@@ -18,7 +18,7 @@
       </appender>
   
       <logger name="org.mongodb.driver" level="WARN"/>
-      <logger name="org.schambon.loadsimrunner" level="DEBUG"/>
+      <logger name="org.schambon.loadsimrunner.TemplateConfiguration" level="INFO"/>
      
       <root level="INFO">
           <!-- Change to File to log to a file -->

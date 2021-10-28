@@ -107,9 +107,9 @@ public class TemplateConfiguration {
 
     public Document generate(Document from) {
         Document doc = _generate(from);
-        // if (LOGGER.isDebugEnabled()) {
-        //     LOGGER.debug("Generated: {}", doc.toJson());
-        // }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Generated: {}", doc.toJson());
+        }
         return doc;
     }
 

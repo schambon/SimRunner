@@ -76,13 +76,10 @@ public class WorkloadConfiguration {
 
                     @Override
                     public void run() {
-                        // TODO Auto-generated method stub
                         LOGGER.info("No-op task");
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
                         }
                     }
                     
