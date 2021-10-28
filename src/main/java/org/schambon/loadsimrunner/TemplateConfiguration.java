@@ -41,7 +41,6 @@ public class TemplateConfiguration {
 
     private Set<String> fieldsToRemember = new TreeSet<>();
     private Map<String, ConcurrentSkipListSet<Object>> remembrances = new TreeMap<>();
-    private Map<String, AtomicInteger> rememberedSizes = new TreeMap<>();
     private List<Document> indexes;
 
     private MongoCollection<Document> mongoColl = null;
@@ -60,7 +59,6 @@ public class TemplateConfiguration {
         for (var field: remember) {
             this.fieldsToRemember.add(field);
             this.remembrances.put(field, new ConcurrentSkipListSet<>());
-            this.rememberedSizes.put(field, new AtomicInteger(0));
         }
 
         if (config.containsKey("indexes")) {
@@ -84,14 +82,12 @@ public class TemplateConfiguration {
 
         for (var field: fieldsToRemember) {
             Set<Object> values = remembrances.get(field);
-            var size = rememberedSizes.get(field);
 
             for (var result : mongoColl.aggregate(Arrays.asList(
                 new Document("$group", new Document("_id", String.format("$%s", field)))
             ))) {
                 values.add(result.get("_id"));
             }
-            size.addAndGet(values.size());
             reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s", values.size(), field));
         }
 
@@ -106,7 +102,6 @@ public class TemplateConfiguration {
 
         for (String field : fieldsToRemember) {
             remembrances.get(field).add(doc.get(field));
-            rememberedSizes.get(field).incrementAndGet();
         }
         return doc;
     }
@@ -122,8 +117,7 @@ public class TemplateConfiguration {
     private Object _randomRememberedField(String field) {
         // TODO this is ugly and slow - there should be a way to make it better?
         var values = remembrances.get(field);
-        var size = rememberedSizes.get(field);
-        int itemNum = ThreadLocalRandom.current().nextInt(size.get());
+        int itemNum = ThreadLocalRandom.current().nextInt(values.size());
 
 
 
