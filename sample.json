@@ -1,0 +1,52 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "templates": [
+        {
+            "name": "person",
+            "database": "simrunner",
+            "collection": "people",
+            "drop": false,
+            "template": {
+                "_id": "%objectid",
+                "first": "%name.firstName",
+                "last": "%name.lastName",
+                "full": "%name.fullName",
+                "embed": {
+                    "number": "%number",
+                    "test": {"%number": {"min": 10, "max": 20}},
+                    "nat": {"%natural": {"max": 200}}
+                },
+                "array": ["%name.firstName", "toto", {"%number": {"min": -10, "max": 10}}, {"structure": {"first": "%name.firstName"}, "last": "%name.lastName"}],
+                "date": {"%date": {"min": {"$date": "1900-01-01"}, "max": "1910-01-01T00:00:00Z"}},
+                "dateOfBirth": "%date.birthday",
+                "address": {
+                    "street": "%address.streetAddress",
+                    "city": "%address.city",
+                    "zip": "%address.zipCode",
+                    "country": "%address.country"
+                },
+                "famous words": "%backToTheFuture.quote",
+                "filler": "%lorem.paragraph",
+                "spice": "%food.spice",
+                "character": "%lordOfTheRings.character"
+             },
+            "remember": ["first","_id"],
+            "indexes": [
+                {"first": 1}
+            ]
+        }
+    ],
+    "workloads": [
+        {
+            "name": "Update last name",
+            "template": "person",
+            "op": "updateOne",
+            "params": {
+                "filter": { "_id": "#_id"},
+                "update": { "$set": { "last": "%name.lastName"}}
+            },
+            "threads": 2
+        }
+    ]
+    
+}
