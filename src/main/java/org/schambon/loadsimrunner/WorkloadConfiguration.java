@@ -69,6 +69,7 @@ public class WorkloadConfiguration {
             case "deleteMany": return new DeleteManyRunner(this, reporter);
             case "replaceOne": return new ReplaceOneRunner(this, reporter);
             case "replaceWithNew": return new ReplaceWithNewRunner(this, reporter);
+            case "aggregate": return new AggregationRunner(this, reporter);
             default:
                 LOGGER.warn("Not implemented (yet?)");
                 return new Runnable() {
