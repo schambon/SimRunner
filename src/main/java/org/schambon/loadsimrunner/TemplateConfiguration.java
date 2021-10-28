@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -40,7 +41,9 @@ public class TemplateConfiguration {
     Document template;
 
     private Set<String> fieldsToRemember = new TreeSet<>();
-    private Map<String, ConcurrentSkipListSet<Object>> remembrances = new TreeMap<>();
+    // using a synchronized list for remembrances because a set is too slow to get a random element out of
+    // private Map<String, ConcurrentSkipListSet<Object>> remembrances = new TreeMap<>();
+    private Map<String, List<Object>> remembrances = new TreeMap<>();
     private List<Document> indexes;
 
     private MongoCollection<Document> mongoColl = null;
@@ -58,7 +61,7 @@ public class TemplateConfiguration {
         var remember = (List<String>) config.get("remember");
         for (var field: remember) {
             this.fieldsToRemember.add(field);
-            this.remembrances.put(field, new ConcurrentSkipListSet<>());
+            this.remembrances.put(field, Collections.synchronizedList(new ArrayList<>()));
         }
 
         if (config.containsKey("indexes")) {
@@ -81,7 +84,7 @@ public class TemplateConfiguration {
         }
 
         for (var field: fieldsToRemember) {
-            Set<Object> values = remembrances.get(field);
+            List<Object> values = remembrances.get(field);
 
             for (var result : mongoColl.aggregate(Arrays.asList(
                 new Document("$group", new Document("_id", String.format("$%s", field)))
@@ -115,17 +118,10 @@ public class TemplateConfiguration {
     }
 
     private Object _randomRememberedField(String field) {
-        // TODO this is ugly and slow - there should be a way to make it better?
         var values = remembrances.get(field);
         int itemNum = ThreadLocalRandom.current().nextInt(values.size());
 
-
-
-        var it = values.iterator();
-        Object obj = null;
-        for (var i = 0; i < itemNum && it.hasNext(); i++) obj = it.next();
-        return obj;
-           
+        return values.get(itemNum);     
     }
 
     private Document _generate(Document current) {
