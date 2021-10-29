@@ -5,9 +5,12 @@
             "name": "person",
             "database": "simrunner",
             "collection": "people",
-            "drop": false,
+            "drop": true,
             "template": {
                 "_id": "%objectid",
+                "sequence": "%sequence",
+                "uuidstr": "%uuidString",
+                "uuidbin": "%uuidBinary",
                 "first": "%name.firstName",
                 "last": "%name.lastName",
                 "constant": 12.8,

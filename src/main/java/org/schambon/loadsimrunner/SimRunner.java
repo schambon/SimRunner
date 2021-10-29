@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
@@ -16,6 +18,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +85,12 @@ public class SimRunner {
         } catch (ClassCastException t) {
             throw new InvalidConfigException("Invalid Connection String");
         }
-        this.client = MongoClients.create(config.getString("connectionString"));
+
+        this.client = MongoClients.create(MongoClientSettings.builder()
+            .applyConnectionString(new ConnectionString(config.getString("connectionString")))
+            .uuidRepresentation(UuidRepresentation.STANDARD)
+            .build());
+
         Document commandResult = client.getDatabase("admin").runCommand(new Document("isMaster", 1));
         if (!commandResult.getBoolean("ismaster")) {
             throw new InvalidConfigException("Must connect to master");

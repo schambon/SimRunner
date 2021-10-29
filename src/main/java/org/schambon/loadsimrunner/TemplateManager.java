@@ -167,9 +167,12 @@ public class TemplateManager {
             case "%number":
                 return ValueGenerators.integer(params.getInteger("min", Integer.MIN_VALUE), params.getInteger("max", Integer.MAX_VALUE));
             case "%natural": return ValueGenerators.integer(params.getInteger("min", 0), params.getInteger("max", Integer.MAX_VALUE));
+            case "%sequence": return ValueGenerators.sequence();
             case "%now": return ValueGenerators.now();
             case "%date": return ValueGenerators.date(params);
             case "%binary": return ValueGenerators.binary(params);
+            case "%uuidString": return ValueGenerators.uuidString();
+            case "%uuidBinary": return ValueGenerators.uuidBinary();
             default: return ValueGenerators.autoFaker(operator);
         }
     }

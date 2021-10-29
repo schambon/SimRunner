@@ -87,6 +87,9 @@ The following template expressions are supported:
 * `%now`: current date
 * `%date`: create a date between the Unix Epoch and 10 years in the future, or specify `min`/`max` bounds in a subdocument, either as ISO8601 or as EJSON dates (hint: `{$date: "2021-01-01"}` works but `"2021-01-01"` doesn't as it's not valid ISO8601).
 * `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes)
+* `%sequence`: create a sequential number. Note - there is only one sequence.
+* `%uuidString`: random UUID, as String
+* `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments. Note that this uses reflection, which is fairly slow.
 

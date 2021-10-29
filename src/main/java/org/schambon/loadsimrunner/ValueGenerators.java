@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.javafaker.Faker;
 
@@ -19,6 +21,7 @@ public class ValueGenerators {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueGenerators.class);
 
     private static Faker faker = new Faker();
+    private static AtomicLong sequenceNumber = new AtomicLong();
 
     public static Generator constant(Object cst) {
         return () -> cst;
@@ -26,6 +29,10 @@ public class ValueGenerators {
     
     public static Generator objectId() {
         return () -> new ObjectId();
+    }
+
+    public static Generator sequence() {
+        return () -> sequenceNumber.getAndIncrement();
     }
 
     public static Generator integer(int min, int max) {
@@ -104,5 +111,13 @@ public class ValueGenerators {
             LOGGER.warn("Cannot map faker operator {}", operator);
             return constant(operator);
         } 
+    }
+
+    public static Generator uuidString() {
+        return () -> UUID.randomUUID().toString();
+    }
+
+    public static Generator uuidBinary() {
+        return () -> UUID.randomUUID();
     }
 }
