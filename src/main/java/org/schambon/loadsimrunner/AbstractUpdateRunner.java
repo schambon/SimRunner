@@ -14,7 +14,7 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractUpdateRunner.class);
 
-    public AbstractUpdateRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public AbstractUpdateRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

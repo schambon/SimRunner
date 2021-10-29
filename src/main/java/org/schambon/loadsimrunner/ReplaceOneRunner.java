@@ -11,7 +11,7 @@ import org.bson.Document;
 
 public class ReplaceOneRunner extends AbstractUpdateRunner {
 
-    public ReplaceOneRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public ReplaceOneRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

@@ -6,7 +6,7 @@ import org.bson.Document;
 
 public class DeleteManyRunner extends AbstractDeleteRunner {
 
-    public DeleteManyRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public DeleteManyRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

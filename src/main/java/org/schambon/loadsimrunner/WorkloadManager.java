@@ -10,9 +10,9 @@ import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WorkloadConfiguration {
+public class WorkloadManager {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(WorkloadConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorkloadManager.class);
 
     String name;
     String template;
@@ -26,9 +26,9 @@ public class WorkloadConfiguration {
 
     Reporter reporter;
 
-    private TemplateConfiguration templateConfig;
+    private TemplateManager templateConfig;
 
-    public WorkloadConfiguration(Document config) {
+    public WorkloadManager(Document config) {
         this.name = config.getString("name");
         this.template = config.getString("template");
         this.op = config.getString("op");
@@ -48,7 +48,7 @@ public class WorkloadConfiguration {
         }
     }
 
-    public void initAndStart(MongoClient client, Map<String, TemplateConfiguration> templates, Reporter reporter) {
+    public void initAndStart(MongoClient client, Map<String, TemplateManager> templates, Reporter reporter) {
         this.collection = templates.get(template).getCollection();
         this.templateConfig = templates.get(template);
         this.reporter = reporter;
@@ -87,7 +87,7 @@ public class WorkloadConfiguration {
         }
     }
 
-    public TemplateConfiguration getTemplateConfig() {
+    public TemplateManager getTemplateConfig() {
         return templateConfig;
     }
 
