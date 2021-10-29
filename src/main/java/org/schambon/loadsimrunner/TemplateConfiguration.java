@@ -45,8 +45,10 @@ public class TemplateConfiguration {
     private MongoCollection<Document> mongoColl = null;
 
     private Faker faker = new Faker();
+    private Reporter reporter;
 
-    public TemplateConfiguration(Document config) {
+    public TemplateConfiguration(Document config, Reporter reporter) {
+        this.reporter = reporter;
         this.name = config.getString("name");
         this.database = config.getString("database");
         this.collection = config.getString("collection");
@@ -71,7 +73,7 @@ public class TemplateConfiguration {
         return this.mongoColl;
     }
 
-    public void initialize(MongoClient client, Reporter reporter) {
+    public void initialize(MongoClient client) {
         reporter.reportInit(String.format("Initializing collection %s.%s", database, collection));
         mongoColl = client.getDatabase(database).getCollection(collection);
         if (drop) {
@@ -102,6 +104,7 @@ public class TemplateConfiguration {
         for (String field : fieldsToRemember) {
             remembrances.get(field).add(doc.get(field));
         }
+
         return doc;
     }
 
@@ -115,8 +118,10 @@ public class TemplateConfiguration {
 
     private Object _randomRememberedField(String field) {
         var values = remembrances.get(field);
-        int itemNum = ThreadLocalRandom.current().nextInt(values.size());
 
+        if (values.size() == 0) return null;
+
+        int itemNum = ThreadLocalRandom.current().nextInt(values.size());
         return values.get(itemNum);     
     }
 
@@ -174,6 +179,8 @@ public class TemplateConfiguration {
             case "%now": return Instant.now();
             case "%date": return _date(params);
             case "%binary": return _binary(params);
+            case "%name.firstName": return faker.name().firstName();
+            case "%name.lastName": return faker.name().lastName();
             default: return _autoFaker(operator);
         }
     }

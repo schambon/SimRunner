@@ -45,6 +45,7 @@ public class Reporter {
     }
 
     public void reportOp(String name, long i, long duration) {
+        LOGGER.debug("Reported {} {} {}", name, i, duration);
         StatsHolder h = stats.get(name);
         if (h == null) {
             h = new StatsHolder();
@@ -71,8 +72,9 @@ public class Reporter {
             var sumBatch = Stats.of(durationsBatch).sum();
             var numberStats = Stats.of(numbers);
 
-            return String.format("%d ops per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n(sum of batch durations): %f\n%f / %f / %f Batch size avg / mean / max",
-                (long) (Math.round((double) numops.get()) / (double) (interval/1000)), 
+            return String.format("%d ops per second\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n(sum of batch durations): %f\n%f / %f / %f Batch size avg / min / max",
+                (long) (numberStats.count() / (double) (interval/1000)), 
+                (long) (numberStats.sum() / (double) (interval/1000)),
                 meanBatch,
                 percentilesBatch.get(50),
                 percentilesBatch.get(95),
@@ -83,7 +85,7 @@ public class Reporter {
         }
 
         public void addOp(long number, long duration) {
-            numops.addAndGet(number);
+            numops.incrementAndGet();
             Reporter.asyncExecutor.submit(() ->  {durationsBatch.add(duration); numbers.add(number);});
         }
     }

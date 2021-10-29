@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InsertRunner extends AbstractRunner {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InsertRunner.class);
 
     public InsertRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
@@ -26,9 +30,13 @@ public class InsertRunner extends AbstractRunner {
     }
 
     private long insertBatch() {
+        var s = System.currentTimeMillis();
         List<Document> docs = new ArrayList<>(batch);
         for (int i = 0; i < batch; i++) {
             docs.add(template.generate());
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Generated batch of {} in {}ms", batch, System.currentTimeMillis()-s);
         }
         long start = System.currentTimeMillis();
         mongoColl.insertMany(docs);

@@ -56,7 +56,7 @@ public class SimRunner {
     public void start() {
         validateConfig();
         for (var entry: templates.entrySet()) {
-            entry.getValue().initialize(client, reporter);
+            entry.getValue().initialize(client);
         }
 
         reporter.start(); // start the clock
@@ -93,7 +93,7 @@ public class SimRunner {
         }
         for (var templateConfig: (List<Document>) config.get("templates")) {
             var name = templateConfig.getString("name");
-            templates.put(name, new TemplateConfiguration(templateConfig));
+            templates.put(name, new TemplateConfiguration(templateConfig, reporter));
         }
 
         if (config.get("workloads") == null || !(config.get("workloads") instanceof List)) {
