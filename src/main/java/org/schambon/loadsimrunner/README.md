@@ -246,3 +246,5 @@ Line by line, this consists of:
 Limitations
 -----------
 
+* Does not support arrayfilters, hint
+* Only top-level fields can be remembered
