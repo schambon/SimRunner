@@ -3,12 +3,8 @@ package org.schambon.loadsimrunner;
 import com.mongodb.client.model.ReplaceOptions;
 
 import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ReplaceWithNewRunner extends AbstractRunner {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(ReplaceWithNewRunner.class);
 
     public ReplaceWithNewRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);

@@ -84,7 +84,6 @@ public class ValueGenerators {
 
     public static Generator autoFaker(String operator) {
         String[] split = operator.substring(1).split("\\.");
-        Object object = faker;
 
         if (split.length != 2) {
             LOGGER.warn("Cannot map faker operator {}", operator);
