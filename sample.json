@@ -10,42 +10,52 @@
                 "_id": "%objectid",
                 "first": "%name.firstName",
                 "last": "%name.lastName",
-                "full": "%name.fullName",
+                "constant": 12.8,
+                "constantDate": {"$date": "2010-02-26"},
+                "birthday": "%date.birthday",
                 "embed": {
-                    "number": "%number",
-                    "test": {"%number": {"min": 10, "max": 20}},
-                    "nat": {"%natural": {"max": 200}}
+                    "key": "value",
+                    "character": "%lordOfTheRings.character"
                 },
-                "array": ["%name.firstName", "toto", {"%number": {"min": -10, "max": 10}}, {"structure": {"first": "%name.firstName"}, "last": "%name.lastName"}],
-                "date": {"%date": {"min": {"$date": "1900-01-01"}, "max": "1910-01-01T00:00:00Z"}},
-                "dateOfBirth": "%date.birthday",
-                "address": {
-                    "street": "%address.streetAddress",
-                    "city": "%address.city",
-                    "zip": "%address.zipCode",
-                    "country": "%address.country"
-                },
-                "famous words": "%backToTheFuture.quote",
-                "filler": "%lorem.paragraph",
-                "spice": "%food.spice",
-                "character": "%lordOfTheRings.character"
+                "array": [
+                    98,
+                    {"%natural": {"max": 100}},
+                    {"now": "%now"}
+                ],
+                "payload": {"%binary": {"size": 32}}
              },
-            "remember": ["first","_id"],
+            "remember": ["_id"],
             "indexes": [
-                {"first": 1}
             ]
         }
     ],
     "workloads": [
         {
-            "name": "Update last name",
+            "name": "Insert",
+            "template": "person",
+            "op": "insert",
+            "threads": 1,
+            "batch": 100,
+            "pace": 1000
+        },
+        {
+            "name": "Find by key",
+            "template": "person",
+            "op": "find",
+            "params": {
+                "filter": { "_id": "#_id" }
+            },
+            "threads": 1
+        },
+        {
+            "name": "Update",
             "template": "person",
             "op": "updateOne",
             "params": {
-                "filter": { "_id": "#_id"},
-                "update": { "$set": { "last": "%name.lastName"}}
+                "filter": {"_id": "#_id"},
+                "update": {"$set": {"updated": "%now"}}
             },
-            "threads": 2
+            "pace": 1000
         }
     ]
     
