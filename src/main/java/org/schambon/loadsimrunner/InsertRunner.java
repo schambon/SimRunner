@@ -11,7 +11,7 @@ public class InsertRunner extends AbstractRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InsertRunner.class);
 
-    public InsertRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public InsertRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

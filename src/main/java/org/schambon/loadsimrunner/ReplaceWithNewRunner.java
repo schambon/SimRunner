@@ -10,7 +10,7 @@ public class ReplaceWithNewRunner extends AbstractRunner {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ReplaceWithNewRunner.class);
 
-    public ReplaceWithNewRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public ReplaceWithNewRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

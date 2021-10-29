@@ -9,7 +9,7 @@ import org.bson.Document;
 
 public class UpdateManyRunner extends AbstractUpdateRunner {
 
-    public UpdateManyRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public UpdateManyRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

@@ -6,7 +6,7 @@ import org.bson.Document;
 
 public class AggregationRunner extends AbstractRunner {
 
-    public AggregationRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public AggregationRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

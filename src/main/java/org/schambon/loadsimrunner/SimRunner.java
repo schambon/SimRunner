@@ -42,8 +42,8 @@ public class SimRunner {
     //////////// Fields /////////////
     Document config;
     MongoClient client;
-    Map<String, TemplateConfiguration> templates = new TreeMap<>();
-    List<WorkloadConfiguration> workloads = new ArrayList<>();
+    Map<String, TemplateManager> templates = new TreeMap<>();
+    List<WorkloadManager> workloads = new ArrayList<>();
 
     Reporter reporter = new Reporter();
 
@@ -66,7 +66,7 @@ public class SimRunner {
 
         while(true) {
             try {
-                Thread.sleep(10000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 LoggerFactory.getLogger(SimRunner.class).warn("Interrupted", e);
             }
@@ -93,14 +93,14 @@ public class SimRunner {
         }
         for (var templateConfig: (List<Document>) config.get("templates")) {
             var name = templateConfig.getString("name");
-            templates.put(name, new TemplateConfiguration(templateConfig, reporter));
+            templates.put(name, new TemplateManager(templateConfig, reporter));
         }
 
         if (config.get("workloads") == null || !(config.get("workloads") instanceof List)) {
             throw new InvalidConfigException("Missing or invalid workloads section");
         }
         for (var workloadConfig: (List<Document>) config.get("workloads")) {
-            workloads.add(new WorkloadConfiguration(workloadConfig));
+            workloads.add(new WorkloadManager(workloadConfig));
         }
     }
 }

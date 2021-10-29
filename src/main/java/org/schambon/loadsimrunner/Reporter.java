@@ -69,19 +69,19 @@ public class Reporter {
 
             var percentilesBatch = percentiles().indexes(50,95).compute(durationsBatch);
             var meanBatch = Stats.of(durationsBatch).mean();
-            var sumBatch = Stats.of(durationsBatch).sum();
+            var util = 100. * Stats.of(durationsBatch).sum() / (double) interval;
             var numberStats = Stats.of(numbers);
 
-            return String.format("%d ops per second\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n(sum of batch durations): %f\n%f / %f / %f Batch size avg / min / max",
+            return String.format("%d ops per second\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n%f / %f / %f Batch size avg / min / max\n[util %%: %f]",
                 (long) (numberStats.count() / (double) (interval/1000)), 
                 (long) (numberStats.sum() / (double) (interval/1000)),
                 meanBatch,
                 percentilesBatch.get(50),
                 percentilesBatch.get(95),
-                sumBatch,
                 numberStats.mean(),
                 numberStats.min(),
-                numberStats.max());
+                numberStats.max(),
+                util);
         }
 
         public void addOp(long number, long duration) {

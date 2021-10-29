@@ -4,7 +4,7 @@ import org.bson.Document;
 
 public class FindRunner extends AbstractRunner {
     
-    public FindRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public FindRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
 

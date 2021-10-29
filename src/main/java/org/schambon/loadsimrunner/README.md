@@ -240,8 +240,8 @@ Line by line, this consists of:
 * mean duration of an operation
 * median duration of an operation
 * 95th percentile duration of an operation
-* sum of batch durations - this tells you how much time is spent MongoDB-side rather than client-side. It should be about `1000 * threads` if it is fully server side. Note that document generation is fairly slow, so you can expect roughly half the time spent client side per thread for pure insert workloads. The example above has 4 threads, so we're close to 50% time spent client side.
 * average / min / max batch size - this is mostly useful for `find` and `updateMany`, tells you how many records are returned / updated per operation. For `insert` it should be exactly equal to your specified batch size.
+* util% - this tells you approximately the percentage of time spent interacting with the database (if you have multiple threads running, it can be more than 100%). This is useful to decide if apparent poor performance is due to the DB or to the test harness itself)
 
 Limitations
 -----------

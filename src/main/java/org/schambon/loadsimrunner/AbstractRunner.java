@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractRunner implements Runnable {
 
-    protected TemplateConfiguration template;
+    protected TemplateManager template;
     protected MongoCollection<Document> mongoColl;
     protected int pace;
     protected int batch;
@@ -15,7 +15,7 @@ public abstract class AbstractRunner implements Runnable {
     protected String name;
     protected Document params;
 
-    public AbstractRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public AbstractRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         this.template = workloadConfiguration.getTemplateConfig();
         this.name = workloadConfiguration.getName();
         this.mongoColl = template.getCollection();

@@ -6,7 +6,7 @@ import org.bson.Document;
 
 public abstract class AbstractDeleteRunner extends AbstractRunner {
 
-    public AbstractDeleteRunner(WorkloadConfiguration workloadConfiguration, Reporter reporter) {
+    public AbstractDeleteRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
     
