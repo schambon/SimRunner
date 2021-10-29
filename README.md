@@ -36,7 +36,7 @@ Let's look at an example:
                 "_id": "%objectid",
                 "first": "%name.firstName",
                 "last": "%name.lastName",
-                "birthday": "%birthday"
+                "birthday": "%date.birthday"
             },
             "remember": ["_id"],
             "indexes": []
@@ -252,7 +252,7 @@ Limitations
 * Does not support arrayfilters, hint
 * Only top-level fields can be remembered
 * Template doesn't have a way to generate variable-length arrays
-
+* No support for transactions or indeed, multi-operation workflows ("read one doc and update another")
 
 Plans
 -----
