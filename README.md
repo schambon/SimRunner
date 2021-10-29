@@ -220,7 +220,7 @@ Options:
 Output
 ------
 
-A report is printed on stdout (as well as in a `simrunner.log` file) every 10 seconds. For each specified workload, it will print the following:
+A report is printed on stdout (as well as in a `simrunner.log` file) every second. For each specified workload, it will print the following:
 
 ```
 18:18:59.403 [main] INFO  org.schambon.loadsimrunner.Reporter - 43 - Insert:
@@ -248,3 +248,15 @@ Limitations
 
 * Does not support arrayfilters, hint
 * Only top-level fields can be remembered
+* Template doesn't have a way to generate variable-length arrays
+
+
+Plans
+-----
+
+If time allows, I'd like to implement the following features:
+* more generic, path-aware "remember" feature, that can work with embedded/array
+* variable array template expression
+* HTTP monitoring console (dynamic graphs!)
+* HTTP command interface (start / stop jobs...)
+* distributed mode (building on the above)
