@@ -90,7 +90,7 @@ A few things can be seen already:
 Templates
 ---------
 
-## Template expressions
+### Template expressions
 
 The following template expressions are supported:
 
@@ -108,7 +108,7 @@ The following template expressions are supported:
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments. Note that this uses reflection, which is fairly slow.
 
-## Template variables (interdependant fields)
+### Template variables (interdependant fields)
 
 It is possible to create _variables_, which you can reuse multiple times in a template.
 
@@ -149,7 +149,7 @@ This creates records like this one:
 
 Note: you can't reference a variable in another variable declaration.
 
-## Dictionaries
+### Dictionaries
 
 Dictionaries let you create custom sets of data that the template system will pick into. Dictionaries can be a static list, a JSON file read on disk, or a plain text file read on disk.
 
@@ -174,7 +174,7 @@ This creates four dictionaries:
 Supported workload operations
 -----------------------------
 
-## Insert
+### Insert
 
 ```
 {
@@ -191,7 +191,7 @@ Inserts a new instance of the named template.
 Options:
 * batch: bulk insert. Omit or specify `"batch": 0` for unit insert.
 
-## find
+### find
 
 ```
 {
@@ -217,7 +217,7 @@ Options:
 * project: projection specification, does _not_ use templates
 * limit: number of documents to fetch
 
-## updateOne and updateMany
+### updateOne and updateMany
 
 ```
 {
@@ -239,7 +239,7 @@ Options:
 * update: the update specification, must include mutation operators ($). `update` can be a pipeline for expressive updates.
 * upsert: is this an upsert? (defaults to `false`)
 
-## replaceOne
+### replaceOne
 
 ```
 {
@@ -261,7 +261,7 @@ Options:
 * update: the replacement document, can use templates (including references)
 * upsert: is this an upsert (defaults to `false`)
 
-## replaceWithNew
+### replaceWithNew
 
 ```
 {
@@ -277,7 +277,7 @@ Options:
 
 Replaces a document with a new instance of its original template. The same notes as `replaceOne` apply.
 
-## aggregate
+### aggregate
 
 ```
 {
