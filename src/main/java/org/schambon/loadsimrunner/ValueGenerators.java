@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
@@ -164,6 +165,21 @@ public class ValueGenerators {
                 result.add(input.subGenerate("of"));
             }
             return result;
+        };
+    }
+
+    public static Generator dictionary(DocumentGenerator input, Map<String, List<? extends Object>> dictionaries) {
+        return () -> {
+            var params = input.generateDocument();
+
+            String name = params.getString("name");
+            List<? extends Object> dict = dictionaries.get(name);
+            if (dict == null) {
+                LOGGER.warn("Could not find dictionary {}", name);
+                return null;
+            }
+            var idx = ThreadLocalRandom.current().nextInt(dict.size());
+            return dict.get(idx);
         };
     }
 }

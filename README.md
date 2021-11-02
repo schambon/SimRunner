@@ -86,8 +86,11 @@ A few things can be seen already:
 * workloads can be `pace`d, that is, you can specify that the operation should run every `n` milliseconds. For instance, if you want an aggregation to run every second and it takes 300ms, the thread will sleep for 700ms before running again. _Note that pacing is on a per-thread basis_: if you have 4 threads running ops at a 100ms pace, you should expect more or less 40 operations per second (10 per thread). If omitted, `pace` defaults to 0 - ie the thread will never sleep.
 * workloads can use the same template language as templates. They can also refer to `remember`ed fields.
 
-Template expressions
---------------------
+
+Templates
+---------
+
+## Template expressions
 
 The following template expressions are supported:
 
@@ -101,13 +104,13 @@ The following template expressions are supported:
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
+* `{"%dictionry": {"name": "dictionary name"}}`: pick a value from a dictionary
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments. Note that this uses reflection, which is fairly slow.
 
-Template variables (interdependant fields)
-------------------------------------------
+## Template variables (interdependant fields)
 
-It is also possible to create _variables_, which you can reuse multiple times in a template.
+It is possible to create _variables_, which you can reuse multiple times in a template.
 
 For example, look at this `templates` section:
 
@@ -145,6 +148,27 @@ This creates records like this one:
 ... and ensures that `death` is in fact posterior to `birth`. Such cross-field dependencies (within a single document) is possible by creating a variable _birthday_ (using the normal templates) and generating the field `death` by referencing it (using the `##` prefix) in the parameters of the `%date` generator.
 
 Note: you can't reference a variable in another variable declaration.
+
+## Dictionaries
+
+Dictionaries let you create custom sets of data that the template system will pick into. Dictionaries can be a static list, a JSON file read on disk, or a plain text file read on disk.
+
+Example:
+
+```
+"dictionaries": {
+    "names": ["John", "Jill", "Joe", "Janet"],
+    "statuses": ["RUNNING", {"status": "DONE", "substatus": "OK"}, {"status": "DONE", "substatus": "NOK"}],
+    "characters": {"file": "characters.json", "type": "json"},
+    "locations": {"file": "locations.txt", "type": "text"}
+}
+```
+
+This creates four dictionaries:
+- `names` is an inline list of strings
+- `statuses` is an inline list of BSON values - this shows strings and documents, but it could be anything that is expressible in Extended JSON
+- `characters` is a JSON file read from disk. The file __must__ contain a single document with an array field called `data` that contains the dictionary (similar to inline dictionaries)
+- `locations` is a plain text file, a dictionary entry per line (only strings, no other or mixed types)
 
 
 Supported workload operations

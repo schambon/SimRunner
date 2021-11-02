@@ -1,7 +1,7 @@
 {
     "connectionString": "mongodb://localhost:27017",
     "http": {
-        "enabled": true,
+        "enabled": false,
         "port": 3000,
         "host": "localhost"
     },
@@ -12,6 +12,12 @@
             "database": "simrunner",
             "collection": "people",
             "drop": true,
+            "dictionaries": {
+                "names": ["John", "Jill", "Joe", "Janet"],
+                "statuses": ["RUNNING", {"status": "DONE", "substatus": "OK"}, {"status": "DONE", "substatus": "NOK"}],
+                "characters": {"file": "characters.json", "type": "json"},
+                "locations": {"file": "locations.txt", "type": "text"}
+            },
             "variables": {
                 "num": {"%number": {"min": 0, "max": 10}},
                 "createDate": {"%date":{"min": {"$date": "2021-10-01"}, "max": {"$date": "2021-11-01"}}}
@@ -45,7 +51,13 @@
                     }
                 },
                 "createdAt": "##createDate",
-                "updateAt": {"%date": {"min": "##createDate", "max": {"$date": "2021-11-01"}}}
+                "updateAt": {"%date": {"min": "##createDate", "max": {"$date": "2021-11-01"}}},
+                "dictionary": {
+                    "name": {"%dictionary": {"name": "names"}},
+                    "statuses": {"%dictionary": {"name": "statuses"}},
+                    "character": {"%dictionary": {"name": "characters"}},
+                    "location": {"%dictionary": {"name": "locations"}}
+                }
              },
             "remember": ["_id"],
             "indexes": [

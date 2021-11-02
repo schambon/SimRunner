@@ -1,5 +1,8 @@
 package org.schambon.loadsimrunner;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,13 +26,13 @@ public class TemplateManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TemplateManager.class);
 
-    String name;
-    String database;
-    String collection;
-    boolean drop = false;
+    private String database;
+    private String collection;
+    private boolean drop = false;
 
-    Document template;
-    Document variables;
+    private Document template;
+    private Document variables;
+    private Document dictionariesConfig;
 
     private Set<String> fieldsToRemember = new TreeSet<>();
     // using a synchronized list for remembrances because a set is too slow to get a random element out of
@@ -46,9 +49,11 @@ public class TemplateManager {
     // thread local container for variables
     private static ThreadLocal<Document> localVariables = new ThreadLocal<>();
 
+    // dictionaries
+    private Map<String, List<? extends Object>> dictionaries = new TreeMap<>();
+
     public TemplateManager(Document config, Reporter reporter) {
         this.reporter = reporter;
-        this.name = config.getString("name");
         this.database = config.getString("database");
         this.collection = config.getString("collection");
         this.drop = config.getBoolean("drop", false);
@@ -72,6 +77,12 @@ public class TemplateManager {
             this.indexes = config.getList("indexes", Document.class);
         } else {
             this.indexes = Collections.emptyList();
+        }
+
+        if (config.containsKey("dictionaries")) {
+            this.dictionariesConfig = (Document) config.get("dictionaries");
+        } else {
+            this.dictionariesConfig = new Document();
         }
     }
     
@@ -103,7 +114,53 @@ public class TemplateManager {
         }
         reporter.reportInit(String.format("\tCreated %d indexes", indexes.size()));
 
+        _initializeDictionaries();
+        reporter.reportInit(String.format("\tLoaded %d dictionaries", dictionaries.size()));
+
         generators.put(template, _compile(template));
+    }
+
+    private void _initializeDictionaries() {
+        for (var entry: dictionariesConfig.entrySet()) {
+            if (entry.getValue() instanceof List<?>) {
+                dictionaries.put(entry.getKey(), (List<Object>)entry.getValue());
+            } else if (entry.getValue() instanceof Document) {
+                dictionaries.put(entry.getKey(), _loadDictionary((Document)entry.getValue()));
+            } else {
+                LOGGER.warn("Invalid dictionary config: {}", entry.getKey());
+            }
+        }
+    }
+
+    private List<? extends Object> _loadDictionary(Document config) {
+
+        String type = config.getString("type");
+        switch (type) {
+            case "json": return _loadJSONDictionary(config);
+            case "text": return _loadTextDictionary(config);
+            default:
+                LOGGER.warn("Cannot read dictionary of type: {}", type);
+                return Collections.emptyList();
+        }
+    }
+
+    private List<Object> _loadJSONDictionary(Document config) {
+        try {
+            var doc = Document.parse(Files.readString(Path.of(config.getString("file"))));
+            return doc.getList("data", Object.class);
+        } catch (IOException e) {
+            LOGGER.error("Cannot read file", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<String> _loadTextDictionary(Document config) {
+        try {
+            return Files.readAllLines(Path.of(config.getString("file")));
+        } catch (IOException e) {
+            LOGGER.error("Cannot read file", e);
+            return Collections.emptyList();
+        }
     }
 
     public Document generate() {
@@ -195,6 +252,7 @@ public class TemplateManager {
             case "%uuidString": return ValueGenerators.uuidString();
             case "%uuidBinary": return ValueGenerators.uuidBinary();
             case "%array": return ValueGenerators.array(params);
+            case "%dictionary": return ValueGenerators.dictionary(params, dictionaries);
             default: return ValueGenerators.autoFaker(operator);
         }
     }
