@@ -16,7 +16,7 @@ public class ReplaceWithNewRunner extends AbstractRunner {
         var filter = (Document) params.get("filter");
         filter = template.generate(filter);
 
-        var replace = template.generate(template.template); // TODO this smells
+        var replace = template.generate();
         replace.remove("_id");
 
         var options = new ReplaceOptions().upsert(params.getBoolean("upsert", false));

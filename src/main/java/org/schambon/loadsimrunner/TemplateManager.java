@@ -29,6 +29,7 @@ public class TemplateManager {
     boolean drop = false;
 
     Document template;
+    Document variables;
 
     private Set<String> fieldsToRemember = new TreeSet<>();
     // using a synchronized list for remembrances because a set is too slow to get a random element out of
@@ -42,6 +43,9 @@ public class TemplateManager {
     // compiled generators cache
     private Map<Document, DocumentGenerator> generators = new HashMap<>();
 
+    // thread local container for variables
+    private static ThreadLocal<Document> localVariables = new ThreadLocal<>();
+
     public TemplateManager(Document config, Reporter reporter) {
         this.reporter = reporter;
         this.name = config.getString("name");
@@ -50,6 +54,10 @@ public class TemplateManager {
         this.drop = config.getBoolean("drop", false);
 
         this.template = (Document) config.get("template");
+        this.variables = (Document) config.get("variables");
+        if (this.variables == null) {
+            this.variables = new Document();
+        }
 
         var remember = (List<String>) config.get("remember");
         for (var field: remember) {
@@ -96,13 +104,19 @@ public class TemplateManager {
     }
 
     public Document generate() {
-        var doc = generate(template);
+        try {
+            localVariables.set(generate(variables));
 
-        for (String field : fieldsToRemember) {
-            remembrances.get(field).add(doc.get(field));
+            var doc = generate(template);
+
+            for (String field : fieldsToRemember) {
+                remembrances.get(field).add(doc.get(field));
+            }
+
+            return doc;
+        } finally {
+            localVariables.remove();
         }
-
-        return doc;
     }
 
     public Document generate(Document from) {
@@ -139,6 +153,8 @@ public class TemplateManager {
             String val = (String) value;
             if (val.startsWith("%")) {
                 return _valueGenerator(val, new Document());
+            } else if (val.startsWith("##")) {
+                return () -> localVariables.get().get(val.substring(2));
             } else if (val.startsWith("#")) {
                 return new RemindingGenerator(remembrances.get(val.substring(1)));
             }

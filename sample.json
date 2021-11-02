@@ -13,7 +13,7 @@
             "collection": "people",
             "drop": true,
             "variables": {
-                "num": {"%natural": {"min": 1, "max": 10}}
+                "num": {"%natural": {"min": 0, "max": 100}}
             },
             "template": {
                 "_id": "%objectid",
@@ -36,9 +36,11 @@
                 ],
                 "payload": {"%binary": {"size": 32}},
                 "num": "##num",
+                "num2": "##num",
+                "num3": "##num",
                 "variableArray": {
                     "%array": {
-                        "min": "##num", "max": "##num",
+                        "min": 2, "max": 3,
                         "of": { "date": "%date", "num": "%natural" }
                     }
                 }
