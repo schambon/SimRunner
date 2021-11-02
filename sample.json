@@ -25,7 +25,13 @@
                     {"%natural": {"max": 100}},
                     {"now": "%now"}
                 ],
-                "payload": {"%binary": {"size": 32}}
+                "payload": {"%binary": {"size": 32}},
+                "variableArray": {
+                    "%array": {
+                        "min": 4, "max": 4,
+                        "of": { "date": "%date", "num": "%natural" }
+                    }
+                }
              },
             "remember": ["_id"],
             "indexes": [

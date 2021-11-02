@@ -173,6 +173,13 @@ public class TemplateManager {
             case "%binary": return ValueGenerators.binary(params);
             case "%uuidString": return ValueGenerators.uuidString();
             case "%uuidBinary": return ValueGenerators.uuidBinary();
+            case "%array": 
+                var of = params.get("of");
+                if (of == null || ! (of instanceof Document)) {
+                    LOGGER.warn("Parameter 'of' of array operator is invalid, ignoring");
+                    of = new Document();
+                }
+                return ValueGenerators.array(params, _compile((Document)of));
             default: return ValueGenerators.autoFaker(operator);
         }
     }

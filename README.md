@@ -90,6 +90,7 @@ The following template expressions are supported:
 * `%sequence`: create a sequential number. Note - there is only one sequence.
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
+* `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments. Note that this uses reflection, which is fairly slow.
 
@@ -251,7 +252,6 @@ Limitations
 
 * Does not support arrayfilters, hint
 * Only top-level fields can be remembered
-* Template doesn't have a way to generate variable-length arrays
 * No support for transactions or indeed, multi-operation workflows ("read one doc and update another")
 
 Plans
@@ -259,7 +259,6 @@ Plans
 
 If time allows, I'd like to implement the following features:
 * more generic, path-aware "remember" feature, that can work with embedded/array
-* variable array template expression
 * HTTP monitoring console (dynamic graphs!)
 * HTTP command interface (start / stop jobs...)
 * distributed mode (building on the above)

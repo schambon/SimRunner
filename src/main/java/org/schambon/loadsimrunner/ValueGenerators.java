@@ -4,7 +4,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
@@ -118,5 +120,19 @@ public class ValueGenerators {
 
     public static Generator uuidBinary() {
         return () -> UUID.randomUUID();
+    }
+
+    public static Generator array(Document params, Generator subgen) {
+        int min = params.getInteger("min", 0);
+        int max = params.getInteger("max", 10);
+
+        return () -> {
+            int size = ThreadLocalRandom.current().nextInt(min, max + 1); // plus one so I can say "min:5, max:6" and that will generate exactly 5, as the bound is exclusive
+            List<Object> result = new ArrayList<>();
+            for (var i = 0; i < size; i++) {
+                result.add(subgen.generate());
+            }
+            return result;
+        };
     }
 }
