@@ -15,6 +15,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

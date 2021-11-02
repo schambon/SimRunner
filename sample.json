@@ -1,5 +1,11 @@
 {
     "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
     "templates": [
         {
             "name": "person",
@@ -44,7 +50,7 @@
             "template": "person",
             "op": "insert",
             "threads": 1,
-            "batch": 100,
+            "batch": 0,
             "pace": 1000
         },
         {
@@ -53,18 +59,7 @@
             "op": "find",
             "params": {
                 "filter": { "_id": "#_id" }
-            },
-            "threads": 1
-        },
-        {
-            "name": "Update",
-            "template": "person",
-            "op": "updateOne",
-            "params": {
-                "filter": {"_id": "#_id"},
-                "update": {"$set": {"updated": "%now"}}
-            },
-            "pace": 1000
+            }
         }
     ]
     

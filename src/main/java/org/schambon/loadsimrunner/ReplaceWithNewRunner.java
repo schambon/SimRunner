@@ -3,6 +3,7 @@ package org.schambon.loadsimrunner;
 import com.mongodb.client.model.ReplaceOptions;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 
 public class ReplaceWithNewRunner extends AbstractRunner {
 

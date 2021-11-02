@@ -1,6 +1,8 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.report;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -8,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +23,7 @@ public class Reporter {
 
     private volatile Map<String, StatsHolder> stats = null;
     private long startTime = 0;
+    private TreeMap<Instant, Report> reports = new TreeMap<>();
 
     public void start() {
         stats = new TreeMap<>();
@@ -30,8 +34,7 @@ public class Reporter {
         LOGGER.info(String.format("INIT: %s", message));
     }
 
-    public void printReport() {
-        LOGGER.info("Periodic report");
+    public void computeReport() {
         var oldStats = stats;
         long now = System.currentTimeMillis();
         long interval = now - startTime;
@@ -39,9 +42,16 @@ public class Reporter {
 
         stats = new TreeMap<>();
 
+        Document reportDoc = new Document();
         for (var workload: oldStats.keySet()) {
-            LOGGER.info("{}:\n{}", workload, oldStats.get(workload).compute(interval));
+            reportDoc.append(workload, oldStats.get(workload).compute(interval));
         }
+
+        Instant reportInstant = Instant.ofEpochMilli(now);
+        Report report = new Report(reportInstant, reportDoc);
+        reports.put(reportInstant, report);
+
+        LOGGER.info(report.toString());
     }
 
     public void reportOp(String name, long i, long duration) {
@@ -52,6 +62,14 @@ public class Reporter {
             stats.put(name, h);
         }
         h.addOp(i, duration);
+    }
+
+    public Collection<Report> getAllReports() {
+        return reports.values();
+    }
+
+    public Collection<Report> getReportsSince(Instant start) {
+        return reports.tailMap(start, false).values();
     }
     
     // a specific thread for logging durations
@@ -65,23 +83,26 @@ public class Reporter {
 
         // Compute some statistics
         // interval is the overall duration
-        public String compute(long interval) {
+        public Document compute(long interval) {
 
             var percentilesBatch = percentiles().indexes(50,95).compute(durationsBatch);
-            var meanBatch = Stats.of(durationsBatch).mean();
-            var util = 100. * Stats.of(durationsBatch).sum() / (double) interval;
+            Stats batchStats = Stats.of(durationsBatch);
+            var meanBatch = batchStats.mean();
+            var util = 100. * batchStats.sum() / (double) interval;
             var numberStats = Stats.of(numbers);
 
-            return String.format("%d ops per second\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n%f / %f / %f Batch size avg / min / max\n[util %%: %f]",
-                (long) (numberStats.count() / (double) (interval/1000)), 
-                (long) (numberStats.sum() / (double) (interval/1000)),
-                meanBatch,
-                percentilesBatch.get(50),
-                percentilesBatch.get(95),
-                numberStats.mean(),
-                numberStats.min(),
-                numberStats.max(),
-                util);
+            Document wlReport = new Document();
+            wlReport.append("ops", (long) (numberStats.count() / (double) (interval/1000)));
+            wlReport.append("records", (long) (numberStats.sum() / (double) (interval/1000)));
+            wlReport.append("mean duration", meanBatch);
+            wlReport.append("median duration", percentilesBatch.get(50));
+            wlReport.append("95th percentile", percentilesBatch.get(95));
+            wlReport.append("mean batch size", numberStats.mean());
+            wlReport.append("min batch size", numberStats.min());
+            wlReport.append("max batch size", numberStats.max());
+            wlReport.append("client util", util);
+
+            return wlReport;
         }
 
         public void addOp(long number, long duration) {

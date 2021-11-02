@@ -15,6 +15,10 @@ The config file specifies:
 * a number of `templates` which specify document shapes and map them to collections
 * a number of `workloads` which specify actions to take on those templates
 
+Optionnally, the config file may also specify:
+* a reporting interval (default 1000ms)
+* an HTTP reporting server configuration
+
 Look at the provided `sample.json` for a more or less complete example of what you can do.
 
 Config file
@@ -26,6 +30,12 @@ Let's look at an example:
 ```
 {
     "connectionString": "mongodb://localhost:27017",
+    "reportInterval": 1000,
+    "http": {
+        "enabled": false,
+        "port": 3000,
+        "host": "localhost"
+    },
     "templates": [
         {
             "name": "person",
@@ -246,6 +256,57 @@ Line by line, this consists of:
 * 95th percentile duration of an operation
 * average / min / max batch size - this is mostly useful for `find` and `updateMany`, tells you how many records are returned / updated per operation. For `insert` it should be exactly equal to your specified batch size.
 * util% - this tells you approximately the percentage of time spent interacting with the database (if you have multiple threads running, it can be more than 100%). This is useful to decide if apparent poor performance is due to the DB or to the test harness itself)
+
+HTTP interface
+--------------
+
+In the `http` section you can configure a REST interface to get periodic reports as JSON.
+
+```
+"http": {
+    "enabled": false,
+    "port": 3000,
+    "host": "localhost"
+}
+```
+
+* `enabled`: boolean, enable the HTTP server (default: false)
+* `port`: int, what port to listen to (default: 3000),
+* `host`: string, what host/IP to bind to (default: "localhost"). If you want to listen to the wider network, set a hostname / IP here, or "0.0.0.0".
+
+Once the system has started, use `curl host:port/report` for a list of all reports since the beginning, or `curl host:port/report\?since=<ISO date>` for a list of all reports since the provided date. This answers with JSON similar to this:
+
+```
+[
+    {
+        "report": {
+            "Find by key": {
+                "95th percentile": 1.0,
+                "client util": 96.99823425544469,
+                "max batch size": 1.0,
+                "mean batch size": 0.98914696529794,
+                "mean duration": 0.2278446011336935,
+                "median duration": 0.0,
+                "min batch size": 0.0,
+                "ops": 4339,
+                "records": 4292
+            },
+            "Insert": {
+                "95th percentile": 83.3,
+                "client util": 1.5597410241318423,
+                "max batch size": 1.0,
+                "mean batch size": 1.0,
+                "mean duration": 15.9,
+                "median duration": 1.0,
+                "min batch size": 1.0,
+                "ops": 1,
+                "records": 1
+            }
+        },
+        "time": "2021-11-02T12:46:23.908Z"
+    }
+]
+```
 
 Limitations
 -----------

@@ -3,6 +3,7 @@ package org.schambon.loadsimrunner;
 import java.util.stream.Collectors;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 
 public class AggregationRunner extends AbstractRunner {
 

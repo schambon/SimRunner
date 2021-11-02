@@ -6,6 +6,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 
 public class UpdateManyRunner extends AbstractUpdateRunner {
 

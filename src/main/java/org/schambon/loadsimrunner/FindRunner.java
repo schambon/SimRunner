@@ -1,6 +1,7 @@
 package org.schambon.loadsimrunner;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 
 public class FindRunner extends AbstractRunner {
     

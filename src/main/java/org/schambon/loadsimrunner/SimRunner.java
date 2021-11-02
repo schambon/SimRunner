@@ -20,9 +20,15 @@ import org.apache.commons.cli.ParseException;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
+import org.schambon.loadsimrunner.http.HttpServer;
+import org.schambon.loadsimrunner.report.Reporter;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SimRunner {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimRunner.class);
+
     public static void main(String[] args) throws ParseException, IOException {
         var options = new Options();
 
@@ -49,6 +55,10 @@ public class SimRunner {
     List<WorkloadManager> workloads = new ArrayList<>();
 
     Reporter reporter = new Reporter();
+    HttpServer httpServer = null;
+
+    int reportInterval = 1000;
+
 
     /////////// Implementation //////////
 
@@ -67,13 +77,22 @@ public class SimRunner {
             workload.initAndStart(client, templates, reporter);
         }
 
+        if (httpServer != null) {
+            try {
+                httpServer.start();
+            } catch (Exception e) {
+                LOGGER.error("Cannot start HTTP server", e);
+            }
+           
+        }
+        
         while(true) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep((long) reportInterval);
             } catch (InterruptedException e) {
-                LoggerFactory.getLogger(SimRunner.class).warn("Interrupted", e);
+                LOGGER.warn("Interrupted", e);
             }
-            reporter.printReport();
+            reporter.computeReport();
         }
     }
 
@@ -110,5 +129,11 @@ public class SimRunner {
         for (var workloadConfig: (List<Document>) config.get("workloads")) {
             workloads.add(new WorkloadManager(workloadConfig));
         }
+
+        if (config.get("http") != null || (config.get("http") instanceof Document)) {
+            this.httpServer = new HttpServer((Document) config.get("http"), reporter);
+        }
+
+        reportInterval = config.getInteger("reportInterval", 1000);
     }
 }

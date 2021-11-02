@@ -74,6 +74,11 @@
         <artifactId>guava</artifactId>
         <version>31.0.1-jre</version>
       </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>11.0.7</version>
+      </dependency>
   </dependencies>
 
 </project>

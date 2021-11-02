@@ -3,6 +3,7 @@ package org.schambon.loadsimrunner;
 import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractRunner implements Runnable {

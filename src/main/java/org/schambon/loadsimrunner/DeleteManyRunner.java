@@ -3,6 +3,7 @@ package org.schambon.loadsimrunner;
 import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.report.Reporter;
 
 public class DeleteManyRunner extends AbstractDeleteRunner {
 

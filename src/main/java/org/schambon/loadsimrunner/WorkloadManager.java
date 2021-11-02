@@ -7,6 +7,7 @@ import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
+import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
