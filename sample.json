@@ -12,6 +12,9 @@
             "database": "simrunner",
             "collection": "people",
             "drop": true,
+            "variables": {
+                "num": {"%natural": {"min": 1, "max": 10}}
+            },
             "template": {
                 "_id": "%objectid",
                 "sequence": "%sequence",
@@ -32,9 +35,10 @@
                     {"now": "%now"}
                 ],
                 "payload": {"%binary": {"size": 32}},
+                "num": "##num",
                 "variableArray": {
                     "%array": {
-                        "min": 4, "max": 4,
+                        "min": "##num", "max": "##num",
                         "of": { "date": "%date", "num": "%natural" }
                     }
                 }
