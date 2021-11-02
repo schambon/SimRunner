@@ -37,46 +37,61 @@ public class ValueGenerators {
         return () -> sequenceNumber.getAndIncrement();
     }
 
-    public static Generator integer(int min, int max) {
-        return () -> faker.number().numberBetween(min, max);
+    public static Generator integer(DocumentGenerator params) {
+        return () -> {
+            var p = params.generateDocument();
+            return faker.number().numberBetween(p.getInteger("min", Integer.MIN_VALUE), p.getInteger("max", Integer.MAX_VALUE));
+        };
+    }
+
+    public static Generator natural(DocumentGenerator params) {
+        return () -> {
+            var p = params.generateDocument();
+            return faker.number().numberBetween(p.getInteger("min", 0), p.getInteger("max", Integer.MAX_VALUE));
+        };
     }
 
     public static Generator now() {
         return () -> new Date();
     }
 
-    public static Generator date(Document params) {
+    public static Generator date(DocumentGenerator input) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_INSTANT;
-        final Date from;
-
-        Object min = params.get("min");
-        if (min instanceof String) {
-            String minString = (String) min;
-            from = Date.from(Instant.from(dateTimeFormatter.parse(minString)));
-        } else if (min instanceof Date) {
-            from = (Date) min;
-        } else {
-            from = Date.from(Instant.ofEpochMilli(0));
-        }
-
-        final Date to;
-        Object max = params.get("max");
-        if (max instanceof String) {
-            String maxString = (String) max;
-            to = Date.from(Instant.from(dateTimeFormatter.parse(maxString)));
-        } else if (max instanceof Date) {
-            to = (Date) max;
-        } else  {
-            to = Date.from(Instant.now().plus(3650, ChronoUnit.DAYS));
-        }
-
-        return () -> faker.date().between(from, to);
-    } 
-
-    public static Generator binary(Document params) {
-        final var size = params.getInteger("size", 512);
 
         return () -> {
+            var params = input.generateDocument();
+
+            final Date from;
+            Object min = params.get("min");
+            if (min instanceof String) {
+                String minString = (String) min;
+                from = Date.from(Instant.from(dateTimeFormatter.parse(minString)));
+            } else if (min instanceof Date) {
+                from = (Date) min;
+            } else {
+                from = Date.from(Instant.ofEpochMilli(0));
+            }
+    
+            final Date to;
+            Object max = params.get("max");
+            if (max instanceof String) {
+                String maxString = (String) max;
+                to = Date.from(Instant.from(dateTimeFormatter.parse(maxString)));
+            } else if (max instanceof Date) {
+                to = (Date) max;
+            } else  {
+                to = Date.from(Instant.now().plus(3650, ChronoUnit.DAYS));
+            }
+
+            return faker.date().between(from, to);
+        };
+    } 
+
+    public static Generator binary(DocumentGenerator input) {
+
+        return () -> {
+            var params = input.generateDocument();
+            var size = params.getInteger("size", 512);
             var bytes = new byte[size];
             ThreadLocalRandom.current().nextBytes(bytes);
             return bytes;
@@ -131,6 +146,22 @@ public class ValueGenerators {
             List<Object> result = new ArrayList<>();
             for (var i = 0; i < size; i++) {
                 result.add(subgen.generate());
+            }
+            return result;
+        };
+    }
+
+    public static Generator array(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+
+            int min = params.getInteger("min", 0);
+            int max = params.getInteger("max", 10);
+
+            int size = ThreadLocalRandom.current().nextInt(min, max + 1); // plus one so I can say "min:5, max:6" and that will generate exactly 5, as the bound is exclusive
+            List<Object> result = new ArrayList<>();
+            for (var i = 0; i < size; i++) {
+                result.add(input.subGenerate("of"));
             }
             return result;
         };

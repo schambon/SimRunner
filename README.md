@@ -104,6 +104,49 @@ The following template expressions are supported:
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments. Note that this uses reflection, which is fairly slow.
 
+Template variables (interdependant fields)
+------------------------------------------
+
+It is also possible to create _variables_, which you can reuse multiple times in a template.
+
+For example, look at this `templates` section:
+
+```
+"templates": [
+    {
+        "name": "19th century people",
+        "database": "simrunner",
+        "collection": "19th_century",
+        "variables": {
+            "birthday": {"%date": {"min": {"$date": "1800-01-01"}, "max": {"$date": "1900-01-01"}}}
+        },
+        "template": {
+            "first": "%name.firstName",
+            "last": "%name.lastName",
+            "birth": "##birthday",
+            "death": {"%date": {"min": "##birthday", "max": {"$date": "1950-01-01"}}}
+        }
+    }
+]
+```
+
+This creates records like this one:
+
+```
+{
+    _id: ObjectId("61815f70cb4ef14d9a4a28f5"),
+    first: 'Zenaida',
+    last: 'Barton',
+    birth: ISODate("1807-06-12T17:28:35.949Z"),
+    death: ISODate("1865-04-15T15:05:13.892Z")
+}
+```
+
+... and ensures that `death` is in fact posterior to `birth`. Such cross-field dependencies (within a single document) is possible by creating a variable _birthday_ (using the normal templates) and generating the field `death` by referencing it (using the `##` prefix) in the parameters of the `%date` generator.
+
+Note: you can't reference a variable in another variable declaration.
+
+
 Supported workload operations
 -----------------------------
 

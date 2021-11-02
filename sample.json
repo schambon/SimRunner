@@ -13,7 +13,8 @@
             "collection": "people",
             "drop": true,
             "variables": {
-                "num": {"%natural": {"min": 0, "max": 100}}
+                "num": {"%number": {"min": 0, "max": 10}},
+                "createDate": {"%date":{"min": {"$date": "2021-10-01"}, "max": {"$date": "2021-11-01"}}}
             },
             "template": {
                 "_id": "%objectid",
@@ -36,14 +37,15 @@
                 ],
                 "payload": {"%binary": {"size": 32}},
                 "num": "##num",
-                "num2": "##num",
-                "num3": "##num",
+                "num+": {"%number": {"min": "##num", "max": 200}},
                 "variableArray": {
                     "%array": {
-                        "min": 2, "max": 3,
+                        "min": "##num", "max": "##num",
                         "of": { "date": "%date", "num": "%natural" }
                     }
-                }
+                },
+                "createdAt": "##createDate",
+                "updateAt": {"%date": {"min": "##createDate", "max": {"$date": "2021-11-01"}}}
              },
             "remember": ["_id"],
             "indexes": [

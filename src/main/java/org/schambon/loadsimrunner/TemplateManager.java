@@ -60,6 +60,9 @@ public class TemplateManager {
         }
 
         var remember = (List<String>) config.get("remember");
+        if (remember == null) {
+            remember = Collections.emptyList();
+        }
         for (var field: remember) {
             this.fieldsToRemember.add(field);
             this.remembrances.put(field, Collections.synchronizedList(new ArrayList<>()));
@@ -152,7 +155,7 @@ public class TemplateManager {
         if (value instanceof String) {
             String val = (String) value;
             if (val.startsWith("%")) {
-                return _valueGenerator(val, new Document());
+                return _valueGenerator(val, new DocumentGenerator());
             } else if (val.startsWith("##")) {
                 return () -> localVariables.get().get(val.substring(2));
             } else if (val.startsWith("#")) {
@@ -164,7 +167,8 @@ public class TemplateManager {
             // is it a template?
             if (_isExpression(subdoc)) {
                 var x = subdoc.entrySet().iterator().next();
-                return _valueGenerator((String) x.getKey(), (Document) x.getValue());
+
+                return _valueGenerator((String) x.getKey(), _compile((Document) x.getValue()));
             } else {
                 return _compile(subdoc);
             }
@@ -177,26 +181,20 @@ public class TemplateManager {
         }
     }
 
-    private Generator _valueGenerator(String operator, Document params) {
+    private Generator _valueGenerator(String operator, DocumentGenerator params) {
         switch (operator) {
             case "%objectid": return ValueGenerators.objectId();
             case "%integer":
             case "%number":
-                return ValueGenerators.integer(params.getInteger("min", Integer.MIN_VALUE), params.getInteger("max", Integer.MAX_VALUE));
-            case "%natural": return ValueGenerators.integer(params.getInteger("min", 0), params.getInteger("max", Integer.MAX_VALUE));
+                return ValueGenerators.integer(params);
+            case "%natural": return ValueGenerators.natural(params);
             case "%sequence": return ValueGenerators.sequence();
             case "%now": return ValueGenerators.now();
             case "%date": return ValueGenerators.date(params);
             case "%binary": return ValueGenerators.binary(params);
             case "%uuidString": return ValueGenerators.uuidString();
             case "%uuidBinary": return ValueGenerators.uuidBinary();
-            case "%array": 
-                var of = params.get("of");
-                if (of == null || ! (of instanceof Document)) {
-                    LOGGER.warn("Parameter 'of' of array operator is invalid, ignoring");
-                    of = new Document();
-                }
-                return ValueGenerators.array(params, _compile((Document)of));
+            case "%array": return ValueGenerators.array(params);
             default: return ValueGenerators.autoFaker(operator);
         }
     }

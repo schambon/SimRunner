@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DocumentGenerator implements Generator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentGenerator.class);
 
     private List<KeyGen> subgenerators = new ArrayList<>();
 
@@ -19,6 +22,16 @@ public class DocumentGenerator implements Generator {
 
     public Document generateDocument() {
         return (Document) generate();
+    }
+
+    public Object subGenerate(String key) {
+        for (var kg: subgenerators) {
+            if (key.equals(kg.key)) {
+                return kg.gen.generate();
+            }
+        }
+        LOGGER.error("Cannot generate for key {}: not found", key);
+        return null;
     }
 
     /* package */ void addSubgenerator(String key, Generator sub) {
