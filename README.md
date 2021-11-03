@@ -108,7 +108,9 @@ The following template expressions are supported:
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
 * `{"%dictionry": {"name": "dictionary name"}}`: pick a value from a dictionary
 
-Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments. Note that this uses reflection, which is fairly slow.
+Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
+
+The best way to generate random text is to use `%lorem.word` or `%lorem.sentence`.
 
 ### Template variables (interdependant fields)
 

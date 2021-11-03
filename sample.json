@@ -41,6 +41,8 @@
                     "key": "value",
                     "character": "%lordOfTheRings.character"
                 },
+                "words": "%lorem.words",
+                "sentence": "%lorem.sentence",
                 "array": [
                     98,
                     {"%natural": {"max": 100}},
