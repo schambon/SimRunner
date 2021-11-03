@@ -12,10 +12,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.TimeSeriesGranularity;
+import com.mongodb.client.model.TimeSeriesOptions;
+import com.mongodb.client.model.ValidationAction;
+import com.mongodb.client.model.ValidationLevel;
+import com.mongodb.client.model.ValidationOptions;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.report.Reporter;
@@ -31,6 +38,7 @@ public class TemplateManager {
     private boolean drop = false;
 
     private Document template;
+    private Document createOptions;
     private Document variables;
     private Document dictionariesConfig;
 
@@ -84,6 +92,12 @@ public class TemplateManager {
         } else {
             this.dictionariesConfig = new Document();
         }
+
+        if (config.containsKey("createOptions")) {
+            this.createOptions = (Document) config.get("createOptions");
+        } else {
+            this.createOptions = new Document();
+        }
     }
     
     public MongoCollection<Document> getCollection() {
@@ -92,10 +106,44 @@ public class TemplateManager {
 
     public void initialize(MongoClient client) {
         reporter.reportInit(String.format("Initializing collection %s.%s", database, collection));
-        mongoColl = client.getDatabase(database).getCollection(collection);
+
+
+        var db = client.getDatabase(database);
+        var found = false;
+        for (var name : db.listCollectionNames()) {
+            if (name.equals(collection)) {
+                found = true;
+                break;
+            }
+        }
+        
+        this.mongoColl = db.getCollection(collection);
+
         if (drop) {
             mongoColl.drop();
             reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
+        }
+
+        if (! found) {
+            var options = new CreateCollectionOptions();
+            options.capped(createOptions.getBoolean("capped", false));
+            if (createOptions.containsKey("timeseries")) {
+                var timeseries = (Document) createOptions.get("timeseries");
+                if (createOptions.containsKey("expireAfterSeconds")) options.expireAfter(createOptions.getLong("expireAfterSeconds"), TimeUnit.SECONDS);
+                var tsOptions = new TimeSeriesOptions(timeseries.getString("timeField"));
+                if (timeseries.containsKey("granularity")) tsOptions.granularity(TimeSeriesGranularity.valueOf(timeseries.getString("granularity")));
+                if (timeseries.containsKey("metaField")) tsOptions.metaField(timeseries.getString("metaField"));
+                options.timeSeriesOptions(tsOptions);
+            }
+            if (createOptions.containsKey("size")) options.sizeInBytes(createOptions.getLong("size"));
+            if (createOptions.containsKey("validator")) {
+                ValidationOptions validationOptions = new ValidationOptions().validator((Document) createOptions.get("validator"));
+                if (createOptions.containsKey("validationLevel")) validationOptions.validationLevel(ValidationLevel.valueOf(createOptions.getString("validationLevel")));
+                if (createOptions.containsKey("validationAction")) validationOptions.validationAction(ValidationAction.valueOf(createOptions.getString("validationAction")));
+                options.validationOptions(validationOptions);
+            }
+
+            db.createCollection(collection, options);
         }
 
         for (var field: fieldsToRemember) {

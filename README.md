@@ -170,6 +170,11 @@ This creates four dictionaries:
 - `characters` is a JSON file read from disk. The file __must__ contain a single document with an array field called `data` that contains the dictionary (similar to inline dictionaries)
 - `locations` is a plain text file, a dictionary entry per line (only strings, no other or mixed types)
 
+### Create Options
+
+A template can define a `createOptions` document with the same syntax as in the [create database command](https://docs.mongodb.com/manual/reference/command/create/). This is useful to create capped collections, or timeseries, or validation.
+
+Note that views and collation options are not supported.
 
 Supported workload operations
 -----------------------------
