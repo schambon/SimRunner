@@ -44,7 +44,10 @@
                 "array": [
                     98,
                     {"%natural": {"max": 100}},
-                    {"now": "%now"}
+                    {"now": "%now"},
+                    {"%long": {"min": 1.00001, "max": 1.99999}},
+                    {"%double": {"min": -1, "max": 1}},
+                    {"%decimal": {"min": -1000, "max": 1000}}
                 ],
                 "payload": {"%binary": {"size": 32}},
                 "num": "##num",
@@ -63,7 +66,8 @@
                     "character": {"%dictionary": {"name": "characters"}},
                     "location": {"%dictionary": {"name": "locations"}}
                 },
-                "gaussian": {"%gaussian": {"mean": 10, "sd": 1.0, "type": "double"}}
+                "gaussianInt": {"%gaussian": {"mean": 10, "sd": 1.0, "type": "int"}},
+                "gaussianDouble" : {"%gaussian": {"mean": 1, "sd": 0.000005, "type": "double"}}
              },
             "remember": ["_id"],
             "indexes": [

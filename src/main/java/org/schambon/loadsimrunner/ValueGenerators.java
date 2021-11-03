@@ -1,6 +1,7 @@
 package org.schambon.loadsimrunner;
 
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +43,45 @@ public class ValueGenerators {
         return () -> {
             var p = params.generateDocument();
             return faker.number().numberBetween(p.getInteger("min", Integer.MIN_VALUE), p.getInteger("max", Integer.MAX_VALUE));
+        };
+    }
+
+    public static Generator longValue(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            Number origin = (Number) params.get("min");
+            long min = origin == null ? Long.MIN_VALUE : origin.longValue();
+            Number bound = (Number) params.get("max");
+            long max = bound == null ? Long.MAX_VALUE : bound.longValue();
+
+            return faker.number().numberBetween(min, max);
+        };
+    }
+
+    public static Generator doubleValue(DocumentGenerator input) {
+        return () -> {
+
+            var params = input.generateDocument();
+            Number origin = (Number) params.get("min");
+            double min = origin == null ? Double.MIN_VALUE : origin.doubleValue();
+            Number bound = (Number) params.get("max");
+            double max = bound == null ? Double.MAX_VALUE : bound.doubleValue();
+
+            return ThreadLocalRandom.current().nextDouble(min, max);
+        };
+    }
+
+    public static Generator decimal(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            Number origin = (Number) params.get("min");
+            long min = origin == null ? Long.MIN_VALUE : origin.longValue();
+            Number bound = (Number) params.get("max");
+            long max = bound == null ? Long.MAX_VALUE : bound.longValue();
+
+            long beforeDot = ThreadLocalRandom.current().nextLong(min, max);
+            long afterDot = ThreadLocalRandom.current().nextLong(0l, 1000000l);
+            return new BigDecimal(String.format("%d.%d", beforeDot, afterDot));
         };
     }
 

@@ -293,6 +293,9 @@ public class TemplateManager {
             case "%number":
                 return ValueGenerators.integer(params);
             case "%natural": return ValueGenerators.natural(params);
+            case "%long": return ValueGenerators.longValue(params);
+            case "%double": return ValueGenerators.doubleValue(params);
+            case "%decimal": return ValueGenerators.decimal(params);
             case "%sequence": return ValueGenerators.sequence();
             case "%gaussian": return ValueGenerators.gaussian(params);
             case "%now": return ValueGenerators.now();

@@ -97,6 +97,8 @@ The following template expressions are supported:
 * `%objectid`: generate a new ObjectId
 * `%integer` / `%number`: generate an int. Optionally use this form: `{"%integer": {"min": 0, "max": 50}}` to specify bounds
 * `%natural`: generate a positive int. Optionally use this form: `{"%natural": {"min": 400, "max": 5000}}` to specify bounds
+* `%long`, `%double`, and `%decimal` work as `%number` and yield longs, doubles, and decimals. Note that BSON doesn't have a 32 bit float type, so we don't support floats.
+* `%gaussian`: generate a number following an approximate Gaussian distribution. Specify `mean`, `sd` for the mean / standard deviation of the Gaussian. Optionally, set `type` to `int` or `long` for integer values (any other value is understood as double)
 * `%now`: current date
 * `%date`: create a date between the Unix Epoch and 10 years in the future, or specify `min`/`max` bounds in a subdocument, either as ISO8601 or as EJSON dates (hint: `{$date: "2021-01-01"}` works but `"2021-01-01"` doesn't as it's not valid ISO8601).
 * `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes)
