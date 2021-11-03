@@ -62,7 +62,8 @@
                     "statuses": {"%dictionary": {"name": "statuses"}},
                     "character": {"%dictionary": {"name": "characters"}},
                     "location": {"%dictionary": {"name": "locations"}}
-                }
+                },
+                "gaussian": {"%gaussian": {"mean": 10, "sd": 1.0, "type": "double"}}
              },
             "remember": ["_id"],
             "indexes": [

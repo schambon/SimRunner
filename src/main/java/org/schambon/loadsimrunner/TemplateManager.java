@@ -294,6 +294,7 @@ public class TemplateManager {
                 return ValueGenerators.integer(params);
             case "%natural": return ValueGenerators.natural(params);
             case "%sequence": return ValueGenerators.sequence();
+            case "%gaussian": return ValueGenerators.gaussian(params);
             case "%now": return ValueGenerators.now();
             case "%date": return ValueGenerators.date(params);
             case "%binary": return ValueGenerators.binary(params);

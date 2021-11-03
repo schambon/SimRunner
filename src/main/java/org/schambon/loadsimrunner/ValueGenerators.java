@@ -52,6 +52,22 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator gaussian(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var mean = ((Number) params.get("mean")).doubleValue();
+            var sd = ((Number) params.get("sd")).doubleValue();
+            var gaussian = ThreadLocalRandom.current().nextGaussian() * sd + mean;
+
+            switch (params.getString("type")) {
+                case "int": return (int) Math.round(gaussian);
+                case "long": return Math.round(gaussian);
+                default:
+                    return gaussian;
+            }
+        };
+    }
+
     public static Generator now() {
         return () -> new Date();
     }
