@@ -12,6 +12,11 @@
             "database": "simrunner",
             "collection": "people",
             "drop": true,
+            "createOptions": {
+                "validator": {
+                    "sequence": {"$exists": true}
+                }
+            },
             "dictionaries": {
                 "names": ["John", "Jill", "Joe", "Janet"],
                 "statuses": ["RUNNING", {"status": "DONE", "substatus": "OK"}, {"status": "DONE", "substatus": "NOK"}],
