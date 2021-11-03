@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import com.github.javafaker.Faker;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.schambon.loadsimrunner.geodata.Place;
+import org.schambon.loadsimrunner.geodata.Places;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -238,4 +241,44 @@ public class ValueGenerators {
             return dict.get(idx);
         };
     }
+
+    public static Generator longlat(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+
+            var countries = params.getList("countries", String.class);
+            if (countries == null) {
+                countries = new ArrayList<String>(Places.PLACES_PER_COUNTRY.keySet());
+            }
+
+            var idx = ThreadLocalRandom.current().nextInt(countries.size());
+            var country = countries.get(idx);
+
+            List<Place> places = Places.PLACES_PER_COUNTRY.get(country);
+            if (places == null) {
+                LOGGER.warn("Unknown country {}", country);
+                return Arrays.asList(0d, 0d);
+            }
+
+            idx = ThreadLocalRandom.current().nextInt(places.size());
+            var place = places.get(idx);
+
+            var longlat = Arrays.asList(place.getLongitude(), place.getLatitude());
+
+            if (params.containsKey("jitter")) {
+                double jitter = ((Number) params.get("jitter")).doubleValue() / 60d;
+                double alpha = ThreadLocalRandom.current().nextDouble(2. * Math.PI);
+
+                double deltalong = jitter * Math.sin(alpha);
+                double deltalat = jitter * Math.cos(alpha);
+
+                longlat.set(0, longlat.get(0) + deltalong);
+                longlat.set(1, longlat.get(1) + deltalat);
+            }
+
+            return longlat;
+        };
+    }
+
+
 }

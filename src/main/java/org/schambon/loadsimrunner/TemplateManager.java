@@ -305,6 +305,7 @@ public class TemplateManager {
             case "%uuidBinary": return ValueGenerators.uuidBinary();
             case "%array": return ValueGenerators.array(params);
             case "%dictionary": return ValueGenerators.dictionary(params, dictionaries);
+            case "%longlat": return ValueGenerators.longlat(params);
             default: return ValueGenerators.autoFaker(operator);
         }
     }

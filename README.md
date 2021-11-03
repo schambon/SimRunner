@@ -107,6 +107,7 @@ The following template expressions are supported:
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
 * `{"%dictionry": {"name": "dictionary name"}}`: pick a value from a dictionary
+* `{"%longlat: {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the database, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
 

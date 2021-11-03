@@ -69,7 +69,8 @@
                     "location": {"%dictionary": {"name": "locations"}}
                 },
                 "gaussianInt": {"%gaussian": {"mean": 10, "sd": 1.0, "type": "int"}},
-                "gaussianDouble" : {"%gaussian": {"mean": 1, "sd": 0.000005, "type": "double"}}
+                "gaussianDouble" : {"%gaussian": {"mean": 1, "sd": 0.000005, "type": "double"}},
+                "longlat": {"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}}
              },
             "remember": ["_id"],
             "indexes": [
