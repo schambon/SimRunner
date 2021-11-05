@@ -18,6 +18,7 @@ import com.github.javafaker.Faker;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.eclipse.jetty.http.HttpTester.Input;
 import org.schambon.loadsimrunner.geodata.Place;
 import org.schambon.loadsimrunner.geodata.Places;
 import org.slf4j.Logger;
@@ -242,6 +243,34 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator dictionaryConcat(DocumentGenerator input, Map<String, List<? extends Object>> dictionaries) {
+        return () -> {
+            var params = input.generateDocument();
+
+            var from = params.getString("from");
+            var length = params.getInteger("length");
+            var sep = params.getString("sep");
+            if (sep == null) {
+                sep = "";
+            }
+
+            List<? extends Object> dict = dictionaries.get(from);
+            if (dict == null) {
+                LOGGER.warn("Could not find dictionary {}", from);
+                return null;
+            }
+
+            var sb = new StringBuilder();
+            for (var i = 0; i < length; i++) {
+                sb.append(dict.get(ThreadLocalRandom.current().nextInt(dict.size())));
+                sb.append(sep);
+            }
+
+            return sb.toString();
+        };
+    }
+
+
     public static Generator longlat(DocumentGenerator input) {
         return () -> {
             var params = input.generateDocument();
@@ -279,6 +308,7 @@ public class ValueGenerators {
             return longlat;
         };
     }
+
 
 
 }
