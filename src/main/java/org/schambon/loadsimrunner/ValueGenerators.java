@@ -263,7 +263,7 @@ public class ValueGenerators {
             var sb = new StringBuilder();
             for (var i = 0; i < length; i++) {
                 sb.append(dict.get(ThreadLocalRandom.current().nextInt(dict.size())));
-                sb.append(sep);
+                if (i < length - 1) sb.append(sep);
             }
 
             return sb.toString();
