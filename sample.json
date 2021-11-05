@@ -5,13 +5,13 @@
         "port": 3000,
         "host": "localhost"
     },
-    "reportInterval": 10000,
+    "reportInterval": 1000,
     "templates": [
         {
             "name": "person",
             "database": "simrunner",
             "collection": "people",
-            "drop": false,
+            "drop": true,
             "createOptions": {
                 "validator": {
                     "sequence": {"$exists": true}
@@ -95,7 +95,8 @@
             "op": "find",
             "params": {
                 "filter": {"_id": "#_id"}
-            }
+            },
+            "pace": 10
         }
  
     ]
