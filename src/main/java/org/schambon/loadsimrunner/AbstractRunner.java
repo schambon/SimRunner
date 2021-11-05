@@ -29,15 +29,14 @@ public abstract class AbstractRunner implements Runnable {
     @Override
     public void run() {
         while (true) {
-            long duration = doRun();
-
-            if (pace != 0) {
-                long wait = Math.max(0, pace - duration);
-                try {
+            try {
+                long duration = doRun();
+                if (pace != 0) {
+                    long wait = Math.max(0, pace - duration);
                     Thread.sleep(wait);
-                } catch (InterruptedException e) {
-                    LoggerFactory.getLogger(getClass()).error("Oops", e);
                 }
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Error caught in execution", e);
             }
         }
         
