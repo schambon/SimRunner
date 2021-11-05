@@ -1,5 +1,106 @@
 <html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.0/chart.min.js" integrity="sha512-GMGzUEevhWh8Tc/njS0bDpwgxdCJLQBWG3Z2Ct+JGOpVnEmjvNx6ts4v6A2XJf1HOrtOsfhv3hBKpK9kE5z8AQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </head>
     <body>
-        <p>Look, I can HTML!</p>
+        <div>
+            <canvas id="chart"></canvas>
+        </div>
+        <div id="message"></div>
+        <script>
+
+            const COLOURS = ["rgb(255, 99, 132)", "rgb(132, 132, 255)", "rgb(132, 255, 132)", "rgb(99, 132, 255)"];
+            const MAXPOINTS = 400;
+
+            fetch(`http://${window.location.hostname}:${window.location.port}/report`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length == 0) {
+                        console.log("No data yet");
+                        setTimeout(() => {window.location.reload()}, 1000);
+                        document.getElementById("message").innerText = "No data yet, please wait...";
+                    } else {
+                        let firstReport = data[0].report;
+                        const dsNames = Object.keys(firstReport);
+                        console.log(dsNames);
+
+                        let labels = data.map( report => report.time );
+                        let ops = dsNames.map( dsName => {return {label: dsName + " (ops)", data: data.map(report => dsName in report.report ? report.report[dsName].ops: 0)};});
+                        for (let i = 0; i < ops.length; i++) {
+                            ops[i].borderColor = COLOURS[i % COLOURS.length];
+                            ops[i].backgroundColor = COLOURS[i % COLOURS.length];
+                        }
+
+                        let records = dsNames.map( dsName => { return { label: dsName + " (records)", data: data.map(report => dsName in report.report ? report.report[dsName].records : 0)};});
+                        for (let i = 0; i < records.length; i++) {
+                            records[i].borderColor = COLOURS[i % COLOURS.length];
+                            records[i].backgroundColor = "rgb(200,200,200)";
+                            records[i].borderDash = [5,5];
+                        }
+
+                        const datasets = ops.concat(records);
+                        
+                        const chartData = {
+                            labels,
+                            datasets
+                        };
+
+                        const config = {
+                            type: "line",
+                            data: chartData,
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        position: "top"
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: "Ops per second"
+                                    }
+                                }
+                            }
+                        };
+
+                        const chart = new Chart(
+                            document.getElementById("chart"),
+                            config
+                        );
+
+                        let last_time = data[data.length - 1].time;
+
+                        const refresh = function() {
+                            fetch(`http://${window.location.hostname}:${window.location.port}/report?since=${last_time}`)
+                                .then(response => response.json())
+                                .then(newdata => {
+                                    if (newdata.length > 0) {
+                                        last_time = newdata[newdata.length - 1].time;
+                                        
+                                        newdata.forEach( report => labels.push(report.time));
+                                        for (let i = 0; i < dsNames.length; i++) {
+                                            newdata.map( report => dsNames[i] in report.report ? report.report[dsNames[i]].ops : 0).forEach( op => {datasets[i].data.push(op);});
+                                            newdata.map( report => dsNames[i] in report.report ? report.report[dsNames[i]].records : 0).forEach( record => {datasets[i + dsNames.length].data.push(record);})
+                                        }
+
+                                        if (labels.length > MAXPOINTS) {
+                                            let todelete = labels.length - MAXPOINTS;
+                                            labels.splice(0, todelete);
+                                            for (let i = 0; i < dsNames.length; i++) {
+                                                datasets[i].data.splice(0, todelete);
+                                                datasets[i + dsNames.length].data.splice(0, todelete);
+                                            }
+                                        }
+
+                                        chart.update("none");
+                                    }
+                                });
+
+                            setTimeout(refresh, 1000);
+                        };
+                        setTimeout(refresh, 1000);
+                    }
+                });
+
+        </script>
     </body>
 </html>
