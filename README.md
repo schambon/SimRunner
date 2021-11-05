@@ -106,7 +106,8 @@ The following template expressions are supported:
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
-* `{"%dictionry": {"name": "dictionary name"}}`: pick a value from a dictionary
+* `{"%dictionary": {"name": "dictionary name"}}`: pick a value from a dictionary
+* `{"%dictionaryConcact": {"from": "dictionary name", "length": (number), "sep": "separator}}`: string _length_ values from a dictionary, separated by _sep_
 * `{"%longlat: {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the database, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
@@ -174,6 +175,10 @@ This creates four dictionaries:
 - `statuses` is an inline list of BSON values - this shows strings and documents, but it could be anything that is expressible in Extended JSON
 - `characters` is a JSON file read from disk. The file __must__ contain a single document with an array field called `data` that contains the dictionary (similar to inline dictionaries)
 - `locations` is a plain text file, a dictionary entry per line (only strings, no other or mixed types)
+
+Dictionaries can be used in templates:
+- either directly (pick a word in the dict),
+- or by concatenating multiple entries of a dictionary. This is useful to create variable-length text based out of real words, rather than Lorem Ipsum. Most UNIX/Linux systems (including macOS) have a dictionary for spell checking at /usr/share/dict/words, that can be read directly by SimRunner to make a (nonsensical) text that you can query from, for example using Atlas Search.
 
 ### Create Options
 
