@@ -4,13 +4,32 @@
     </head>
     <body>
         <div>
-            <canvas id="chart"></canvas>
+            <canvas id="number"></canvas>
+        </div>
+        <div>
+            <canvas id="duration"></canvas>
         </div>
         <div id="message"></div>
         <script>
-
+            // colours: reddish, blueish, greenish, yellowish?
             const COLOURS = ["rgb(255, 99, 132)", "rgb(132, 132, 255)", "rgb(132, 255, 132)", "rgb(99, 132, 255)"];
-            const MAXPOINTS = 400;
+            // duration colours: same but darker
+            const DURATION_COLOURS = ["rgb(155,0,32)", "rgb(32,32,150)", "rgb(32,150,32)", "rgb(0,32,150)"];
+
+            const MAXPOINTS = 1800;
+
+            function loadData(names, label, data, dash) {
+                let res = names.map( name => { return {label: name + " (" + label + ")", data: data.map(report => name in report.report ? report.report[name][label] : 0)}});
+                for (let i = 0; i < res.length; i++) {
+                    res[i].borderColor = COLOURS[i % COLOURS.length];
+                    res[i].backgroundColor = dash ? "rgb(132,132,132)" : COLOURS[i % COLOURS.length];
+                    if (dash) {
+                        res[i].borderDash = [5,5];
+                    }
+                }
+
+                return res;
+            }
 
             fetch(`http://${window.location.hostname}:${window.location.port}/report`)
                 .then(response => response.json())
@@ -22,32 +41,24 @@
                     } else {
                         let firstReport = data[0].report;
                         const dsNames = Object.keys(firstReport);
-                        console.log(dsNames);
 
                         let labels = data.map( report => report.time );
-                        let ops = dsNames.map( dsName => {return {label: dsName + " (ops)", data: data.map(report => dsName in report.report ? report.report[dsName].ops: 0)};});
-                        for (let i = 0; i < ops.length; i++) {
-                            ops[i].borderColor = COLOURS[i % COLOURS.length];
-                            ops[i].backgroundColor = COLOURS[i % COLOURS.length];
-                        }
 
-                        let records = dsNames.map( dsName => { return { label: dsName + " (records)", data: data.map(report => dsName in report.report ? report.report[dsName].records : 0)};});
-                        for (let i = 0; i < records.length; i++) {
-                            records[i].borderColor = COLOURS[i % COLOURS.length];
-                            records[i].backgroundColor = "rgb(200,200,200)";
-                            records[i].borderDash = [5,5];
-                        }
-
-                        const datasets = ops.concat(records);
-                        
-                        const chartData = {
+                        const datasetsNumber = loadData(dsNames, "ops", data, false).concat(loadData(dsNames, "records", data, true));
+                        const chartDataNumber = {
                             labels,
-                            datasets
+                            datasets: datasetsNumber
                         };
 
-                        const config = {
+                        const datasetsDuration = loadData(dsNames, "median duration", data, false).concat(loadData(dsNames, "95th percentile", data, true));
+                        const chartDataDuration = {
+                            labels,
+                            datasets: datasetsDuration
+                        };
+
+                        const configNumber = {
                             type: "line",
-                            data: chartData,
+                            data: chartDataNumber,
                             options: {
                                 responsive: true,
                                 plugins: {
@@ -56,15 +67,37 @@
                                     },
                                     title: {
                                         display: true,
-                                        text: "Ops per second"
+                                        text: "Numbers per second"
                                     }
                                 }
                             }
                         };
 
-                        const chart = new Chart(
-                            document.getElementById("chart"),
-                            config
+                        const configDuration = {
+                            type: "line",
+                            data: chartDataDuration,
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        position: "top"
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: "Durations"
+                                    }
+                                }
+                            }
+                        };
+
+                        const numberChart = new Chart(
+                            document.getElementById("number"),
+                            configNumber
+                        );
+
+                        const durationChart = new Chart(
+                            document.getElementById("duration"),
+                            configDuration
                         );
 
                         let last_time = data[data.length - 1].time;
@@ -77,21 +110,30 @@
                                         last_time = newdata[newdata.length - 1].time;
                                         
                                         newdata.forEach( report => labels.push(report.time));
+                                        const updateData = function(i, name, offset, dataset) {
+                                            newdata.map( report => dsNames[i] in report.report ? report.report[dsNames[i]][name] : 0).forEach( x => {dataset[i + offset * dsNames.length].data.push(x);});
+                                        };
                                         for (let i = 0; i < dsNames.length; i++) {
-                                            newdata.map( report => dsNames[i] in report.report ? report.report[dsNames[i]].ops : 0).forEach( op => {datasets[i].data.push(op);});
-                                            newdata.map( report => dsNames[i] in report.report ? report.report[dsNames[i]].records : 0).forEach( record => {datasets[i + dsNames.length].data.push(record);})
+                                            updateData(i, "ops", 0, datasetsNumber);
+                                            updateData(i, "records", 1, datasetsNumber);
+                                            updateData(i, "median duration", 0, datasetsDuration);
+                                            updateData(i, "95th percentile", 1, datasetsDuration);
                                         }
 
                                         if (labels.length > MAXPOINTS) {
                                             let todelete = labels.length - MAXPOINTS;
                                             labels.splice(0, todelete);
                                             for (let i = 0; i < dsNames.length; i++) {
-                                                datasets[i].data.splice(0, todelete);
-                                                datasets[i + dsNames.length].data.splice(0, todelete);
+                                                datasetsNumber[i].data.splice(0, todelete);
+                                                datasetsNumber[i + dsNames.length].data.splice(0, todelete);
+
+                                                datasetsDuration[i].data.splice(0, todelete);
+                                                datasetsDuration[i + dsNames.length].data.splice(0, todelete);
                                             }
                                         }
 
-                                        chart.update("none");
+                                        numberChart.update("none");
+                                        durationChart.update("none");
                                     }
                                 });
 

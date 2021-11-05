@@ -1,11 +1,11 @@
 {
     "connectionString": "mongodb://localhost:27017",
     "http": {
-        "enabled": false,
+        "enabled": true,
         "port": 3000,
         "host": "localhost"
     },
-    "reportInterval": 1000,
+    "reportInterval": 10000,
     "templates": [
         {
             "name": "person",
@@ -25,7 +25,7 @@
                 "locations": {"file": "locations.txt", "type": "text"}
             },
             "variables": {
-                "num": {"%number": {"min": 0, "max": 10}},
+                "num": {"%number": {"min": 0, "max": 50}},
                 "createDate": {"%date":{"min": {"$date": "2021-10-01"}, "max": {"$date": "2021-11-01"}}}
             },
             "template": {
@@ -74,8 +74,8 @@
                 "longlat": {"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}},
                 "dictionaryConcat": {"%dictionaryConcat": {"from": "words", "length": {"%natural": {"max": 10}}, "sep": " "}}
              },
-            "remember": ["_id"],
-            "indexes": [
+            "remember": ["first"],
+            "indexes": [ { "first": 1}
             ]
         }
     ],
@@ -90,11 +90,11 @@
             "pace": 100
         },
         {
-            "name": "Find by ID",
+            "name": "Find by first name",
             "template": "person",
             "op": "find",
             "params": {
-                "filter": {"_id": "#_id"}
+                "filter": {"first": "#first"}
             },
             "pace": 10
         }
