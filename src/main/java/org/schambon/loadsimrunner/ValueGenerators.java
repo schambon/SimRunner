@@ -13,9 +13,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-
-import javax.security.auth.callback.ChoiceCallback;
 
 import com.github.javafaker.Faker;
 
@@ -382,6 +379,20 @@ public class ValueGenerators {
 
             return sb.toString();
         };
+    }
+
+    public static Generator custom(DocumentGenerator input) {
+        var params = input.generateDocument();
+
+        try {
+            Class<? extends Generator> clz = (Class<? extends Generator>) Class.forName(params.getString("class"));
+            return clz.getConstructor().newInstance();
+
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            LOGGER.error("Cannot instantiate custom generator", e);
+
+            return () -> null;
+        }
     }
 
 
