@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import javax.security.auth.callback.ChoiceCallback;
 
@@ -338,6 +339,50 @@ public class ValueGenerators {
         };
     }
 
+
+    private static final char[] numbers;
+    private static final char[] letters;
+    private static final char[] LETTERS;
+
+    static {
+        numbers = new char[10];
+        letters = new char[26];
+        LETTERS = new char[26];
+        for (int i = 0; i < 10; i++) {
+            numbers[i] = "0123456789".charAt(i);
+        }
+        for (int i = 0; i < 26; i++) {
+            letters[i] = "abcdefghijklmnopqrstuvwxyz".charAt(i);
+            LETTERS[i] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(i);
+        }
+    }
+    
+
+    public static Generator stringTemplate(DocumentGenerator input) {
+        return () -> {
+            Document params = input.generateDocument();
+            String template = params.getString("template");
+            if (template == null) {
+                LOGGER.error("Missing template in {}", params.toJson());
+                return "---MISSING VALUE---";
+            }
+
+            // treat # as digit, ? as lower case letter, ! as upper case letter
+            StringBuilder sb = new StringBuilder();
+            var rnd = ThreadLocalRandom.current();
+
+            template.chars().forEach( cp -> {
+                switch(cp) {
+                    case '&': sb.append((char)numbers[rnd.nextInt(10)]); break;
+                    case '?': sb.append((char)letters[rnd.nextInt(26)]); break;
+                    case '!': sb.append((char)LETTERS[rnd.nextInt(26)]); break;
+                    default: sb.append((char)cp);
+                }
+            });
+
+            return sb.toString();
+        };
+    }
 
 
 }

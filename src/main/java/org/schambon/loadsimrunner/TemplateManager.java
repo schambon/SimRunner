@@ -308,6 +308,7 @@ public class TemplateManager {
             case "%dictionary": return ValueGenerators.dictionary(params, dictionaries);
             case "%dictionaryConcat": return ValueGenerators.dictionaryConcat(params, dictionaries);
             case "%longlat": return ValueGenerators.longlat(params);
+            case "%stringTemplate": return ValueGenerators.stringTemplate(params);
             default: return ValueGenerators.autoFaker(operator);
         }
     }
