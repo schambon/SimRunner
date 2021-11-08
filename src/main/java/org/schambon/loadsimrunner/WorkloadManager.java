@@ -8,6 +8,15 @@ import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.report.Reporter;
+import org.schambon.loadsimrunner.runner.AggregationRunner;
+import org.schambon.loadsimrunner.runner.DeleteManyRunner;
+import org.schambon.loadsimrunner.runner.DeleteOneRunner;
+import org.schambon.loadsimrunner.runner.FindRunner;
+import org.schambon.loadsimrunner.runner.InsertRunner;
+import org.schambon.loadsimrunner.runner.ReplaceOneRunner;
+import org.schambon.loadsimrunner.runner.ReplaceWithNewRunner;
+import org.schambon.loadsimrunner.runner.UpdateManyRunner;
+import org.schambon.loadsimrunner.runner.UpdateOneRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

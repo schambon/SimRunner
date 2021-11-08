@@ -1,8 +1,9 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.runner;
 
 import java.util.stream.Collectors;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
 
 public class AggregationRunner extends AbstractRunner {

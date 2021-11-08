@@ -1,8 +1,10 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.runner;
 
 import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.TemplateManager;
+import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.LoggerFactory;
 

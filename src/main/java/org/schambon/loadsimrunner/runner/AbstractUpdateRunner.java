@@ -1,4 +1,4 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.runner;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,6 +7,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

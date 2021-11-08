@@ -1,8 +1,9 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.runner;
 
 import com.mongodb.client.result.DeleteResult;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
 
 public class DeleteOneRunner extends AbstractDeleteRunner {
