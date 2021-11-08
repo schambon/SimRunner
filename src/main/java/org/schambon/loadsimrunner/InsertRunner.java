@@ -3,6 +3,8 @@ package org.schambon.loadsimrunner;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mongodb.client.model.InsertManyOptions;
+
 import org.bson.Document;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.Logger;
@@ -40,7 +42,7 @@ public class InsertRunner extends AbstractRunner {
             LOGGER.debug("Generated batch of {} in {}ms", batch, System.currentTimeMillis()-s);
         }
         long start = System.currentTimeMillis();
-        mongoColl.insertMany(docs);
+        mongoColl.insertMany(docs, new InsertManyOptions().ordered(params.getBoolean("ordered", false)));
         long duration = System.currentTimeMillis() - start;
         reporter.reportOp(name, batch, duration);
 
