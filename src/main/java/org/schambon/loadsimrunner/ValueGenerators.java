@@ -175,6 +175,17 @@ public class ValueGenerators {
         }
     }
 
+    public static Generator time(DocumentGenerator input) {
+        return () -> {
+            var rnd = ThreadLocalRandom.current();
+            return String.format("%d:%d:%d",
+                rnd.nextInt(24),
+                rnd.nextInt(60),
+                rnd.nextInt(60)
+            );
+        };
+    }
+
     public static Generator binary(DocumentGenerator input) {
 
         return () -> {

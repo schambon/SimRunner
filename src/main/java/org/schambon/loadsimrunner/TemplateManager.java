@@ -150,7 +150,8 @@ public class TemplateManager {
             List<Object> values = remembrances.get(field);
 
             for (var result : mongoColl.aggregate(Arrays.asList(
-                new Document("$group", new Document("_id", String.format("$%s", field)))
+                new Document("$group", new Document("_id", String.format("$%s", field))),
+                new Document("$limit", 1000000)
             ))) {
                 values.add(result.get("_id"));
             }
@@ -300,6 +301,7 @@ public class TemplateManager {
             case "%gaussian": return ValueGenerators.gaussian(params);
             case "%now": return ValueGenerators.now();
             case "%date": return ValueGenerators.date(params);
+            case "%time": return ValueGenerators.time(params);
             case "%plusDate": return ValueGenerators.plusDate(params);
             case "%binary": return ValueGenerators.binary(params);
             case "%uuidString": return ValueGenerators.uuidString();
