@@ -9,6 +9,7 @@ import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.schambon.loadsimrunner.runner.AggregationRunner;
+import org.schambon.loadsimrunner.runner.CustomRunner;
 import org.schambon.loadsimrunner.runner.DeleteManyRunner;
 import org.schambon.loadsimrunner.runner.DeleteOneRunner;
 import org.schambon.loadsimrunner.runner.FindRunner;
@@ -80,6 +81,7 @@ public class WorkloadManager {
             case "replaceOne": return new ReplaceOneRunner(this, reporter);
             case "replaceWithNew": return new ReplaceWithNewRunner(this, reporter);
             case "aggregate": return new AggregationRunner(this, reporter);
+            case "custom": return new CustomRunner(this, reporter);
             default:
                 LOGGER.warn("Not implemented (yet?)");
                 return new Runnable() {
