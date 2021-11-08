@@ -14,11 +14,12 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.security.auth.callback.ChoiceCallback;
+
 import com.github.javafaker.Faker;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.eclipse.jetty.http.HttpTester.Input;
 import org.schambon.loadsimrunner.geodata.Place;
 import org.schambon.loadsimrunner.geodata.Places;
 import org.slf4j.Logger;
@@ -144,9 +145,37 @@ public class ValueGenerators {
                 to = Date.from(Instant.now().plus(3650, ChronoUnit.DAYS));
             }
 
-            return faker.date().between(from, to);
+            Date result = faker.date().between(from, to);
+
+            if (params.containsKey("truncate")) {
+                return Date.from(Instant.ofEpochMilli(result.getTime()).truncatedTo(_chronoUnit(params.getString("truncate"))));
+            } else return result;
         };
     } 
+
+    public static Generator plusDate(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+
+            var base = Instant.ofEpochMilli(params.get("base", Date.class).getTime());
+            var plus = params.get("plus", Number.class).intValue();
+            var unit = params.getString("unit");
+
+            return Date.from(base.plus(plus, _chronoUnit(unit)));
+        };
+    }
+
+    private static ChronoUnit _chronoUnit(String unit) {
+
+        switch (unit.toLowerCase()) {
+            case "year": return ChronoUnit.YEARS;
+            case "month": return ChronoUnit.MONTHS;
+            case "day": return ChronoUnit.DAYS;
+            case "hour": return ChronoUnit.HOURS;
+            case "minute": return ChronoUnit.MINUTES;
+            default: return ChronoUnit.SECONDS;
+        }
+    }
 
     public static Generator binary(DocumentGenerator input) {
 

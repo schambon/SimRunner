@@ -300,6 +300,7 @@ public class TemplateManager {
             case "%gaussian": return ValueGenerators.gaussian(params);
             case "%now": return ValueGenerators.now();
             case "%date": return ValueGenerators.date(params);
+            case "%plusDate": return ValueGenerators.plusDate(params);
             case "%binary": return ValueGenerators.binary(params);
             case "%uuidString": return ValueGenerators.uuidString();
             case "%uuidBinary": return ValueGenerators.uuidBinary();
