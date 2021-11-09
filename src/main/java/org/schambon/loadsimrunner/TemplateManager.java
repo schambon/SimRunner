@@ -290,6 +290,7 @@ public class TemplateManager {
     private Generator _valueGenerator(String operator, DocumentGenerator params) {
         switch (operator) {
             case "%objectid": return ValueGenerators.objectId();
+            case "%bool": return ValueGenerators.bool();
             case "%integer":
             case "%number":
                 return ValueGenerators.integer(params);

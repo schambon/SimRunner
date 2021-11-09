@@ -34,6 +34,10 @@ public class ValueGenerators {
         return () -> cst;
     }
     
+    public static Generator bool() {
+        return () -> ThreadLocalRandom.current().nextBoolean();
+    }
+
     public static Generator objectId() {
         return () -> new ObjectId();
     }
@@ -70,7 +74,13 @@ public class ValueGenerators {
             Number bound = (Number) params.get("max");
             double max = bound == null ? Double.MAX_VALUE : bound.doubleValue();
 
-            return ThreadLocalRandom.current().nextDouble(min, max);
+            double res = ThreadLocalRandom.current().nextDouble(min, max);
+
+            if (params.containsKey("decimals")) {
+                double factor = Math.pow(10, params.getInteger("decimals"));
+                res = Math.round(res * factor) / factor;
+            }
+            return res;
         };
     }
 
@@ -271,6 +281,10 @@ public class ValueGenerators {
             var params = input.generateDocument();
 
             String name = params.getString("name");
+            if (name == null) {
+                LOGGER.error("Null dictionary name");
+                return "";
+            }
             List<? extends Object> dict = dictionaries.get(name);
             if (dict == null) {
                 LOGGER.warn("Could not find dictionary {}", name);
