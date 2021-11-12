@@ -94,6 +94,8 @@ public class Reporter {
             Document wlReport = new Document();
             wlReport.append("ops", (long) (numberStats.count() / (double) (interval/1000)));
             wlReport.append("records", (long) (numberStats.sum() / (double) (interval/1000)));
+            wlReport.append("total ops", numberStats.count());
+            wlReport.append("total records", (long)numberStats.sum());
             wlReport.append("mean duration", meanBatch);
             wlReport.append("median duration", percentilesBatch.get(50));
             wlReport.append("95th percentile", percentilesBatch.get(95));

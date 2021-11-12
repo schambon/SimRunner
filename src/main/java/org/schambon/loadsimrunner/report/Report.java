@@ -33,9 +33,9 @@ public class Report {
     }
 
     private String workloadReport(String name, Document wlReport) {
-        return String.format("%s:\n==========\n%d ops per second\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n%f / %f / %f Batch size avg / min / max\n[util %%: %f]",
+        return String.format("%s:\n==========\n%d ops per second (%d total)\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n%f / %f / %f Batch size avg / min / max\n[util %%: %f]",
             name,
-            wlReport.getLong("ops"),
+            wlReport.getLong("ops"), wlReport.getLong("total ops"),
             wlReport.getLong("records"),
             wlReport.getDouble("mean duration"),
             wlReport.getDouble("median duration"),
