@@ -33,19 +33,20 @@ public class Report {
     }
 
     private String workloadReport(String name, Document wlReport) {
-        return String.format("%s:\n==========\n%d ops per second (%d total)\n%d records per second\n%f ms mean duration\n%f ms median\n%f ms 95th percentile\n%f / %f / %f Batch size avg / min / max\n[util %%: %f]",
+        return String.format("%s:\n==========\n%d ops per second (%d total)\n%d records per second\n%f ms mean duration\n%f ms median\n%d ms 95th percentile\n%f / %f / %f Batch size avg / min / max\n[util %%: %f -- report computed in %d]",
             name,
             wlReport.getLong("ops"), wlReport.getLong("total ops"),
             wlReport.getLong("records"),
             wlReport.getDouble("mean duration"),
             wlReport.getDouble("median duration"),
-            wlReport.getDouble("95th percentile"),
+            wlReport.getLong("95th percentile"),
             wlReport.getDouble("mean batch size"),
             wlReport.getDouble("min batch size"),
             wlReport.getDouble("max batch size"),
-            wlReport.getDouble("client util")
+            wlReport.getDouble("client util"),
+            wlReport.getLong("report compute time")
         );
-    }
+    } 
 
     public String toJSON() {
         return new Document("time", time.toString()).append("report", report).toJson();

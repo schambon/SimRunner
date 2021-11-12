@@ -1,5 +1,7 @@
 package org.schambon.loadsimrunner.report;
 
+import static java.lang.System.currentTimeMillis;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,7 +16,7 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.math.Quantiles.percentiles;
+import com.google.common.collect.TreeMultiset;
 import com.google.common.math.Stats;
 
 public class Reporter {
@@ -35,27 +37,29 @@ public class Reporter {
     }
 
     public void computeReport() {
-        var oldStats = stats;
-        long now = System.currentTimeMillis();
-        long interval = now - startTime;
-        startTime = now;
-
-        stats = new TreeMap<>();
-
-        Document reportDoc = new Document();
-        for (var workload: oldStats.keySet()) {
-            reportDoc.append(workload, oldStats.get(workload).compute(interval));
-        }
-
-        Instant reportInstant = Instant.ofEpochMilli(now);
-        Report report = new Report(reportInstant, reportDoc);
-        reports.put(reportInstant, report);
-
-        LOGGER.info(report.toString());
+        asyncExecutor.submit(() -> {
+            var oldStats = stats;
+            long now = System.currentTimeMillis();
+            long interval = now - startTime;
+            startTime = now;
+    
+            stats = new TreeMap<>();
+    
+            Document reportDoc = new Document();
+            for (var workload: oldStats.keySet()) {
+                reportDoc.append(workload, oldStats.get(workload).compute(interval));
+            }
+    
+            Instant reportInstant = Instant.ofEpochMilli(now);
+            Report report = new Report(reportInstant, reportDoc);
+            reports.put(reportInstant, report);
+    
+            LOGGER.info(report.toString());
+        });
     }
 
     public void reportOp(String name, long i, long duration) {
-        LOGGER.debug("Reported {} {} {}", name, i, duration);
+        //LOGGER.debug("Reported {} {} {}", name, i, duration);
         StatsHolder h = stats.get(name);
         if (h == null) {
             h = new StatsHolder();
@@ -78,14 +82,21 @@ public class Reporter {
     private static class StatsHolder {
 
         AtomicLong numops = new AtomicLong(0);
-        List<Long> durationsBatch = new ArrayList<>();
+        // List<Long> durationsBatch = new ArrayList<>();
+        TreeMultiset<Long> durationsBatch = TreeMultiset.create();
         List<Long> numbers = new ArrayList<>();
 
         // Compute some statistics
         // interval is the overall duration
         public Document compute(long interval) {
 
-            var percentilesBatch = percentiles().indexes(50,95).compute(durationsBatch);
+            var __startCompute = currentTimeMillis();
+
+            List<Long> durations = new ArrayList<>();
+            durations.addAll(durationsBatch);
+            long ninetyFifth = durations.get((int)Math.ceil(.95d * (double)durations.size()));
+
+            //var percentilesBatch = percentiles().indexes(50,95).compute(durationsBatch);
             Stats batchStats = Stats.of(durationsBatch);
             var meanBatch = batchStats.mean();
             var util = 100. * batchStats.sum() / (double) interval;
@@ -97,14 +108,16 @@ public class Reporter {
             wlReport.append("total ops", numberStats.count());
             wlReport.append("total records", (long)numberStats.sum());
             wlReport.append("mean duration", meanBatch);
-            wlReport.append("median duration", percentilesBatch.get(50));
-            wlReport.append("95th percentile", percentilesBatch.get(95));
+            //wlReport.append("median duration", percentilesBatch.get(50));
+            wlReport.append("95th percentile", ninetyFifth);
             wlReport.append("mean batch size", numberStats.mean());
             wlReport.append("min batch size", numberStats.min());
             wlReport.append("max batch size", numberStats.max());
             wlReport.append("client util", util);
+            wlReport.append("report compute time", currentTimeMillis() - __startCompute);
 
             return wlReport;
+
         }
 
         public void addOp(long number, long duration) {
