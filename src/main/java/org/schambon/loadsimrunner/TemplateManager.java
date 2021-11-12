@@ -150,8 +150,9 @@ public class TemplateManager {
             List<Object> values = remembrances.get(field);
 
             for (var result : mongoColl.aggregate(Arrays.asList(
-                new Document("$group", new Document("_id", String.format("$%s", field))),
-                new Document("$limit", 1000000)
+                new Document("$limit", 1000000),
+                new Document("$group", new Document("_id", String.format("$%s", field)))
+                
             ))) {
                 values.add(result.get("_id"));
             }
