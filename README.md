@@ -407,4 +407,3 @@ Plans
 If time allows, I'd like to implement the following features:
 * more generic, path-aware "remember" feature, that can work with embedded/array
 * HTTP command interface (start / stop jobs...)
-* distributed mode (building on the above)
