@@ -29,6 +29,7 @@ public class WorkloadManager {
     String template;
     String op; 
     Document params = null;
+    Document variables = null;
     int threads;
     int batch;
     int pace;
@@ -48,6 +49,7 @@ public class WorkloadManager {
         } else {
             this.params = new Document();
         }
+        this.variables = (Document) config.get("variables");
         this.threads = config.getInteger("threads", 1);
         this.batch =  config.getInteger("batch", 0);
         this.pace = config.getInteger("pace", 0);
@@ -117,5 +119,9 @@ public class WorkloadManager {
 
     public Document getParams() {
         return params;
+    }
+
+    public Document getVariables() {
+        return variables;
     }
 }

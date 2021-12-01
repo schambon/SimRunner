@@ -15,7 +15,7 @@ public abstract class AbstractDeleteRunner extends AbstractRunner {
     @Override
     protected long doRun() {
         var filter = (Document) params.get("filter");
-        filter = template.generate(filter);
+        filter = template.generate(filter, variables);
 
         var start = System.currentTimeMillis();
         var deleteResult = doDelete(filter);

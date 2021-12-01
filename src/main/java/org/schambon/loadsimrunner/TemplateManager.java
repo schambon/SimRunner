@@ -15,6 +15,8 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.swing.plaf.ViewportUI;
+
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -223,6 +225,28 @@ public class TemplateManager {
             }
 
             return doc;
+        } finally {
+            localVariables.remove();
+        }
+    }
+
+    public Document generate(Document from, Document variables) {
+        try {
+            if (variables != null) {
+                localVariables.set(generate(variables));  
+            }
+            return generate(from);
+        } finally {
+            localVariables.remove();
+        }
+    }
+
+    public List<Document> generate(List<Document> from, Document variables) {
+        try {
+            if (variables != null) {
+                localVariables.set(generate(variables));  
+            }
+            return from.stream().map(this::generate).collect(Collectors.toList());
         } finally {
             localVariables.remove();
         }

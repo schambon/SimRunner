@@ -15,7 +15,7 @@ public class ReplaceWithNewRunner extends AbstractRunner {
     @Override
     protected long doRun() {
         var filter = (Document) params.get("filter");
-        filter = template.generate(filter);
+        filter = template.generate(filter, variables);
 
         var replace = template.generate();
         replace.remove("_id");

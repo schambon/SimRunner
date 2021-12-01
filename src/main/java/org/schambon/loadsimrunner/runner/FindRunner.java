@@ -15,7 +15,7 @@ public class FindRunner extends AbstractRunner {
     @Override
     protected long doRun() {
         Document filter = (Document) params.get("filter");
-        filter = template.generate(filter);
+        filter = template.generate(filter, variables);
 
         var limit = params.getInteger("limit", -1);
         var skip = params.getBoolean("skip", false);

@@ -1,7 +1,6 @@
 package org.schambon.loadsimrunner.runner;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.UpdateResult;
@@ -30,9 +29,9 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
         // TODO handle arrayfilters, hint, etc.
         var update = params.get("update");
         if (update instanceof Document) {
-            update = template.generate((Document) update);
+            update = template.generate((Document) update, variables);
         } else if (update instanceof List) {
-            update = ((List<Document>) update).stream().map(template::generate).collect(Collectors.toList());
+            update = template.generate((List<Document>) update, variables);
         } else {
             LOGGER.error("Invalid update definition");
             return 0;

@@ -17,6 +17,7 @@ public abstract class AbstractRunner implements Runnable {
     protected Reporter reporter;
     protected String name;
     protected Document params;
+    protected Document variables; // may be null!
 
     public AbstractRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         this.template = workloadConfiguration.getTemplateConfig();
@@ -26,6 +27,7 @@ public abstract class AbstractRunner implements Runnable {
         this.batch = workloadConfiguration.getBatch();
         this.reporter = reporter;
         this.params = workloadConfiguration.getParams();
+        this.variables = workloadConfiguration.getVariables();
     }
 
     @Override

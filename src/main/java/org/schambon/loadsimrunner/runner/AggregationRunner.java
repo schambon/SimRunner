@@ -1,6 +1,5 @@
 package org.schambon.loadsimrunner.runner;
 
-import java.util.stream.Collectors;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.WorkloadManager;
@@ -14,9 +13,7 @@ public class AggregationRunner extends AbstractRunner {
 
     @Override
     protected long doRun() {
-        var pipeline = params.getList("pipeline", Document.class).stream()
-            .map(template::generate)
-            .collect(Collectors.toList());
+        var pipeline = template.generate(params.getList("pipeline", Document.class), variables);
 
         var start = System.currentTimeMillis();
         var i = 0;
