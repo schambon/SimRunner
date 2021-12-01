@@ -22,6 +22,8 @@ Optionnally, the config file may also specify:
 Look at the provided `sample.json` for a more or less complete example of what you can do.
 
 If you enable the HTTP interface in the config file, point your browser at http://<host>:<port> to view a dynamic graph of throughput and latency.
+    
+For distributed metrics collection (aggregate results from multiple SimRunners) take a look at https://github.com/schambon/SimRunner-Collector
 
 Config file
 -----------
@@ -412,4 +414,3 @@ Plans
 If time allows, I'd like to implement the following features:
 * more generic, path-aware "remember" feature, that can work with embedded/array
 * HTTP command interface (start / stop jobs...)
-* distributed mode (building on the above)
