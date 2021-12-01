@@ -121,6 +121,49 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator product(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var of = (List<Number>) params.get("of");
+            var type = params.getString("type");
+            if (type == null) type = "long";
+
+            switch(type) {
+                case "long":
+                    var resultLong = of.stream().reduce((a,b) -> a.longValue() * b.longValue());
+                    if (resultLong.isPresent()) return resultLong.get(); else return 0l;
+                case "double":
+                    var resultDouble = of.stream().reduce((a,b) -> a.doubleValue() * b.doubleValue());
+                    if (resultDouble.isPresent()) return resultDouble.get(); else return 0d;
+                default:
+                    return 0l;
+            }
+        };
+    }
+
+    public static Generator sum(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var of = (List<Number>) params.get("of");
+            var type = params.getString("type");
+            if (type == null) type = "long";
+
+            switch(type) {
+                case "long":
+                    var resultLong = of.stream().reduce((a,b) -> a.longValue() + b.longValue());
+                    if (resultLong.isPresent()) return resultLong.get(); else return 0l;
+                case "double":
+                    var resultDouble = of.stream().reduce((a,b) -> a.doubleValue() + b.doubleValue());
+                    if (resultDouble.isPresent()) return resultDouble.get(); else return 0d;
+                default:
+                    return 0l;
+            }
+        };
+    }
+
+
+    /* Dates */
+
     public static Generator now() {
         return () -> new Date();
     }
@@ -170,6 +213,28 @@ public class ValueGenerators {
             var unit = params.getString("unit");
 
             return Date.from(base.plus(plus, _chronoUnit(unit)));
+        };
+    }
+
+    public static Generator ceilDate(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var base = Instant.ofEpochMilli(params.get("base", Date.class).getTime());
+            var unit = params.getString("unit");
+            if (unit == null) unit = "day";
+            var chronoUnit = _chronoUnit(unit);
+            return base.truncatedTo(chronoUnit).plus(1, chronoUnit);
+        };
+    }
+
+    public static Generator floorDate(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var base = Instant.ofEpochMilli(params.get("base", Date.class).getTime());
+            var unit = params.getString("unit");
+            if (unit == null) unit = "day";
+            var chronoUnit = _chronoUnit(unit);
+            return base.truncatedTo(chronoUnit);
         };
     }
 

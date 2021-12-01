@@ -29,9 +29,9 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
         // TODO handle arrayfilters, hint, etc.
         var update = params.get("update");
         if (update instanceof Document) {
-            update = template.generate((Document) update, variables);
+            update = template.generate((Document) update);
         } else if (update instanceof List) {
-            update = template.generate((List<Document>) update, variables);
+            update = template.generate((List<Document>) update);
         } else {
             LOGGER.error("Invalid update definition");
             return 0;

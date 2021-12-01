@@ -34,6 +34,7 @@ public abstract class AbstractRunner implements Runnable {
     public void run() {
         while (true) {
             try {
+                template.setVariables(variables);
                 long duration = doRun();
                 if (pace != 0) {
                     long wait = Math.max(0, pace - duration);
@@ -41,7 +42,9 @@ public abstract class AbstractRunner implements Runnable {
                 }
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Error caught in execution", e);
-            }
+            } finally {
+                template.clearVariables();
+            } 
         }
         
     }

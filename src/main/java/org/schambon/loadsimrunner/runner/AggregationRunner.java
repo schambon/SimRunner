@@ -13,7 +13,7 @@ public class AggregationRunner extends AbstractRunner {
 
     @Override
     protected long doRun() {
-        var pipeline = template.generate(params.getList("pipeline", Document.class), variables);
+        var pipeline = template.generate(params.getList("pipeline", Document.class));
 
         var start = System.currentTimeMillis();
         var i = 0;

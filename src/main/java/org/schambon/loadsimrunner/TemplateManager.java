@@ -230,26 +230,16 @@ public class TemplateManager {
         }
     }
 
-    public Document generate(Document from, Document variables) {
-        try {
-            if (variables != null) {
-                localVariables.set(generate(variables));  
-            }
-            return generate(from);
-        } finally {
-            localVariables.remove();
-        }
+    public void setVariables(Document variables) {
+        localVariables.set(generate(variables));
     }
 
-    public List<Document> generate(List<Document> from, Document variables) {
-        try {
-            if (variables != null) {
-                localVariables.set(generate(variables));  
-            }
-            return from.stream().map(this::generate).collect(Collectors.toList());
-        } finally {
-            localVariables.remove();
-        }
+    public void clearVariables() {
+        localVariables.remove();
+    }
+    
+    public List<Document> generate(List<Document> from) {
+        return from.stream().map(this::generate).collect(Collectors.toList());
     }
 
     public Document generate(Document from) {
@@ -315,6 +305,8 @@ public class TemplateManager {
         switch (operator) {
             case "%objectid": return ValueGenerators.objectId();
             case "%bool": return ValueGenerators.bool();
+
+            // numbers
             case "%integer":
             case "%number":
                 return ValueGenerators.integer(params);
@@ -324,17 +316,29 @@ public class TemplateManager {
             case "%decimal": return ValueGenerators.decimal(params);
             case "%sequence": return ValueGenerators.sequence();
             case "%gaussian": return ValueGenerators.gaussian(params);
+            case "%product": return ValueGenerators.product(params);
+            case "%sum": return ValueGenerators.sum(params);
+
+            // dates
             case "%now": return ValueGenerators.now();
             case "%date": return ValueGenerators.date(params);
             case "%time": return ValueGenerators.time(params);
             case "%plusDate": return ValueGenerators.plusDate(params);
+            case "%ceilDate": return ValueGenerators.ceilDate(params);
+            case "%floorDate": return ValueGenerators.floorDate(params);
+
             case "%binary": return ValueGenerators.binary(params);
             case "%uuidString": return ValueGenerators.uuidString();
             case "%uuidBinary": return ValueGenerators.uuidBinary();
             case "%array": return ValueGenerators.array(params);
+
+            // dictionary
             case "%dictionary": return ValueGenerators.dictionary(params, dictionaries);
             case "%dictionaryConcat": return ValueGenerators.dictionaryConcat(params, dictionaries);
+
+            // geo
             case "%longlat": return ValueGenerators.longlat(params);
+
             case "%stringTemplate": return ValueGenerators.stringTemplate(params);
             case "%custom": return ValueGenerators.custom(params);
             default: return ValueGenerators.autoFaker(operator);

@@ -101,8 +101,13 @@ The following template expressions are supported:
 * `%natural`: generate a positive int. Optionally use this form: `{"%natural": {"min": 400, "max": 5000}}` to specify bounds
 * `%long`, `%double`, and `%decimal` work as `%number` and yield longs, doubles, and decimals. Note that BSON doesn't have a 32 bit float type, so we don't support floats.
 * `%gaussian`: generate a number following an approximate Gaussian distribution. Specify `mean`, `sd` for the mean / standard deviation of the Gaussian. Optionally, set `type` to `int` or `long` for integer values (any other value is understood as double)
+* `%product`: product of number array specified by `of`. Parameter `type` (either `long` or `double`, default `long`) specifies how to cast the result
+* `%sum`: like `%product` but sums the `of` array
 * `%now`: current date
 * `%date`: create a date between the Unix Epoch and 10 years in the future, or specify `min`/`max` bounds in a subdocument, either as ISO8601 or as EJSON dates (hint: `{$date: "2021-01-01"}` works but `"2021-01-01"` doesn't as it's not valid ISO8601).
+* `{"%plusDate": {"base": date, "plus": amount, "unit": unit}}`: adds some time to a date. `unit` is either: `year`, `month`, `day`, `minute`
+* `{"%ceilDate": {"base": date, "unit": unit}}`: align date to the next unit (eg next hour, day...) - default unit is `day`
+* `{"%floorDate": {"base": date, "unit": unit}}`: truncate date to the unit (eg hour, day...) - default unit is `day`
 * `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes)
 * `%sequence`: create a sequential number. Note - there is only one sequence.
 * `%uuidString`: random UUID, as String
@@ -156,6 +161,8 @@ This creates records like this one:
 ... and ensures that `death` is in fact posterior to `birth`. Such cross-field dependencies (within a single document) is possible by creating a variable _birthday_ (using the normal templates) and generating the field `death` by referencing it (using the `##` prefix) in the parameters of the `%date` generator.
 
 Note: you can't reference a variable in another variable declaration.
+
+Note: variables can also be defined in a workload definition, and used in templated expressions within that workload.
 
 ### Dictionaries
 
