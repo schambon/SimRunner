@@ -231,7 +231,9 @@ public class TemplateManager {
     }
 
     public void setVariables(Document variables) {
-        localVariables.set(generate(variables));
+        if (variables != null) {
+            localVariables.set(generate(variables)); 
+        }
     }
 
     public void clearVariables() {
