@@ -50,7 +50,7 @@
                             datasets: datasetsNumber
                         };
 
-                        const datasetsDuration = loadData(dsNames, "median duration", data, false).concat(loadData(dsNames, "95th percentile", data, true));
+                        const datasetsDuration = loadData(dsNames, "mean duration", data, false).concat(loadData(dsNames, "95th percentile", data, true));
                         const chartDataDuration = {
                             labels,
                             datasets: datasetsDuration
@@ -116,7 +116,7 @@
                                         for (let i = 0; i < dsNames.length; i++) {
                                             updateData(i, "ops", 0, datasetsNumber);
                                             updateData(i, "records", 1, datasetsNumber);
-                                            updateData(i, "median duration", 0, datasetsDuration);
+                                            updateData(i, "mean duration", 0, datasetsDuration);
                                             updateData(i, "95th percentile", 1, datasetsDuration);
                                         }
 
