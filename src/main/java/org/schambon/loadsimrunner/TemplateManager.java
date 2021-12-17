@@ -7,15 +7,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import javax.swing.plaf.ViewportUI;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -44,7 +42,7 @@ public class TemplateManager {
     private Document variables;
     private Document dictionariesConfig;
 
-    private Set<String> fieldsToRemember = new TreeSet<>();
+    private Set<RememberField> fieldsToRemember = new HashSet<>();
     // using a synchronized list for remembrances because a set is too slow to get a random element out of
     private Map<String, List<Object>> remembrances = new TreeMap<>();
     private List<Document> indexes;
@@ -62,6 +60,8 @@ public class TemplateManager {
     // dictionaries
     private Map<String, List<? extends Object>> dictionaries = new TreeMap<>();
 
+
+
     public TemplateManager(Document config, Reporter reporter) {
         this.reporter = reporter;
         this.database = config.getString("database");
@@ -74,13 +74,14 @@ public class TemplateManager {
             this.variables = new Document();
         }
 
-        var remember = (List<String>) config.get("remember");
-        if (remember == null) {
-            remember = Collections.emptyList();
+        var rememberFields = (List<Object>) config.get("remember");
+        if (rememberFields == null) {
+            rememberFields = Collections.emptyList();
         }
+        var remember = parseRememberFields(rememberFields);
         for (var field: remember) {
             this.fieldsToRemember.add(field);
-            this.remembrances.put(field, Collections.synchronizedList(new ArrayList<>()));
+            this.remembrances.put(field.field, Collections.synchronizedList(new ArrayList<>()));
         }
 
         if (config.containsKey("indexes")) {
@@ -102,6 +103,28 @@ public class TemplateManager {
         }
     }
     
+
+    private static class RememberField {
+        String field;
+        boolean preload ;
+
+        public RememberField(String field, boolean preload) {
+            this.field = field;
+            this.preload = preload;
+        }
+    }
+
+    private List<RememberField> parseRememberFields(List<Object> input) {
+        return input.stream().map(i -> {
+            if (i instanceof Document) {
+                var doc = (Document) i;
+                return new RememberField(doc.getString("field"), doc.getBoolean("preload", true));
+            } else {
+                return new RememberField((String)i, true);
+            }
+        }).collect(Collectors.toList());
+    }
+
     public MongoCollection<Document> getCollection() {
         return this.mongoColl;
     }
@@ -149,15 +172,20 @@ public class TemplateManager {
         }
 
         for (var field: fieldsToRemember) {
-            List<Object> values = remembrances.get(field);
+            if (!field.preload) {
+                reporter.reportInit(String.format("\tSkip preloading existing keys for field: %s", field.field));
+                continue;
+            }
+
+            List<Object> values = remembrances.get(field.field);
 
             for (var result : mongoColl.aggregate(Arrays.asList(
-                new Document("$group", new Document("_id", String.format("$%s", field))),
+                new Document("$group", new Document("_id", String.format("$%s", field.field))),
                 new Document("$limit", 1000000)
             )).allowDiskUse(true)) {
                 values.add(result.get("_id"));
             }
-            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s", values.size(), field));
+            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s", values.size(), field.field));
         }
 
         for (Document indexDef: indexes) {
@@ -220,8 +248,8 @@ public class TemplateManager {
 
             var doc = generate(template);
 
-            for (String field : fieldsToRemember) {
-                remembrances.get(field).add(doc.get(field));
+            for (RememberField field : fieldsToRemember) {
+                remembrances.get(field.field).add(doc.get(field));
             }
 
             return doc;
