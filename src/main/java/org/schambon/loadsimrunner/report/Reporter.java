@@ -95,9 +95,9 @@ public class Reporter {
             List<Long> durations = new ArrayList<>();
             durations.addAll(durationsBatch);
             long ninetyFifth = durations.get((int)Math.ceil(.95d * (double)durations.size()));
+            long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2+1) : 0;
 
-            //var percentilesBatch = percentiles().indexes(50,95).compute(durationsBatch);
-            Stats batchStats = Stats.of(durationsBatch);
+            Stats batchStats = Stats.of(durations);
             var meanBatch = batchStats.mean();
             var util = 100. * batchStats.sum() / (double) interval;
             var numberStats = Stats.of(numbers);
@@ -108,7 +108,7 @@ public class Reporter {
             wlReport.append("total ops", numberStats.count());
             wlReport.append("total records", (long)numberStats.sum());
             wlReport.append("mean duration", meanBatch);
-            //wlReport.append("median duration", percentilesBatch.get(50));
+            wlReport.append("median duration", fiftieth);
             wlReport.append("95th percentile", ninetyFifth);
             wlReport.append("mean batch size", numberStats.mean());
             wlReport.append("min batch size", numberStats.min());
