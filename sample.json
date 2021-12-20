@@ -74,9 +74,8 @@
                 "longlat": {"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}},
                 "dictionaryConcat": {"%dictionaryConcat": {"from": "words", "length": {"%natural": {"max": 10}}, "sep": " "}}
              },
-            "remember": ["first"],
-            "indexes": [ { "first": 1}
-            ]
+            "remember": [{"field": "first","preload": false}, "sentence"],
+            "indexes": [ { "first": 1} ]
         }
     ],
     "workloads": [
@@ -85,9 +84,8 @@
             "name": "Insert",
             "template": "person",
             "op": "insert",
-            "threads": 1,
-            "batch": 0,
-            "pace": 100
+            "threads": 4,
+            "batch": 100
         },
         {
             "name": "Find by first name",
