@@ -95,6 +95,16 @@
                 "filter": {"first": "#first"}
             },
             "pace": 10
+        },
+        {
+            "disabled": true,
+            "name": "custom",
+            "template": "person",
+            "op": "custom",
+            "params": {
+                "class": "org.schambon.loadsimrunner.sample.SampleCustomRunner"
+            },
+            "pace": 100
         }
  
     ]

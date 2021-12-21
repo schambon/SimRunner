@@ -34,11 +34,11 @@ public class WorkloadManager {
     int batch;
     int pace;
 
-    MongoCollection<Document> collection;
-
     Reporter reporter;
 
     private TemplateManager templateConfig;
+
+    private MongoClient client;
 
     public WorkloadManager(Document config) {
         this.name = config.getString("name");
@@ -62,7 +62,7 @@ public class WorkloadManager {
     }
 
     public void initAndStart(MongoClient client, Map<String, TemplateManager> templates, Reporter reporter) {
-        this.collection = templates.get(template).getCollection();
+        this.client = client;
         this.templateConfig = templates.get(template);
         this.reporter = reporter;
 
@@ -99,6 +99,10 @@ public class WorkloadManager {
                     
                 };
         }
+    }
+
+    public MongoClient getMongoClient() {
+        return client;
     }
 
     public TemplateManager getTemplateConfig() {
