@@ -15,6 +15,9 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.print.Doc;
+
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -23,6 +26,7 @@ import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.client.model.ValidationOptions;
+import static com.mongodb.client.model.Filters.*;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.report.Reporter;
@@ -41,6 +45,7 @@ public class TemplateManager {
     private Document createOptions;
     private Document variables;
     private Document dictionariesConfig;
+    private Document shardingConfig;
 
     private Set<RememberField> fieldsToRemember = new HashSet<>();
     // using a synchronized list for remembrances because a set is too slow to get a random element out of
@@ -101,6 +106,8 @@ public class TemplateManager {
         } else {
             this.createOptions = new Document();
         }
+
+        this.shardingConfig = (Document) config.get("sharding");
     }
     
 
@@ -145,8 +152,15 @@ public class TemplateManager {
         this.mongoColl = db.getCollection(collection);
 
         if (drop) {
-            mongoColl.drop();
-            reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
+            // if we are sharded, do a delete all instead of a drop
+            if (client.getDatabase("config").getCollection("collections").find(eq("_id", database + "." + collection)).first() != null) {
+                reporter.reportInit(String.format("Collection %s.%s is sharded. Deleting all records instead of dropping (https://docs.mongodb.com/manual/reference/method/db.collection.drop)", database, collection));
+                mongoColl.deleteMany(new Document());
+                reporter.reportInit(String.format("Deleted all records from collection %s.%s", database, collection));
+            } else {
+                mongoColl.drop();
+                reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
+            }
         }
 
         if (! found) {
@@ -196,6 +210,8 @@ public class TemplateManager {
         _initializeDictionaries();
         reporter.reportInit(String.format("\tLoaded %d dictionaries", dictionaries.size()));
 
+        _initializeSharding(client);
+
         generators.put(template, _compile(template));
     }
 
@@ -239,6 +255,78 @@ public class TemplateManager {
         } catch (IOException e) {
             LOGGER.error("Cannot read file", e);
             return Collections.emptyList();
+        }
+    }
+    
+    private void _initializeSharding(MongoClient client) {
+        if (shardingConfig == null) {
+            return;
+        }
+
+        var admindb = client.getDatabase("admin");
+        var namespace = String.format("%s.%s", database, collection);
+
+        // check if we are on a mongos
+        var isMaster = admindb.runCommand(new Document("isMaster", 1));
+        if (! "isdbgrid".equals(isMaster.getString("msg"))) {
+            reporter.reportInit("Connection is not to a mongos; ignoring sharding configuration");
+            return;
+        }
+
+        if (client.getDatabase("config").getCollection("collections").find(eq("_id", namespace)).first() != null) {
+            reporter.reportInit("Collection is already sharded; skipping sharding configuration");
+            return;
+        }
+
+        try {
+            admindb.runCommand(new Document("enableSharding", database));
+        } catch (MongoException e) {
+
+            // can happen if the db is already enabled for sharding
+            if (!e.getMessage().contains("already enabled")) {
+                LOGGER.error("Cannot enable sharding", e);
+                throw e;
+            }
+        }
+
+        Document key = (Document)shardingConfig.get("key");
+        if (key == null) {
+            reporter.reportInit("No shard key found, skipping sharding configuration");
+            return;
+        }
+        
+        admindb.runCommand(new Document("shardCollection", namespace).append("key", key));
+        reporter.reportInit(String.format("Sharded collection %s with key %s", namespace, key.toJson()));
+
+        if (shardingConfig.get("presplit") != null) {
+            List<Document> splitPoints = shardingConfig.getList("presplit", Document.class);
+
+            // stop the balancer
+            var balancerStatus = admindb.runCommand(new Document("balancerStatus", 1)).getString("mode");
+            admindb.runCommand(new Document("balancerStop", 1));
+
+            reporter.reportInit(String.format("Presplitting collection %s", namespace));
+            // 1st pass - split chunks
+            for (var point: splitPoints) {
+                admindb.runCommand(new Document("split", namespace)
+                    .append("middle", point.getEmbedded(List.of("point"), Document.class))
+                );
+            }
+
+            // 2nd pass - move chunks
+            for (var point: splitPoints) {
+                admindb.runCommand(new Document("moveChunk", namespace)
+                    .append("find", point.getEmbedded(List.of("point"), Document.class))
+                    .append("to", point.getString("shard"))
+                );
+            }
+
+            // restart the balancer if it was running before
+            if (balancerStatus.equals("full")) {
+                admindb.runCommand(new Document("balancerStart", 1));
+            }
+
+            reporter.reportInit(String.format("Collection %s pre-splitted", namespace));
         }
     }
 

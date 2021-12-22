@@ -1,0 +1,40 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": false,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "person",
+            "database": "simrunner",
+            "collection": "sharded",
+            "drop": true,
+            "sharding": {
+                "key": { "first": 1 },
+                "presplit": [
+                    { "point": {"first": "A"}, "shard": "shard01" },
+                    { "point": {"first": "M"}, "shard": "shard02" }
+                ]
+            },
+            "template": {
+                "_id": "%objectid",
+                "first": "%name.firstName",
+                "last": "%name.lastName"
+            },
+            "indexes": [ { "first": 1} ]
+        }
+    ],
+    "workloads": [
+        {
+            "name": "Insert",
+            "template": "person",
+            "op": "insert",
+            "threads": 4,
+            "batch": 100
+        }
+    ]
+    
+}

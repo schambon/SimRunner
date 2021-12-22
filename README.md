@@ -197,6 +197,31 @@ A template can define a `createOptions` document with the same syntax as in the 
 
 Note that views and collation options are not supported.
 
+### Sharding
+
+A template can define basic sharding options:
+- shard key
+- presplit chunks
+
+Example configuration:
+```
+"sharding": {
+    "key": { "first": 1 },
+    "presplit": [
+        { "point": {"first": "A"}, "shard": "shard01" },
+        { "point": {"first": "M"}, "shard": "shard02" }
+    ]
+}
+```
+
+Presplit is optional. It is not possible to presplit a hashed sharded collection.
+
+Some notes:
+- the first chunk (from minKey to the first point) remains on the primary shard of the collection.
+- if a collection is already sharded, all sharding options are ignored (no resplitting or anything like that).
+- if a collection is sharded, even if sharding isn't configured, the `drop` option is reinterpreted to be `deleteMany({})` (delete all documents rather than dropping). This is because dropping a collection drop requires flushing the cache on all routers, which is not practical from the client side.
+- it is up to the user to make sure the cluster configuration (like the number and names of the shards) aligns with the sharding configuration here. No checks are made.
+
 Supported workload operations
 -----------------------------
 
