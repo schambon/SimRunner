@@ -330,6 +330,10 @@ public class TemplateManager {
         }
     }
 
+    public List<Object> getRemindedValues(String key) {
+        return remembrances.get(key);
+    }
+
     public Document generate() {
         try {
             localVariables.set(generate(variables));
@@ -350,6 +354,10 @@ public class TemplateManager {
         if (variables != null) {
             localVariables.set(generate(variables)); 
         }
+    }
+
+    public Document getLocalVariables() {
+        return localVariables.get();
     }
 
     public void clearVariables() {
