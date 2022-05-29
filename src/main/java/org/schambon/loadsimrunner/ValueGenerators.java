@@ -485,5 +485,24 @@ public class ValueGenerators {
         }
     }
 
+    public static Generator coordLine(DocumentGenerator input) {
+
+        return () -> {
+            var params = input.generateDocument();
+
+            List<Number> from = params.getList("from", Number.class);
+            List<Number> to = params.getList("to", Number.class);
+
+            var deltaX = to.get(0).doubleValue() - from.get(0).doubleValue();
+            var deltaY = to.get(1).doubleValue() - from.get(1).doubleValue();
+
+            var alpha = ThreadLocalRandom.current().nextDouble(1d);
+
+            var x = from.get(0).doubleValue() + deltaX * alpha;
+            var y = from.get(1).doubleValue() + deltaY * alpha;
+
+            return Arrays.asList(x, y);
+        };
+    }
 
 }

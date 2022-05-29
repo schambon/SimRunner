@@ -464,6 +464,7 @@ public class TemplateManager {
 
             // geo
             case "%longlat": return ValueGenerators.longlat(params);
+            case "%coordLine": return ValueGenerators.coordLine(params);
 
             case "%stringTemplate": return ValueGenerators.stringTemplate(params);
             case "%custom": return ValueGenerators.custom(params);
