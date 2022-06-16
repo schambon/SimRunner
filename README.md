@@ -1,7 +1,7 @@
 SimRunner
 =========
 
-This is an attempt at building a tool that can reproduce more or less faithfully "realistic" workloads on MongoDB - so you can model as accurately as possible a given workload to test infrastructure changes, or workload changes, before going live.
+This is a tool that can reproduce, as much as possible, realistic workloads on MongoDB - so you can model as accurately as possible a given workload to test infrastructure changes, or workload changes, before going live.
 
 It should be considered a "work in progress" and comes without any support or guarantee, either from MongoDB, Inc. or myself.
 
