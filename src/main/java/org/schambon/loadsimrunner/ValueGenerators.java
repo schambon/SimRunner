@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
@@ -161,6 +162,17 @@ public class ValueGenerators {
         };
     }
 
+
+    public static Generator stringConcat(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+
+            List of = (List)params.get("of");
+            Optional<String> result = of.stream().reduce((a,b) -> a.toString() + b.toString());
+
+            if (result.isPresent()) return result.get(); else return "";
+        };
+    }
 
     /* Dates */
 

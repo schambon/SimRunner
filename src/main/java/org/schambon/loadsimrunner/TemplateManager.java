@@ -341,7 +341,7 @@ public class TemplateManager {
             var doc = generate(template);
 
             for (RememberField field : fieldsToRemember) {
-                remembrances.get(field.field).add(doc.get(field));
+                remembrances.get(field.field).add(doc.get(field.field));
             }
 
             return doc;
@@ -444,6 +444,9 @@ public class TemplateManager {
             case "%gaussian": return ValueGenerators.gaussian(params);
             case "%product": return ValueGenerators.product(params);
             case "%sum": return ValueGenerators.sum(params);
+
+            // strings
+            case "%stringConcat": return ValueGenerators.stringConcat(params);
 
             // dates
             case "%now": return ValueGenerators.now();

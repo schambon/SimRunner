@@ -120,6 +120,7 @@ The following template expressions are supported:
 * `{"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the database, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
 * `{"%coordLine": {"from": [x, y], "to": [x, y]}}`: create a long,lat pair (really an x,y pair) that is on the line between `from` and `to`.
 * `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
+* `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
 
