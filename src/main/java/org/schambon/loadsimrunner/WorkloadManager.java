@@ -2,6 +2,9 @@ package org.schambon.loadsimrunner;
 
 import java.util.Map;
 
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 
@@ -33,6 +36,9 @@ public class WorkloadManager {
     int threads;
     int batch;
     int pace;
+    ReadPreference readPreference;
+    ReadConcern readConcern;
+    WriteConcern writeConcern;
 
     Reporter reporter;
 
@@ -53,6 +59,47 @@ public class WorkloadManager {
         this.threads = config.getInteger("threads", 1);
         this.batch =  config.getInteger("batch", 0);
         this.pace = config.getInteger("pace", 0);
+
+        String readPref = config.getString("readPreference");
+        if (readPref != null) {
+            try {
+                readPreference = ReadPreference.valueOf(readPref);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidConfigException(String.format("%s is not a legal read preference", readPref));
+            }
+        }
+
+        String readC = config.getString("readConcern");
+        if (readC != null) {
+            switch(readC.toLowerCase()) {
+                case "local":
+                readConcern = ReadConcern.LOCAL;
+                break;
+                case "majority":
+                readConcern = ReadConcern.MAJORITY;
+                break;
+                case "available":
+                readConcern = ReadConcern.AVAILABLE;
+                break;
+                case "linearizable":
+                readConcern = ReadConcern.LINEARIZABLE;
+                break;
+                case "snapshot":
+                readConcern = ReadConcern.SNAPSHOT;
+                break;
+                default:
+                throw new InvalidConfigException(String.format("%s is not a legal read concern level", readC));
+            }
+        }
+
+        String wc = config.getString("writeConcern");
+        if (wc != null) {
+            writeConcern = WriteConcern.valueOf(wc);
+            if (writeConcern == null) {
+                throw new InvalidConfigException(String.format("%s is not a valid write concern", wc));
+            }
+        }
+
 
         if (this.batch > 0) {
             if (! "insert".equals(op)) {
@@ -127,5 +174,17 @@ public class WorkloadManager {
 
     public Document getVariables() {
         return variables;
+    }
+
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 }

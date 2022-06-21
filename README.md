@@ -227,8 +227,17 @@ Some notes:
 - if a collection is sharded, even if sharding isn't configured, the `drop` option is reinterpreted to be `deleteMany({})` (delete all documents rather than dropping). This is because dropping a collection drop requires flushing the cache on all routers, which is not practical from the client side.
 - it is up to the user to make sure the cluster configuration (like the number and names of the shards) aligns with the sharding configuration here. No checks are made.
 
-Supported workload operations
------------------------------
+Workloads
+---------
+
+### Common parameters
+
+* threads: number of worker threads for this workload
+* batch: (insert only) bulk write batch size
+* pace: operations should run every _pace_ milliseconds (on each thread)
+* readPreference: primary, secondary, primaryPreferred, secondaryPreferred, nearest (no tag sets)
+* readConcern: majority, local, available, linearizable, snapshot
+* writeConcern: majority, w1, w2 (no tag sets)
 
 ### Insert
 

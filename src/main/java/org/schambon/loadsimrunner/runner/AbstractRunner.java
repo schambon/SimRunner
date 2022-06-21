@@ -1,5 +1,7 @@
 package org.schambon.loadsimrunner.runner;
 
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
@@ -22,7 +24,20 @@ public abstract class AbstractRunner implements Runnable {
     public AbstractRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         this.template = workloadConfiguration.getTemplateConfig();
         this.name = workloadConfiguration.getName();
-        this.mongoColl = template.getCollection();
+
+        var collection = template.getCollection();
+
+        if (workloadConfiguration.getReadPreference() != null) {
+            collection = collection.withReadPreference(workloadConfiguration.getReadPreference());
+        }
+        if (workloadConfiguration.getReadConcern() != null) {
+            collection = collection.withReadConcern(workloadConfiguration.getReadConcern());
+        }
+        if (workloadConfiguration.getWriteConcern() != null) {
+            collection = collection.withWriteConcern(workloadConfiguration.getWriteConcern());
+        }
+        this.mongoColl = collection;
+
         this.pace = workloadConfiguration.getPace();
         this.batch = workloadConfiguration.getBatch();
         this.reporter = reporter;
