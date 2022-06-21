@@ -8,7 +8,7 @@ It should be considered a "work in progress" and comes without any support or gu
 TL;DR
 -----
 
-Build with `mvn package` and run with `java -jar SimRunner.jar <config file>`.
+Build with `mvn package` and run with `java -jar SimRunner.jar <config file>`. Needs at least Java 11 (tested with 17 as well).
 
 The config file specifies:
 * a connection string to MongoDB
@@ -23,7 +23,9 @@ Look at the provided `sample.json` for a more or less complete example of what y
 
 If you enable the HTTP interface in the config file, point your browser at http://(host):(port) to view a dynamic graph of throughput and latency.
     
-For distributed metrics collection (aggregate results from multiple SimRunners) take a look at https://github.com/schambon/SimRunner-Collector
+For distributed metrics collection (aggregate results from multiple SimRunners, if you have a very intensive workload) take a look at https://github.com/schambon/SimRunner-Collector
+
+For easy setup in EC2, a quick and dirty script to provision a machine etc. is at https://github.com/schambon/launchSimRunner
 
 Config file
 -----------
@@ -429,16 +431,58 @@ Once the system has started, use `curl host:port/report` for a list of all repor
 ]
 ```
 
+Tips and tricks
+---------------
+
+# Preloading remembered nested fields
+
+Only top-level fields can be remembered at insert time. However, one neat trick is to first insert a lot of data, then apply the read patterns in a second step. If the fields are single-valued then you can use "remember" to preload nested data by using the dotted syntax.
+
+For instance:
+
+```
+{
+    "templates": [{
+        "name": "person",
+        "template": { ... },
+        "remember": [ "sub.doc" ]
+    }],
+    "workloads": [{
+        "name": "find by subdoc",
+        "template": "person",
+        "op": "find",
+        "params": {
+            "filter": { "sub.doc": "#sub.doc" }
+        }
+    }]
+}
+```
+
+This will NOT remember fields as it inserts them, but it will preload them all right! (Thanks to Khalid Dar for pointing that out)
+
+# Mix remembered fields and variables
+
+The `#field` expression takes a value from the "field" bag at random every time it is executed. If you need the same value twice, use a variable (which is set once per template). For instance, to create a workload that finds a document by first name and creates a new field by appending a random number to the first name, you can do this:
+
+```
+"workloads": [{
+    "name": "fancy update",
+    "template": "sometemplate",
+    "variables": {
+        "first": "#first"
+    },
+    "op": "updateOne",
+    "params": {
+        "filter": { "first": "##first" },
+        "update": { "$set": {"newfield": {"%stringConcat": ["##first", " - ", "%natural"]}}}
+    }
+}]
+```
+
 Limitations
 -----------
 
 * Does not support arrayfilters, hint
 * Only top-level fields can be remembered
-* No support for transactions or indeed, multi-operation workflows ("read one doc and update another")
+* No declarative support for transactions or indeed, multi-operation workflows ("read one doc and update another") - you have to use custom runners for that.
 
-Plans
------
-
-If time allows, I'd like to implement the following features:
-* more generic, path-aware "remember" feature, that can work with embedded/array
-* HTTP command interface (start / stop jobs...)
