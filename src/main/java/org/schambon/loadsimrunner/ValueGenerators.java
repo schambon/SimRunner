@@ -517,4 +517,46 @@ public class ValueGenerators {
         };
     }
 
+    private static Object subdescend(Document in, List<String> path) {
+        if (path == null || path.size() == 0) {
+            return in;
+        }
+        var head = path.get(0);
+        var sub = in.get(head);
+        if (sub == null) {
+            LOGGER.debug("Descend target not found, returning null");
+            return null;
+        } else if (sub instanceof Document) {
+            return subdescend((Document) sub, path.subList(1, path.size()));
+        } else if (path.size() == 1) {
+            return sub;
+        } else {
+            LOGGER.debug("Descend stopped because found a scalar with remaining path elements, returning null");
+            return null;
+        }
+    }
+
+    public static Generator descend(DocumentGenerator input) {
+        /*
+         * { x: {"%descend": {"in": some_object, "path": "a.b.c"}}
+         */
+        return () -> {
+            var params = input.generateDocument();
+
+            var in = params.get("in");
+            if (in instanceof Document) {
+                String path = params.getString("path");
+                Document inDoc = (Document) in;
+
+                var elems = Arrays.asList(path.split("\\."));
+
+                var result = subdescend(inDoc, elems);
+                LOGGER.debug("Descent param in {} path {}, result {}", inDoc.toJson(), path, result);
+                return result;
+            } else {
+                LOGGER.debug("Descend target is not a subdocument, ignoring path");
+                return in;
+            }
+        };
+    }
 }

@@ -471,6 +471,11 @@ public class TemplateManager {
 
             case "%stringTemplate": return ValueGenerators.stringTemplate(params);
             case "%custom": return ValueGenerators.custom(params);
+
+            // path descent
+            case "%descend": return ValueGenerators.descend(params);
+
+            // faker
             default: return ValueGenerators.autoFaker(operator);
         }
     }
