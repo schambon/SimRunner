@@ -15,8 +15,6 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.print.Doc;
-
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -34,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 public class TemplateManager {
+
+    private static final int DEFAULT_NUMBER_TO_PRELOAD = 1000000;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TemplateManager.class);
 
@@ -84,9 +84,9 @@ public class TemplateManager {
             rememberFields = Collections.emptyList();
         }
         var remember = parseRememberFields(rememberFields);
-        for (var field: remember) {
-            this.fieldsToRemember.add(field);
-            this.remembrances.put(field.field, Collections.synchronizedList(new ArrayList<>()));
+        for (var rfield: remember) {
+            this.fieldsToRemember.add(rfield);
+            this.remembrances.put(rfield.name, Collections.synchronizedList(new ArrayList<>()));
         }
 
         if (config.containsKey("indexes")) {
@@ -114,10 +114,28 @@ public class TemplateManager {
     private static class RememberField {
         String field;
         boolean preload ;
+        List<String> project;
+        String name;
+        int number;
 
-        public RememberField(String field, boolean preload) {
+        public RememberField(String field, List<String> project, String name, boolean preload, int number) {
             this.field = field;
             this.preload = preload;
+            if (project == null) {
+                this.project = Collections.emptyList();
+            } else {
+                this.project = project;
+            }
+            if (name == null) {
+                this.name = field;
+            } else {
+                this.name = name;
+            }
+            this.number = number;
+        }
+
+        public boolean hasProjection() {
+            return !project.isEmpty();
         }
     }
 
@@ -125,9 +143,9 @@ public class TemplateManager {
         return input.stream().map(i -> {
             if (i instanceof Document) {
                 var doc = (Document) i;
-                return new RememberField(doc.getString("field"), doc.getBoolean("preload", true));
+                return new RememberField(doc.getString("field"), doc.getList("project", String.class), doc.getString("name"), doc.getBoolean("preload", true), doc.getInteger("number", DEFAULT_NUMBER_TO_PRELOAD));
             } else {
-                return new RememberField((String)i, true);
+                return new RememberField((String)i, null, null, true, DEFAULT_NUMBER_TO_PRELOAD);
             }
         }).collect(Collectors.toList());
     }
@@ -185,22 +203,7 @@ public class TemplateManager {
             db.createCollection(collection, options);
         }
 
-        for (var field: fieldsToRemember) {
-            if (!field.preload) {
-                reporter.reportInit(String.format("\tSkip preloading existing keys for field: %s", field.field));
-                continue;
-            }
-
-            List<Object> values = remembrances.get(field.field);
-
-            for (var result : mongoColl.aggregate(Arrays.asList(
-                new Document("$group", new Document("_id", String.format("$%s", field.field))),
-                new Document("$limit", 1000000)
-            )).allowDiskUse(true)) {
-                values.add(result.get("_id"));
-            }
-            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s", values.size(), field.field));
-        }
+        _preloadRememberedFields();
 
         for (Document indexDef: indexes) {
             mongoColl.createIndex(indexDef);
@@ -213,6 +216,43 @@ public class TemplateManager {
         _initializeSharding(client);
 
         generators.put(template, _compile(template));
+    }
+
+    private void _preloadRememberedFields() {
+        for (var rfield: fieldsToRemember) {
+            if (!rfield.preload) {
+                reporter.reportInit(String.format("\tSkip preloading existing keys for field: %s", rfield.name));
+                continue;
+            }
+
+            List<Object> values = remembrances.get(rfield.name);
+
+            var pipeline = new ArrayList<Document>();
+            pipeline.add(new Document("$group", new Document("_id", String.format("$%s", rfield.field))));
+            pipeline.add( new Document("$limit", rfield.number));
+
+            if (rfield.hasProjection()) {
+                var $projection = new Document();
+                for (var field: rfield.project) {
+                    $projection.append(field, String.format("$_id.%s", field));
+                }
+
+                pipeline.add(new Document(
+                    "$project",
+                    new Document("_id", $projection)));
+            }
+
+            for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
+                values.add(result.get("_id"));
+            }
+            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s", values.size(), rfield.name));
+
+            if (LOGGER.isDebugEnabled()) {
+                for (var v: values) {
+                    LOGGER.debug("-- {}", v.toString());
+                }
+            }
+        }
     }
 
     private void _initializeDictionaries() {
