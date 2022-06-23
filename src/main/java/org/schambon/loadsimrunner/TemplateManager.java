@@ -114,17 +114,17 @@ public class TemplateManager {
     private static class RememberField {
         String field;
         boolean preload ;
-        List<String> project;
+        List<String> compound;
         String name;
         int number;
 
-        public RememberField(String field, List<String> project, String name, boolean preload, int number) {
+        public RememberField(String field, List<String> compound, String name, boolean preload, int number) {
             this.field = field;
             this.preload = preload;
-            if (project == null) {
-                this.project = Collections.emptyList();
+            if (compound == null) {
+                this.compound = Collections.emptyList();
             } else {
-                this.project = project;
+                this.compound = compound;
             }
             if (name == null) {
                 this.name = field;
@@ -134,8 +134,9 @@ public class TemplateManager {
             this.number = number;
         }
 
-        public boolean hasProjection() {
-            return !project.isEmpty();
+        // compound trumps field, basically
+        public boolean isSimple() {
+            return compound.isEmpty();
         }
     }
 
@@ -143,7 +144,7 @@ public class TemplateManager {
         return input.stream().map(i -> {
             if (i instanceof Document) {
                 var doc = (Document) i;
-                return new RememberField(doc.getString("field"), doc.getList("project", String.class), doc.getString("name"), doc.getBoolean("preload", true), doc.getInteger("number", DEFAULT_NUMBER_TO_PRELOAD));
+                return new RememberField(doc.getString("field"), doc.getList("compound", String.class), doc.getString("name"), doc.getBoolean("preload", true), doc.getInteger("number", DEFAULT_NUMBER_TO_PRELOAD));
             } else {
                 return new RememberField((String)i, null, null, true, DEFAULT_NUMBER_TO_PRELOAD);
             }
@@ -228,18 +229,26 @@ public class TemplateManager {
             List<Object> values = remembrances.get(rfield.name);
 
             var pipeline = new ArrayList<Document>();
-            pipeline.add(new Document("$group", new Document("_id", String.format("$%s", rfield.field))));
-            pipeline.add( new Document("$limit", rfield.number));
 
-            if (rfield.hasProjection()) {
-                var $projection = new Document();
-                for (var field: rfield.project) {
-                    $projection.append(field, String.format("$_id.%s", field));
+            if (rfield.isSimple()) {
+                // load by field
+                pipeline.add(new Document("$group", new Document("_id", String.format("$%s", rfield.field))));
+            } else {
+                var compoundKey = new Document();
+                for (var key: rfield.compound) {
+                    compoundKey.append(key.replace('.', '_'), String.format("$%s", key));
                 }
 
-                pipeline.add(new Document(
-                    "$project",
-                    new Document("_id", $projection)));
+                pipeline.add(new Document("$group",
+                    new Document("_id", compoundKey)
+                ));
+            }
+
+            pipeline.add( new Document("$limit", rfield.number));
+
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Preload pipeline is {}",pipeline);
             }
 
             for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
@@ -251,6 +260,31 @@ public class TemplateManager {
                 for (var v: values) {
                     LOGGER.debug("-- {}", v.toString());
                 }
+            }
+        }
+    }
+
+    private void _extractRememberedFields(Document doc) {
+        for (var rfield: fieldsToRemember) {
+            Object value;
+            if (rfield.isSimple()) {
+                if (rfield.field.contains(".")) {
+                    value = Util.subdescend(doc, Arrays.asList(rfield.field.split("\\.")));
+                } else {
+                    value = doc.get(rfield.field);
+                }
+
+            } else {
+                var cmp = new Document();
+                for (var key: rfield.compound) {
+                    cmp.append(key.replace('.', '_'), Util.subdescend(doc, Arrays.asList(key.split("\\."))));
+                }
+                value = cmp;
+            }
+
+            remembrances.get(rfield.name).add(value);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Extracted value: {} for remembered field {}", value, rfield.name);
             }
         }
     }
@@ -380,9 +414,10 @@ public class TemplateManager {
 
             var doc = generate(template);
 
-            for (RememberField field : fieldsToRemember) {
-                remembrances.get(field.field).add(doc.get(field.field));
-            }
+            //for (RememberField field : fieldsToRemember) {
+            //    remembrances.get(field.field).add(doc.get(field.field));
+            //}
+            _extractRememberedFields(doc);
 
             return doc;
         } finally {

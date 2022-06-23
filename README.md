@@ -86,7 +86,7 @@ A few things can be seen already:
 * templates are _named_ and referenced by name in the workloads.
 * workloads are also named. This is for collecting statistics.
 * templates are pretty flexible. You can use all normal EJSON expressions (like `{"$date": "2021-10-27T00:00:00Z"}`) as well as _generator expressions_ prefixed by `%`. Generator expressions allow you to randomly generate objectids, dates, and almost everything that is supported by [JavaFaker](https://github.com/DiUS/java-faker). 
-* templates can `remember` top-level fields it has generated. This is useful for generating workloads later on. When the system starts, the `remember`ed fields are pre-populated from the existing collection (if it exists) by default. In order to skip preloading, use the longer-form `{ "field": "fieldname", "preload": false }` remember configuration syntax.
+* templates can `remember` top-level fields it has generated, in order to create libraries of valid data. This is useful for generating workloads later on. When the system starts, the `remember`ed fields are pre-populated from the existing collection (if it exists) by default. See further down for advanced remember features.
 * templates can specify indexes (use normal MongoDB syntax) to create at startup.
 * workloads run independently in their own threads. They can also be multi-threaded, if you want to model specific parallelism condition. __SimRunner__ doesn't support distributed execution (yet!), though, so make sure you don't provision more threads than your hardware can handle. If omitted, `threads` defaults to 1.
 * workloads can be `pace`d, that is, you can specify that the operation should run every `n` milliseconds. For instance, if you want an aggregation to run every second and it takes 300ms, the thread will sleep for 700ms before running again. _Note that pacing is on a per-thread basis_: if you have 4 threads running ops at a 100ms pace, you should expect more or less 40 operations per second (10 per thread). If omitted, `pace` defaults to 0 - ie the thread will never sleep.
@@ -123,6 +123,7 @@ The following template expressions are supported:
 * `{"%coordLine": {"from": [x, y], "to": [x, y]}}`: create a long,lat pair (really an x,y pair) that is on the line between `from` and `to`.
 * `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
 * `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
+* `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents - this is most useful for complex remembered fields (see further down).
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
 
@@ -195,6 +196,82 @@ This creates four dictionaries:
 Dictionaries can be used in templates:
 - either directly (pick a word in the dict),
 - or by concatenating multiple entries of a dictionary. This is useful to create variable-length text based out of real words, rather than Lorem Ipsum. Most UNIX/Linux systems (including macOS) have a dictionary for spell checking at /usr/share/dict/words, that can be read directly by SimRunner to make a (nonsensical) text that you can query from, for example using Atlas Search.
+
+### Advanced remembered fields
+
+At its simplest, you can create a library of values by specifying `"remember": ["value"]` in the template. "value" can be a top-level or nested field (with `dotted.path` syntax), however note that the template manager will not traverse arrays (so if you have `{ a: [ {b:1}, {b:2}]})` you _cannot_ say `"remember": ["a.b"]`).
+
+Beyond listing fields, you can use the following long form: `"remember": [ {"field": "x", "compound": ["x", "y"], "name": "name", "preload": true, "number": 10000} ]`. This long form provides the following features:
+- `field`: field name or field path, like simply listing in `remember`
+- `compound`: instead of managing a single field, generate a document by compounding several fields. For example, `"compound": [ "x", "y.z" ]` will remember a value of the form `{"x": ..., "y_z": ...}`. Note that paths are descended for identifying values, but keys are named by substituting "_" for ".". If `compound` is present, `field` is ignored.
+- `name`: this is the name of the value library, which will be used in queries. By default, it is the same as `field`. If using `compound`, it is mandatory to specify a name.
+- `preload`: should we load values from the existing collection at startup (default: true)?
+- `number`: how many distinct values should we preload from the existing collection at startup (default: one million)?
+
+Compounding is useful when you want to run complex queries and still ensure they do match some existing records. For example, with the following template:
+```
+{
+    "name": "person",
+    "template": { 
+        "_id": "%objectid",
+        "first": "%name.first",
+        "last": "%name.last",
+        "date of birth": "%date.birthday"
+        (...)
+    },
+    "remember": ["first", "last"]
+}
+
+```
+
+If you want to run a query on both `first` and `last`, you could do that by `remember`ing both fields and running a workload like:
+
+```
+{
+    "template": "person",
+    "op": "find",
+    "params": {
+        "filter": {
+            "first": "#first",
+            "last": "#last"
+        }
+    }
+}
+```
+
+but it would pick a first name and a last name at random - most of the time yielding a combination that doesn't actually exist in the database. Instead, use a compound rembember specification:
+
+```
+{
+    "name": "person",
+    "template": { 
+        "_id": "%objectid",
+        "first": "%name.first",
+        "last": "%name.last",
+        "date of birth": "%date.birthday"
+        (...)
+    },
+    "remember": [{"compound": ["first", "last"], "name": "firstAndLast"}]
+}
+```
+
+and query it like this:
+
+```
+{
+    "template": "person",
+    "op": "find",
+    "variables": {
+        "compoundVar": "#firstAndLast"
+    },
+    "params": {
+        "filter": {
+            "first": {"%descend": {"in": "##compoundVar", "path": "first"}}
+            "last":  {"%descend": {"in": "##compoundVar", "path": "last"}}
+        }
+    }
+}
+```
 
 ### Create Options
 
@@ -492,6 +569,5 @@ Limitations
 -----------
 
 * Does not support arrayfilters, hint
-* Only top-level fields can be remembered
 * No declarative support for transactions or indeed, multi-operation workflows ("read one doc and update another") - you have to use custom runners for that.
 
