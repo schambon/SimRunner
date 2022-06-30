@@ -117,13 +117,13 @@ The following template expressions are supported:
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
-* `{"%dictionary": {"name": "dictionary name"}}`: pick a value from a dictionary
+* `{"%dictionary": {"name": "dictionary name"}}`: pick a value from a dictionary (synonym with `"#dictionary name"`)
 * `{"%dictionaryConcact": {"from": "dictionary name", "length": (number), "sep": "separator}}`: string _length_ values from a dictionary, separated by _sep_
 * `{"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the database, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
 * `{"%coordLine": {"from": [x, y], "to": [x, y]}}`: create a long,lat pair (really an x,y pair) that is on the line between `from` and `to`.
 * `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
 * `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
-* `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents - this is most useful for complex remembered fields (see further down).
+* `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents. This should be mostly legacy, as `#document.dot.delimited.path` is equivalent.
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
 
@@ -131,7 +131,7 @@ The best way to generate random text is to use `%lorem.word` or `%lorem.sentence
 
 ### Template variables (interdependant fields)
 
-It is possible to create _variables_, which you can reuse multiple times in a template.
+It is possible to create _variables_, which are evaluated once and reused multiple times in a template.
 
 For example, look at this `templates` section:
 
@@ -147,7 +147,7 @@ For example, look at this `templates` section:
         "template": {
             "first": "%name.firstName",
             "last": "%name.lastName",
-            "birth": "##birthday",
+            "birth": "#birthday",
             "death": {"%date": {"min": "##birthday", "max": {"$date": "1950-01-01"}}}
         }
     }
@@ -194,7 +194,7 @@ This creates four dictionaries:
 - `locations` is a plain text file, a dictionary entry per line (only strings, no other or mixed types)
 
 Dictionaries can be used in templates:
-- either directly (pick a word in the dict),
+- either directly (pick a word in the dict) with the `"#dict"` or `{"%dictionary": {"name": "dict"}}` syntaxes.
 - or by concatenating multiple entries of a dictionary. This is useful to create variable-length text based out of real words, rather than Lorem Ipsum. Most UNIX/Linux systems (including macOS) have a dictionary for spell checking at /usr/share/dict/words, that can be read directly by SimRunner to make a (nonsensical) text that you can query from, for example using Atlas Search.
 
 ### Advanced remembered fields
@@ -266,12 +266,24 @@ and query it like this:
     },
     "params": {
         "filter": {
-            "first": {"%descend": {"in": "##compoundVar", "path": "first"}}
-            "last":  {"%descend": {"in": "##compoundVar", "path": "last"}}
+            "first": "#compoundVar.first",
+            "last":  "#compoundVar.last"
         }
     }
 }
 ```
+
+### Hash-name evaluation
+
+When the system encounters a `#name` token, it is resolved in the following order:
+
+1. Variables
+2. Remembered fields
+3. Dictionaries
+
+For compatibility's sake, the `##name` syntax can still be used to refer to variables.
+
+When a token like `#name.sub.document` is found, documents are descended as expected. Arrays are not descended.
 
 ### Create Options
 

@@ -53,16 +53,16 @@
                     {"%decimal": {"min": -1000, "max": 1000}}
                 ],
                 "payload": {"%binary": {"size": 32}},
-                "num": "##num",
-                "num+": {"%number": {"min": "##num", "max": 200}},
+                "num": "#num",
+                "num+": {"%number": {"min": "#num", "max": 200}},
                 "variableArray": {
                     "%array": {
-                        "min": "##num", "max": "##num",
+                        "min": "#num", "max": "#num",
                         "of": { "date": "%date", "num": "%natural" }
                     }
                 },
-                "createdAt": "##createDate",
-                "updateAt": {"%date": {"min": "##createDate", "max": {"$date": "2021-11-01"}}},
+                "createdAt": "#createDate",
+                "updateAt": {"%date": {"min": "#createDate", "max": {"$date": "2021-11-01"}}},
                 "dictionary": {
                     "name": {"%dictionary": {"name": "names"}},
                     "statuses": {"%dictionary": {"name": "statuses"}},
