@@ -5,6 +5,11 @@ This is a tool that can reproduce, as much as possible, realistic workloads on M
 
 It should be considered a "work in progress" and comes without any support or guarantee, either from MongoDB, Inc. or myself.
 
+2022-06-30 Update
+-----------------
+
+The newer version has a fairly drastic reworking of the whole variable / remembered field / dictionary and object descent access syntax. It's much simpler now! But since the new `#` token is now overloaded, it can be a bit misleading and although by and large the previous syntaxes (`##` and `%descend`) are still supported, it is possible that existing workloads may need to be adapted.
+
 TL;DR
 -----
 
