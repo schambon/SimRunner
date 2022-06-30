@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -477,11 +478,13 @@ public class TemplateManager {
             String val = (String) value;
             if (val.startsWith("%")) {
                 return _valueGenerator(val, new DocumentGenerator());
-            } else if (val.startsWith("##")) {
-                return () -> localVariables.get().get(val.substring(2));
             } else if (val.startsWith("#")) {
+                return _hashGenerator(val.substring(1));
+            } else if (val.startsWith("##")) { // this is for compatibility
+                return () -> localVariables.get().get(val.substring(2));
+            } /*else if (val.startsWith("#")) {
                 return new RemindingGenerator(remembrances.get(val.substring(1)));
-            }
+            }*/
             else return ValueGenerators.constant(value);
         } else if (value instanceof Document) {
             var subdoc = (Document) value;
@@ -500,6 +503,47 @@ public class TemplateManager {
         } else {
             return ValueGenerators.constant(value);
         }
+    }
+
+    private Generator _hashGenerator(String key) {
+        return () -> {
+            var keys = Arrays.asList(key.split("\\."));
+
+            var head = keys.get(0); // at least we are always assured it exists
+            var tail = keys.subList(1, keys.size()); // may be empty
+
+            // 1. dereference head
+            Object resolved;
+            // first check variables - note we may be defining variables so they don't exist yet!
+            if (localVariables.get() != null && localVariables.get().containsKey(head)) {
+                resolved = localVariables.get().get(head);
+            } else if (remembrances.containsKey(head)) {
+                var values = remembrances.get(head);
+                if (values.size() == 0) {
+                    resolved = null;
+                } else {
+                    resolved = values.get(ThreadLocalRandom.current().nextInt(values.size()));
+                }
+            } else if (dictionaries.containsKey(head)) {
+                var values = dictionaries.get(head);
+                if (values.size() == 0) {
+                    resolved = null;
+                } else {
+                    resolved = values.get(ThreadLocalRandom.current().nextInt(values.size()));
+                }
+            } else {
+                LOGGER.debug("Hash key not resolved: {}", head);
+                return null;
+            }
+
+            // 2. descend
+            if (resolved instanceof Document) {
+                return Util.subdescend((Document) resolved, tail);
+            } else {
+                LOGGER.debug("Hash key not a document, but there is a descent: {}", head);
+                return resolved;
+            }
+        };
     }
 
     private Generator _valueGenerator(String operator, DocumentGenerator params) {

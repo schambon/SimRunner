@@ -1,0 +1,94 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "remember",
+            "database": "simrunner",
+            "collection": "remember",
+            "comment": "name should take a value from the dictionary",
+            "drop": true,
+            "variables": {
+                "test": "#subdocs",
+                "notfoundvar": "#notfound"
+            },
+            "template": {
+                "_id": "%objectid",
+                "name": "#names",
+                "a": "#subdocs.a",
+                "variable": "#test",
+                "notfound": "#notfound",
+                "notfoundvar": "#notfoundvar",
+                "dataloaded": "#dataLoaded",
+                "dataloaded_descend": "#dataLoaded.data_sub_something",
+                "descending": {
+                    "aa": "#test.a",
+                    "bb": "#test.b",
+                    "cc": "#test.c.d"
+                },
+                "data": {
+                    "cui": "%natural",
+                    "cug": "%natural",
+                    "sub": {
+                        "something": "%lorem.word",
+                        "else": "%lorem.word"
+                    },
+                    "padding": { "%array": {"min": 1, "max": 10, "of": "%lorem.sentence"} }
+                },
+                "first": "%name.firstName",
+                "last": "%name.lastName"
+             },
+             "dictionaries": {
+                "names": ["John", "Jill", "Jane", "Jim"],
+                "subdocs": [{"a":1, "b":1, "c": {"d": 1}}, {"a":2, "b": 2}]
+            },
+            "remember": [{"compound": ["data.cui", "data.sub.something"], "name": "dataLoaded", "preload": true, "number": 10}, "_id", {"compound": ["first", "last"], "name": "firstAndLast"}],
+            "indexes": []
+        }
+    ],
+    "workloads": [
+        {
+            "name": "Insert",
+            "template": "remember",
+            "op": "insert",
+            "pace": 100
+        },
+        {
+            "name": "compoundRemember",
+            "template": "remember",
+            "op":"find",
+            "variables": {
+                "firstAndLast": "#firstAndLast"
+            },
+            "params": {
+                "filter": {
+                    "first": "#firstAndLast.first",
+                    "last": "#firstAndLast.last"
+                }
+            }
+        },
+        {
+            "disabled": true,
+            "name": "Descent",
+            "template": "remember",
+            "op": "find",
+            "variables": {
+                "dataVar": "#dataLoaded"
+            },
+            "params": {
+                "filter": {
+                    "data.cui": {"%descend": {"in": "##dataVar", "path": "data_cui"}},
+                    "data.sub.something":  {"%descend": {"in": "##dataVar", "path": "data_sub_something"}}
+                }
+            },
+            "pace": 100
+        }
+ 
+    ]
+    
+}
