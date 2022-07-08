@@ -6,7 +6,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
@@ -39,6 +38,7 @@ public class WorkloadManager {
     ReadPreference readPreference;
     ReadConcern readConcern;
     WriteConcern writeConcern;
+    long stopAfter = -1;
 
     Reporter reporter;
 
@@ -59,6 +59,12 @@ public class WorkloadManager {
         this.threads = config.getInteger("threads", 1);
         this.batch =  config.getInteger("batch", 0);
         this.pace = config.getInteger("pace", 0);
+
+        var _stopAfter = config.get("stopAfter");
+        if (_stopAfter != null) {
+            this.stopAfter = ((Number)_stopAfter).longValue();
+        }
+        LOGGER.debug("Workload {} stopping after {} (config: {})", name, stopAfter, _stopAfter);
 
         String readPref = config.getString("readPreference");
         if (readPref != null) {
@@ -186,5 +192,9 @@ public class WorkloadManager {
 
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    public long getStopAfter() {
+        return stopAfter;
     }
 }

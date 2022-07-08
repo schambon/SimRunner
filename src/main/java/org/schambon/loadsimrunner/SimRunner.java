@@ -127,7 +127,7 @@ public class SimRunner {
             throw new InvalidConfigException("Missing or invalid workloads section");
         }
         for (var workloadConfig: (List<Document>) config.get("workloads")) {
-            if (! workloadConfig.containsKey("disabled"))
+            if ((! workloadConfig.containsKey("disabled")) || (!(workloadConfig.getBoolean("disabled", false))))
                 workloads.add(new WorkloadManager(workloadConfig));
         }
 

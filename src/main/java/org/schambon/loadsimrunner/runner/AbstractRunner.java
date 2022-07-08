@@ -1,7 +1,5 @@
 package org.schambon.loadsimrunner.runner;
 
-import com.mongodb.ReadConcern;
-import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
@@ -20,6 +18,9 @@ public abstract class AbstractRunner implements Runnable {
     protected String name;
     protected Document params;
     protected Document variables; // may be null!
+    protected long stopAfter;
+
+    protected long counter = 0;
 
     public AbstractRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         this.template = workloadConfiguration.getTemplateConfig();
@@ -43,14 +44,22 @@ public abstract class AbstractRunner implements Runnable {
         this.reporter = reporter;
         this.params = workloadConfiguration.getParams();
         this.variables = workloadConfiguration.getVariables();
+        this.stopAfter = workloadConfiguration.getStopAfter();
     }
 
     @Override
     public void run() {
-        while (true) {
+        var keepGoing = true;
+        while (keepGoing) {
             try {
                 template.setVariables(variables);
                 long duration = doRun();
+                counter++;
+                LoggerFactory.getLogger(getClass()).debug("Counter: {}, stopAfter: {}", counter, stopAfter);
+                if (stopAfter > 0 && counter >= stopAfter) {
+                    LoggerFactory.getLogger(getClass()).info("Workload {} stopping.", name);
+                    keepGoing = false;
+                }
                 if (pace != 0) {
                     long wait = Math.max(0, pace - duration);
                     Thread.sleep(wait);
