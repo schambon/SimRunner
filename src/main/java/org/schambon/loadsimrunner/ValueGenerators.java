@@ -162,6 +162,19 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator abs(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var of = (Number) params.get("of");
+            if (of instanceof Long) {
+                return Math.abs(of.longValue());
+            } else if (of instanceof Integer) {
+                return Math.abs(of.intValue());
+            } else {
+                return Math.abs(of.doubleValue());
+            }
+        };
+    }
 
     public static Generator stringConcat(DocumentGenerator input) {
         return () -> {

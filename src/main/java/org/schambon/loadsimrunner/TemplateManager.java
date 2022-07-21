@@ -563,6 +563,7 @@ public class TemplateManager {
             case "%gaussian": return ValueGenerators.gaussian(params);
             case "%product": return ValueGenerators.product(params);
             case "%sum": return ValueGenerators.sum(params);
+            case "%abs": return ValueGenerators.abs(params);
 
             // strings
             case "%stringConcat": return ValueGenerators.stringConcat(params);
