@@ -87,6 +87,7 @@ public class SimRunner {
         }
         
         while(true) {
+            LOGGER.debug("Reporter waking up");
             try {
                 Thread.sleep((long) reportInterval);
             } catch (InterruptedException e) {

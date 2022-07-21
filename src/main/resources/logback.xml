@@ -20,6 +20,7 @@
       <logger name="org.mongodb.driver" level="WARN"/>
 
       <!-- Set to DEBUG to eyeball generated documents -->
+      <logger name="org.schambon.loadsimrunner.SimRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.TemplateManager" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.Reporter" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.InsertRunner" level="INFO"/>

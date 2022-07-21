@@ -37,24 +37,30 @@ public class Reporter {
     }
 
     public void computeReport() {
+        LOGGER.debug("Scheduling report compute");
         asyncExecutor.submit(() -> {
-            var oldStats = stats;
-            long now = System.currentTimeMillis();
-            long interval = now - startTime;
-            startTime = now;
-    
-            stats = new TreeMap<>();
-    
-            Document reportDoc = new Document();
-            for (var workload: oldStats.keySet()) {
-                reportDoc.append(workload, oldStats.get(workload).compute(interval));
+            try {
+                LOGGER.debug("Running report compute");
+                var oldStats = stats;
+                long now = System.currentTimeMillis();
+                long interval = now - startTime;
+                startTime = now;
+        
+                stats = new TreeMap<>();
+        
+                Document reportDoc = new Document();
+                for (var workload: oldStats.keySet()) {
+                    reportDoc.append(workload, oldStats.get(workload).compute(interval));
+                }
+        
+                Instant reportInstant = Instant.ofEpochMilli(now);
+                Report report = new Report(reportInstant, reportDoc);
+                reports.put(reportInstant, report);
+        
+                LOGGER.info(report.toString());
+            } catch (Throwable t) {
+                LOGGER.error("Error while computing report", t);
             }
-    
-            Instant reportInstant = Instant.ofEpochMilli(now);
-            Report report = new Report(reportInstant, reportDoc);
-            reports.put(reportInstant, report);
-    
-            LOGGER.info(report.toString());
         });
     }
 
@@ -94,7 +100,11 @@ public class Reporter {
 
             List<Long> durations = new ArrayList<>();
             durations.addAll(durationsBatch);
-            long ninetyFifth = durations.get((int)Math.ceil(.95d * (double)durations.size()));
+            var ninetyFifthIndex = (int)Math.ceil(.95d * (double)durations.size());
+            if (ninetyFifthIndex >= durations.size()) {
+                ninetyFifthIndex = Math.max(0, durations.size()-1);
+            }
+            long ninetyFifth = durations.get(ninetyFifthIndex);
             long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2+1) : 0;
 
             Stats batchStats = Stats.of(durations);
