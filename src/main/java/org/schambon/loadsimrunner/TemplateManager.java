@@ -493,6 +493,7 @@ public class TemplateManager {
                 var x = subdoc.entrySet().iterator().next();
 
                 return _valueGenerator((String) x.getKey(), _compile((Document) x.getValue()));
+
             } else {
                 return _compile(subdoc);
             }
@@ -549,7 +550,9 @@ public class TemplateManager {
     private Generator _valueGenerator(String operator, DocumentGenerator params) {
         switch (operator) {
             case "%objectid": return ValueGenerators.objectId();
-            case "%bool": return ValueGenerators.bool();
+            case "%bool":
+            case "%boolean":
+             return ValueGenerators.bool();
 
             // numbers
             case "%integer":
@@ -580,6 +583,7 @@ public class TemplateManager {
             case "%uuidString": return ValueGenerators.uuidString();
             case "%uuidBinary": return ValueGenerators.uuidBinary();
             case "%array": return ValueGenerators.array(params);
+            case "%keyValueMap": return ValueGenerators.keyValueMap(params);
 
             // dictionary
             case "%dictionary": return ValueGenerators.dictionary(params, dictionaries);

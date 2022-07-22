@@ -123,9 +123,10 @@ The following template expressions are supported:
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
+* `{"%keyValueMap": {"min": integer, "max": integer, "key": { template resolving to string }, "value": { template } }}`: variable-length subdocument with keys/values generated from the provided templates. Key uniqueness is enforced at generation time.
 * `{"%dictionary": {"name": "dictionary name"}}`: pick a value from a dictionary (synonym with `"#dictionary name"`)
 * `{"%dictionaryConcact": {"from": "dictionary name", "length": (number), "sep": "separator}}`: string _length_ values from a dictionary, separated by _sep_
-* `{"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the database, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
+* `{"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the dataset, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
 * `{"%coordLine": {"from": [x, y], "to": [x, y]}}`: create a long,lat pair (really an x,y pair) that is on the line between `from` and `to`.
 * `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
 * `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.

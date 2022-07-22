@@ -176,6 +176,7 @@ public class ValueGenerators {
         };
     }
 
+
     public static Generator stringConcat(DocumentGenerator input) {
         return () -> {
             var params = input.generateDocument();
@@ -336,20 +337,6 @@ public class ValueGenerators {
         return () -> UUID.randomUUID();
     }
 
-    public static Generator array(Document params, Generator subgen) {
-        int min = params.getInteger("min", 0);
-        int max = params.getInteger("max", 10);
-
-        return () -> {
-            int size = ThreadLocalRandom.current().nextInt(min, max + 1); // plus one so I can say "min:5, max:6" and that will generate exactly 5, as the bound is exclusive
-            List<Object> result = new ArrayList<>();
-            for (var i = 0; i < size; i++) {
-                result.add(subgen.generate());
-            }
-            return result;
-        };
-    }
-
     public static Generator array(DocumentGenerator input) {
         return () -> {
             var params = input.generateDocument();
@@ -363,6 +350,31 @@ public class ValueGenerators {
                 result.add(input.subGenerate("of"));
             }
             return result;
+        };
+    }
+
+
+    public static Generator keyValueMap(DocumentGenerator input) {
+        return () -> {
+
+            var params = input.generateDocument();
+
+            int min = params.getInteger("min", 0);
+            int max = params.getInteger("max", 10);
+
+            int size = ThreadLocalRandom.current().nextInt(min, max + 1); 
+
+            var result = new Document();
+
+            for (var i = 0; i < size; i++) {
+                var key = (String) input.subGenerate("key");
+                while (result.containsKey(key)) { // enforce uniqueness
+                    key = (String) input.subGenerate("key");
+                }
+                result.append(key, input.subGenerate("value"));
+            }
+            return result;
+
         };
     }
 
