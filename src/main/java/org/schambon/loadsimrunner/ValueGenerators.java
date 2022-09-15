@@ -176,6 +176,15 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator mod(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var of = (Number) params.get("of");
+            var by = (Number) params.get("by");
+
+            return of.longValue() % by.longValue();
+        };
+    }
 
     public static Generator stringConcat(DocumentGenerator input) {
         return () -> {

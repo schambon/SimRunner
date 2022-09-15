@@ -1,0 +1,37 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "mod",
+            "database": "simrunner",
+            "collection": "mod",
+            "drop": true,
+            "variables": {
+                "a": "%natural"
+            },
+            "template": {
+                "_id": "%objectid",
+                "a": "#a",
+                "mod": {"%mod": {"of": "#a", "by": 10}}
+             }
+        }
+    ],
+    "workloads": [
+
+        {
+            "name": "Insert",
+            "template": "mod",
+            "op": "insert",
+            "threads": 1,
+            "pace": 100
+        }
+ 
+    ]
+    
+}

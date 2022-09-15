@@ -113,6 +113,7 @@ The following template expressions are supported:
 * `%product`: product of number array specified by `of`. Parameter `type` (either `long` or `double`, default `long`) specifies how to cast the result
 * `%sum`: like `%product` but sums the `of` array
 * `%abs`: absolute value
+* `{"%mod": {"of": number, "by": number}}`: modulus (`of` mod `by`)
 * `%now`: current date
 * `%date`: create a date between the Unix Epoch and 10 years in the future, or specify `min`/`max` bounds in a subdocument, either as ISO8601 or as EJSON dates (hint: `{$date: "2021-01-01"}` works but `"2021-01-01"` doesn't as it's not valid ISO8601).
 * `{"%plusDate": {"base": date, "plus": amount, "unit": unit}}`: adds some time to a date. `unit` is either: `year`, `month`, `day`, `minute`

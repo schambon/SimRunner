@@ -567,6 +567,7 @@ public class TemplateManager {
             case "%product": return ValueGenerators.product(params);
             case "%sum": return ValueGenerators.sum(params);
             case "%abs": return ValueGenerators.abs(params);
+            case "%mod": return ValueGenerators.mod(params);
 
             // strings
             case "%stringConcat": return ValueGenerators.stringConcat(params);
