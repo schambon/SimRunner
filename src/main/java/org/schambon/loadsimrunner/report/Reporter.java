@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.bson.Document;
@@ -36,7 +37,7 @@ public class Reporter {
         LOGGER.info(String.format("INIT: %s", message));
     }
 
-    public void computeReport() {
+    public void computeReport(List<? extends ReporterCallback> callbacks) {
         LOGGER.debug("Scheduling report compute");
         asyncExecutor.submit(() -> {
             try {
@@ -58,6 +59,11 @@ public class Reporter {
                 reports.put(reportInstant, report);
         
                 LOGGER.info(report.toString());
+
+                for (var cb : callbacks) {
+                    cb.report(report);
+                }
+
             } catch (Throwable t) {
                 LOGGER.error("Error while computing report", t);
             }

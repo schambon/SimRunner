@@ -1,6 +1,7 @@
 package org.schambon.loadsimrunner;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -21,6 +22,7 @@ import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.http.HttpServer;
+import org.schambon.loadsimrunner.report.MongoReporter;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +73,8 @@ public class SimRunner {
         for (var entry: templates.entrySet()) {
             entry.getValue().initialize(client);
         }
+        var mongoReporter = new MongoReporter((Document) config.get("mongoReporter"));
+        var reporterCallbacks = Collections.singletonList(mongoReporter);
 
         reporter.start(); // start the clock
         for (var workload: workloads) {
@@ -93,7 +97,7 @@ public class SimRunner {
             } catch (InterruptedException e) {
                 LOGGER.warn("Interrupted", e);
             }
-            reporter.computeReport();
+            reporter.computeReport(reporterCallbacks);
         }
     }
 

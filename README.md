@@ -1,14 +1,18 @@
 SimRunner
 =========
 
-This is a tool that can reproduce, as much as possible, realistic workloads on MongoDB - so you can model as accurately as possible a given workload to test infrastructure changes, or workload changes, before going live.
+SimRunner is a tool that binds:
+- a powerful data generator for MongoDB
+- a declarative and highly scalable workload generator
+
+You can think of SimRunner as (a bit more than) the sum of [mgeneratejs](https://www.npmjs.com/package/mgeneratejs) and [POCDriver](https://github.com/johnlpage/pocdriver). Generate documents as you would with mgenerate, and inject them to MongoDB with a super-fast multithreaded workload framework.
+
+Workloads are declarative in that you describe them in JSON. Just write your queries, your threading options, and you're set. No code to write. Just make sure you close all your curly brackets. Of course, since MongoDB queries are themselves BSON Documents, you can use the same expression language as in the data generator to introduce some variability. Workloads have a few tricks up their sleeve - for example you can build a "dictionary" of known or generated values that you can reuse in your queries.
+
+Thanks to all this, SimRunner can reproduce fairly closely realistic workloads on MongoDB - so you can model as accurately as possible a given workload to test infrastructure changes, or workload changes, before going live.
 
 It should be considered a "work in progress" and comes without any support or guarantee, either from MongoDB, Inc. or myself.
 
-2022-06-30 Update
------------------
-
-The newer version has a fairly drastic reworking of the whole variable / remembered field / dictionary and object descent access syntax. It's much simpler now! But since the new `#` token is now overloaded, it can be a bit misleading and although by and large the previous syntaxes (`##` and `%descend`) are still supported, it is possible that existing workloads may need to be adapted.
 
 TL;DR
 -----
@@ -46,6 +50,14 @@ Let's look at an example:
         "enabled": false,
         "port": 3000,
         "host": "localhost"
+    },
+    "mongoReporter": {
+        "enabled": true,
+        "connectionString": "mongodb://localhost:27017",
+        "database": "simrunner",
+        "collection": "report",
+        "drop": false,
+        "runtimeSuffix": false
     },
     "templates": [
         {
@@ -540,10 +552,39 @@ Once the system has started, use `curl host:port/report` for a list of all repor
 ]
 ```
 
+MongoDB Reporting
+--------------
+
+The reports SimRunner builds can add up to a bunch of data. Of course you can visualise them in the http interface (and download as CSV to work in your favourite spreadsheet program), but at some point it would be nice to send it to something more robust, like... a database?
+
+If you add a `mongoReporter` section to your config file, SimRunner will write all reports to the provided MongoDB collection. Note that if the collection doesn't exist (or if you specify `"drop": true`), then it will create it as a [time series collection](https://www.mongodb.com/docs/manual/core/timeseries-collections/). This requires at least MongoDB 5.0. If you're running on older versions, just create your report collection manually.
+
+Configuration:
+
+```
+"mongoReporter": {
+    "enabled": true,
+    "connectionString": "mongodb://localhost:27017",
+    "database": "simrunner",
+    "collection": "report",
+    "drop": false,
+    "runtimeSuffix": true
+}
+```
+
+* `enabled`: should we log results to MongoDB ? (default: `false`)
+* `connectionString`: MongoDB connection string. Does not have to be the same as the tested cluster (arguably, should not.)
+* `database`: database in which to store the reports
+* `collection`: collection in which to store the reports
+* `drop`: drop the collection? (default: `false`)
+* `runtimeSuffix`: if `true`, the UTC date and time when SimRunner starts up is appended to the collection name. This creates in effect one collection per test run. (default: `false`)
+
+Note that the HTTP interface doesn't need to be running for the MongoReporter to work. They are two completely different subsystems.
+
 Tips and tricks
 ---------------
 
-# Preloading remembered nested fields
+### Preloading remembered nested fields
 
 Only top-level fields can be remembered at insert time. However, one neat trick is to first insert a lot of data, then apply the read patterns in a second step. If the fields are single-valued then you can use "remember" to preload nested data by using the dotted syntax.
 
@@ -569,7 +610,7 @@ For instance:
 
 This will NOT remember fields as it inserts them, but it will preload them all right! (Thanks to Khalid Dar for pointing that out)
 
-# Mix remembered fields and variables
+### Mix remembered fields and variables
 
 The `#field` expression takes a value from the "field" bag at random every time it is executed. If you need the same value twice, use a variable (which is set once per template). For instance, to create a workload that finds a document by first name and creates a new field by appending a random number to the first name, you can do this:
 
@@ -587,6 +628,10 @@ The `#field` expression takes a value from the "field" bag at random every time 
     }
 }]
 ```
+
+### Comment your code!
+
+JSON has no syntax for comments... but SimRunner will happily ignore configuration keys it doesn't recognise. We consider it good practice to add a `comment` key to your workload definitions.
 
 Limitations
 -----------

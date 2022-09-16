@@ -1,0 +1,90 @@
+package org.schambon.loadsimrunner.report;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.TimeSeriesGranularity;
+import com.mongodb.client.model.TimeSeriesOptions;
+
+public class MongoReporter implements ReporterCallback {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongoReporter.class);
+    
+    boolean initialized = false;
+
+    MongoCollection<Document> collection;
+
+    public MongoReporter(Document config) {
+        if (config == null) {
+            initialized = false;
+            // nothing to initialize, let it go
+        } else {
+
+            var enabled = config.getBoolean("enabled", false);
+
+            if (enabled) {
+                var connstring = config.getString("connectionString");
+                var database = config.getString("database");
+                var collectionName = config.getString("collection");
+                var drop = config.getBoolean("drop", false);
+                var runtimeSuffix = config.getBoolean("runtimeSuffix", false);
+
+                if (connstring == null || database == null || collectionName == null) {
+                    LOGGER.error("connectionString, database and collection are mandatory parameters for mongoReporter");
+                    System.exit(1);
+                }
+
+                if (runtimeSuffix) {
+                    var formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm").withZone(ZoneId.of("Z"));
+                    collectionName = collectionName + "_" + formatter.format(Instant.now());
+                }
+
+                var exportClient = MongoClients.create(connstring);
+                var db = exportClient.getDatabase(database);
+                collection = db.getCollection(collectionName);
+
+                if (drop) {
+                    collection.drop();
+                    LOGGER.info("Dropped collection {}.{} for result export", database, collectionName);
+                }
+
+                var exists = false;
+                for(var name: db.listCollectionNames()) {
+                    if (name.equals(collectionName)) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists) {
+                    db.createCollection(collectionName, new CreateCollectionOptions().timeSeriesOptions(
+                        new TimeSeriesOptions("time").metaField("task").granularity(TimeSeriesGranularity.SECONDS)
+                    ));
+                }
+
+                initialized = true;
+            }
+        }
+    }
+
+    @Override
+    public void report(Report report) {
+        if (initialized) {
+            for (var task : report.getReport().keySet()) {
+                collection.insertOne(
+                    new Document("time", report.getTime())
+                    .append("task", task)
+                    .append("measures", report.getReport().get(task))
+                );
+            }
+        }
+    }
+}
