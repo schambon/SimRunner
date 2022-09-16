@@ -40,6 +40,7 @@ public class HttpServer {
     
         HandlerList list = new HandlerList();
         list.addHandler(new ReportHandler(reporter));
+        list.addHandler(new DownloadHander(reporter));
         list.addHandler(staticHandler);
         server.setHandler(list);
 

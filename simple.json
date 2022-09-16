@@ -1,0 +1,34 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "simple",
+            "database": "simrunner",
+            "collection": "simple",
+            "drop": true,
+            "template": {
+                "_id": "%objectid",
+                "string": "%lorem.sentence"
+            }
+        }
+    ],
+    "workloads": [
+
+        {
+            "comment": "Insert a simple record every 100ms",
+            "name": "Insert",
+            "template": "simple",
+            "op": "insert",
+            "threads": 1,
+            "pace": 100
+        }
+ 
+    ]
+    
+}
