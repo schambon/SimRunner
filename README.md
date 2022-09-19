@@ -168,7 +168,7 @@ For example, look at this `templates` section:
             "first": "%name.firstName",
             "last": "%name.lastName",
             "birth": "#birthday",
-            "death": {"%date": {"min": "##birthday", "max": {"$date": "1950-01-01"}}}
+            "death": {"%date": {"min": "#birthday", "max": {"$date": "1950-01-01"}}}
         }
     }
 ]
@@ -186,7 +186,7 @@ This creates records like this one:
 }
 ```
 
-... and ensures that `death` is in fact posterior to `birth`. Such cross-field dependencies (within a single document) is possible by creating a variable _birthday_ (using the normal templates) and generating the field `death` by referencing it (using the `##` prefix) in the parameters of the `%date` generator.
+... and ensures that `death` is in fact posterior to `birth`. Such cross-field dependencies (within a single document) is possible by creating a variable _birthday_ (using the normal templates) and generating the field `death` by referencing it (using the `#` prefix) in the parameters of the `%date` generator.
 
 Note: you can't reference a variable in another variable declaration.
 
