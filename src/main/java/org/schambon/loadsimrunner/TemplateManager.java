@@ -305,6 +305,7 @@ public class TemplateManager {
     private List<? extends Object> _loadDictionary(Document config) {
 
         String type = config.getString("type");
+        if (type == null) type = "text ";
         switch (type) {
             case "json": return _loadJSONDictionary(config);
             case "text": return _loadTextDictionary(config);
