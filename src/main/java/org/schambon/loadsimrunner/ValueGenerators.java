@@ -197,6 +197,19 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator _toString(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            
+            Object of = params.get("of");
+            if (of == null) {
+                return "";
+            } else {
+                return of.toString();
+            }
+        };
+    }
+
     /* Dates */
 
     public static Generator now() {

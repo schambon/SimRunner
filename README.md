@@ -143,6 +143,7 @@ The following template expressions are supported:
 * `{"%coordLine": {"from": [x, y], "to": [x, y]}}`: create a long,lat pair (really an x,y pair) that is on the line between `from` and `to`.
 * `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
 * `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
+* `{"%toString": {"of": template}}`: make "template" into a string (eg long -> string)
 * `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents. This should be mostly legacy, as `#document.dot.delimited.path` is equivalent.
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.

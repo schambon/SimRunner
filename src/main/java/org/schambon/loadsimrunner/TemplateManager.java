@@ -572,6 +572,7 @@ public class TemplateManager {
 
             // strings
             case "%stringConcat": return ValueGenerators.stringConcat(params);
+            case "%toString": return ValueGenerators._toString(params);
 
             // dates
             case "%now": return ValueGenerators.now();
