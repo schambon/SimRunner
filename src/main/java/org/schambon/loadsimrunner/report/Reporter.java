@@ -111,7 +111,7 @@ public class Reporter {
                 ninetyFifthIndex = Math.max(0, durations.size()-1);
             }
             long ninetyFifth = durations.get(ninetyFifthIndex);
-            long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2+1) : 0;
+            long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2) : 0;
 
             Stats batchStats = Stats.of(durations);
             var meanBatch = batchStats.mean();
