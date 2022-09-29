@@ -22,7 +22,8 @@
             "drop": true,
             "template": {
                 "_id": "%objectid",
-                "string": "%lorem.sentence"
+                "string": "%lorem.sentence",
+                "seq": "%threadSequence"
             },
             "remember": ["_id"]
         }
@@ -34,10 +35,11 @@
             "name": "Insert",
             "template": "simple",
             "op": "insert",
-            "threads": 1,
+            "threads": 4,
             "pace": 100
         },
         {
+            "disabled": true,
             "name": "find by _id",
             "template": "simple",
             "op": "find",

@@ -564,6 +564,7 @@ public class TemplateManager {
             case "%double": return ValueGenerators.doubleValue(params);
             case "%decimal": return ValueGenerators.decimal(params);
             case "%sequence": return ValueGenerators.sequence();
+            case "%threadSequence": return ValueGenerators.threadSequence();
             case "%gaussian": return ValueGenerators.gaussian(params);
             case "%product": return ValueGenerators.product(params);
             case "%sum": return ValueGenerators.sum(params);

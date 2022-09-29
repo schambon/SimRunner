@@ -132,7 +132,8 @@ The following template expressions are supported:
 * `{"%ceilDate": {"base": date, "unit": unit}}`: align date to the next unit (eg next hour, day...) - default unit is `day`
 * `{"%floorDate": {"base": date, "unit": unit}}`: truncate date to the unit (eg hour, day...) - default unit is `day`
 * `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes)
-* `%sequence`: create a sequential number. Note - there is only one sequence.
+* `%sequence`: create a sequential number from a *global* sequence.
+* `%threadSequence`: create a sequential number from a *per-thread* sequence.
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
 * `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).

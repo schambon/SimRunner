@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.javafaker.Faker;
 
+import ch.qos.logback.core.joran.conditional.ThenAction;
+
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.schambon.loadsimrunner.geodata.Place;
@@ -30,6 +32,7 @@ public class ValueGenerators {
 
     private static Faker faker = new Faker();
     private static AtomicLong sequenceNumber = new AtomicLong();
+    private static ThreadLocal<AtomicLong> threadLocalSequenceHolder = new ThreadLocal<>();
 
     public static Generator constant(Object cst) {
         return () -> cst;
@@ -45,6 +48,19 @@ public class ValueGenerators {
 
     public static Generator sequence() {
         return () -> sequenceNumber.getAndIncrement();
+    }
+
+    public static Generator threadSequence() {
+        return () -> {
+            var alng = threadLocalSequenceHolder.get();
+            synchronized (threadLocalSequenceHolder) {
+                if (alng == null) {
+                    alng = new AtomicLong();
+                    threadLocalSequenceHolder.set(alng);
+                }
+            }
+            return alng.getAndIncrement();
+        };
     }
 
     public static Generator integer(DocumentGenerator params) {
