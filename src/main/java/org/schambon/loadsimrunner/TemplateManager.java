@@ -29,6 +29,7 @@ import static com.mongodb.client.model.Filters.*;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.report.Reporter;
+import org.schambon.loadsimrunner.runner.WorkloadThread;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -569,6 +570,16 @@ public class TemplateManager {
             case "%sum": return ValueGenerators.sum(params);
             case "%abs": return ValueGenerators.abs(params);
             case "%mod": return ValueGenerators.mod(params);
+
+            // workload
+            case "%threadNumber": return () -> {
+                WorkloadThread t = (WorkloadThread) Thread.currentThread();
+                return t.getThreadNumber();
+            };
+            case "%workloadName": return () -> {
+                WorkloadThread t = (WorkloadThread) Thread.currentThread();
+                return t.getWorkloadName();
+            };
 
             // strings
             case "%stringConcat": return ValueGenerators.stringConcat(params);

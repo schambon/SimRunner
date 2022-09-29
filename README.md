@@ -145,6 +145,8 @@ The following template expressions are supported:
 * `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
 * `{"%toString": {"of": template}}`: make "template" into a string (eg long -> string)
 * `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents. This should be mostly legacy, as `#document.dot.delimited.path` is equivalent.
+* `%workloadName`: name of the current workload
+* `%threadNumber`: number of the thread in the current workload
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
 
