@@ -20,6 +20,7 @@ import org.schambon.loadsimrunner.runner.ReplaceOneRunner;
 import org.schambon.loadsimrunner.runner.ReplaceWithNewRunner;
 import org.schambon.loadsimrunner.runner.UpdateManyRunner;
 import org.schambon.loadsimrunner.runner.UpdateOneRunner;
+import org.schambon.loadsimrunner.runner.WorkloadThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +121,7 @@ public class WorkloadManager {
         this.reporter = reporter;
 
         for (var i = 0; i < threads; i++) {
-            Thread thread = new Thread(getRunnable());
+            Thread thread = new WorkloadThread(name, i, getRunnable());
             thread.start();
         }
     }
