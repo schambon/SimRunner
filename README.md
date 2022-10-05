@@ -198,7 +198,7 @@ Note: variables can also be defined in a workload definition, and used in templa
 
 ### Dictionaries
 
-Dictionaries let you create custom sets of data that the template system will pick into. Dictionaries can be a static list, a JSON file read on disk, or a plain text file read on disk.
+Dictionaries let you create custom sets of data that the template system will pick into. Dictionaries can be a static list, a JSON file read on disk, a plain text file read on disk, or even a MongoDB collection from your cluster.
 
 Example:
 
@@ -207,15 +207,21 @@ Example:
     "names": ["John", "Jill", "Joe", "Janet"],
     "statuses": ["RUNNING", {"status": "DONE", "substatus": "OK"}, {"status": "DONE", "substatus": "NOK"}],
     "characters": {"file": "characters.json", "type": "json"},
-    "locations": {"file": "locations.txt", "type": "text"}
+    "locations": {"file": "locations.txt", "type": "text"},
+    "identifiers": {"type": "collection", "collection": "referenceIdentifiers", "db": "refdb", "query": {"valid": true}, "limit": 1000, "attribute": "name"}
 }
 ```
 
-This creates four dictionaries:
+This creates five dictionaries:
 - `names` is an inline list of strings
 - `statuses` is an inline list of BSON values - this shows strings and documents, but it could be anything that is expressible in Extended JSON
 - `characters` is a JSON file read from disk. The file __must__ contain a single document with an array field called `data` that contains the dictionary (similar to inline dictionaries)
 - `locations` is a plain text file, a dictionary entry per line (only strings, no other or mixed types)
+- `identifiers` is read from `refdb.referenceIdentifiers` collection on the cluster. Only `collection` is mandatory, for the other parameters default values are:
+  * `db`: inherited from template definition
+  * `query`: `{}`
+  * `limit`: 1,000,000 (same as remembered field prefetching)
+  * `attribute`: attribute to use for the dictionary
 
 Dictionaries can be used in templates:
 - either directly (pick a word in the dict) with the `"#dict"` or `{"%dictionary": {"name": "dict"}}` syntaxes.

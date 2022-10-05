@@ -39,6 +39,7 @@ public class TemplateManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TemplateManager.class);
 
+    private MongoClient mongoClient;
     private String database;
     private String collection;
     private boolean drop = false;
@@ -159,7 +160,7 @@ public class TemplateManager {
 
     public void initialize(MongoClient client) {
         reporter.reportInit(String.format("Initializing collection %s.%s", database, collection));
-
+        this.mongoClient = client;
 
         var db = client.getDatabase(database);
         var found = false;
@@ -310,6 +311,7 @@ public class TemplateManager {
         switch (type) {
             case "json": return _loadJSONDictionary(config);
             case "text": return _loadTextDictionary(config);
+            case "collection": return _loadCollectionDictionary(config);
             default:
                 LOGGER.warn("Cannot read dictionary of type: {}", type);
                 return Collections.emptyList();
@@ -333,6 +335,31 @@ public class TemplateManager {
             LOGGER.error("Cannot read file", e);
             return Collections.emptyList();
         }
+    }
+
+    private List<String> _loadCollectionDictionary(Document config) {
+        var dbName = (config.containsKey("db")) ? config.getString("db") : this.database;
+        var _coll = mongoClient.getDatabase(dbName).getCollection(config.getString("collection"));
+
+        var query = (Document) config.get("query");
+        if (query == null) query = new Document();
+        var effectiveQuery = _compile(query).generateDocument();
+
+        var limit = config.getInteger("limit", DEFAULT_NUMBER_TO_PRELOAD);
+
+        var attribute = config.getString("attribute");
+        if (attribute == null) {
+            attribute = "_id";
+        }
+        var projectionDocument = new Document(attribute, true);
+        if (! "_id".equals(attribute)) projectionDocument.append("_id", false);
+        List<String> result = new ArrayList<>();
+
+        for (var r : _coll.find(effectiveQuery).limit(limit).projection(projectionDocument)) {
+            var v = r.get(attribute);
+            result.add(v == null ? "null" : v.toString());
+        }
+        return result;
     }
     
     private void _initializeSharding(MongoClient client) {
