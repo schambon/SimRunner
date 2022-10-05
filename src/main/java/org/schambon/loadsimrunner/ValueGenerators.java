@@ -2,6 +2,7 @@ package org.schambon.loadsimrunner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -332,9 +333,23 @@ public class ValueGenerators {
             var size = params.getInteger("size", 512);
             var bytes = new byte[size];
             ThreadLocalRandom.current().nextBytes(bytes);
-            return bytes;
+
+            if (params.containsKey("as") && "hex".equals(params.get("as"))) {
+                return bytesToHex(bytes);
+            } else return bytes;
         };
 
+    }
+
+    private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+    private static String bytesToHex(byte[] bytes) {
+        byte[] hexChars = new byte[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars, StandardCharsets.UTF_8);
     }
 
     public static Generator autoFaker(String operator) {

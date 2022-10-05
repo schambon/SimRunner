@@ -131,7 +131,7 @@ The following template expressions are supported:
 * `{"%plusDate": {"base": date, "plus": amount, "unit": unit}}`: adds some time to a date. `unit` is either: `year`, `month`, `day`, `minute`
 * `{"%ceilDate": {"base": date, "unit": unit}}`: align date to the next unit (eg next hour, day...) - default unit is `day`
 * `{"%floorDate": {"base": date, "unit": unit}}`: truncate date to the unit (eg hour, day...) - default unit is `day`
-* `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes)
+* `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes). Use `"as": "hex"` to encode in a hex string rather than a binary array
 * `%sequence`: create a sequential number from a *global* sequence.
 * `%threadSequence`: create a sequential number from a *per-thread* sequence.
 * `%uuidString`: random UUID, as String
