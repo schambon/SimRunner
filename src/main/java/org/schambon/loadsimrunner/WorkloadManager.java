@@ -109,8 +109,8 @@ public class WorkloadManager {
 
 
         if (this.batch > 0) {
-            if (! "insert".equals(op)) {
-                throw new InvalidConfigException("Op must be insert for batch work");
+            if (! ("insert".equals(op) || "updateOne".equals(op))) {
+                throw new InvalidConfigException("Op must be insert or updateOne for batch work");
             }
         }
     }

@@ -352,7 +352,7 @@ Workloads
 ### Common parameters
 
 * threads: number of worker threads for this workload
-* batch: (insert only) bulk write batch size
+* batch: (insert or updateOne only) bulk write batch size
 * pace: operations should run every _pace_ milliseconds (on each thread)
 * readPreference: primary, secondary, primaryPreferred, secondaryPreferred, nearest (no tag sets)
 * readConcern: majority, local, available, linearizable, snapshot

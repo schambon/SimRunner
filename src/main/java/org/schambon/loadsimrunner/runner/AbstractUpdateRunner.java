@@ -1,8 +1,12 @@
 package org.schambon.loadsimrunner.runner;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.UpdateResult;
 
 import org.bson.Document;
@@ -21,6 +25,14 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
 
     @Override
     protected long doRun() {
+        if (batch == 0) {
+            return updateOne();
+        } else {
+            return updateBatch();
+        }
+    }
+
+    private long updateOne() {
         var filter = (Document) params.get("filter");
         filter = template.generate(filter);
 
@@ -51,5 +63,35 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
 
     abstract protected UpdateResult doUpdate(Document filter, Document update, UpdateOptions options);
     abstract protected UpdateResult doUpdate(Document filter, List<Document> update, UpdateOptions options);
-    
+ 
+
+    private long updateBatch() {
+
+        List operations = new ArrayList<>(batch);
+
+        var options = new UpdateOptions().upsert(params.getBoolean("upsert", false));
+        var filter = (Document) params.get("filter");
+        var update = params.get("update");
+
+        for (int i = 0; i < batch; i++) {
+            var _f = template.generate(filter);
+            UpdateOneModel<Document> model;
+            if (update instanceof Document) {
+                model = new UpdateOneModel<>(_f, template.generate((Document)update), options);
+            } else if (update instanceof List) {
+                model = new UpdateOneModel<>(_f, template.generate((List<Document>)update), options);
+            } else {
+                LOGGER.error("Invalid update definition");
+                return 0;
+            }
+            operations.add(model);
+        }
+        var start = System.currentTimeMillis();
+        mongoColl.bulkWrite(operations, new BulkWriteOptions().ordered(params.getBoolean("ordered", false)));
+        long duration = System.currentTimeMillis() - start;
+        reporter.reportOp(name, batch, duration);
+        return duration;
+    }
+
+   
 }
