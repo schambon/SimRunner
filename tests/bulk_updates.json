@@ -1,0 +1,45 @@
+{
+    "connectionString": "mongodb://localhost:27017/?w=1&journal=false",
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "bulk update",
+            "database": "simrunner",
+            "collection": "bulk_update",
+            "drop": false,
+            "template": {
+                "_id": {"%natural": {"min": 0, "max": 1000}},
+                "num": {"%natural": {"min": 0, "max": 10}}
+            },
+            "indexes": [{"num":1}]
+        }
+    ],
+    "workloads": [
+        {
+            "disabled":true,
+            "name": "Update one",
+            "template": "bulk update",
+            "op": "updateOne",
+            "params": {
+                "filter": { "_id": {"%natural": {"min": 0, "max": 1000}}},
+                "update": { "$set": {"num": {"%natural": {"min": 0, "max": 10}}}},
+                "upsert": false
+            },
+            "threads": 1,
+            "batch": 100
+        } ,
+        {
+            "name": "Update many",
+            "template": "bulk update",
+            "op": "updateMany",
+            "params": {
+                "filter": { "num": {"%natural": {"min": 0, "max": 10}}},
+                "update": { "$set": {"num": {"%natural": {"min": 0, "max": 10}}}},
+                "upsert": true
+            },
+            "threads": 1,
+            "batch": 100
+        }
+    ]
+    
+}

@@ -71,7 +71,7 @@ public class Reporter {
     }
 
     public void reportOp(String name, long i, long duration) {
-        //LOGGER.debug("Reported {} {} {}", name, i, duration);
+        LOGGER.debug("Reported {} {} {}", name, i, duration);
         StatsHolder h = stats.get(name);
         if (h == null) {
             h = new StatsHolder();

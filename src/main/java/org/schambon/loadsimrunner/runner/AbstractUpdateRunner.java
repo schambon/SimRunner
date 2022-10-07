@@ -26,13 +26,13 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
     @Override
     protected long doRun() {
         if (batch == 0) {
-            return updateOne();
+            return singleUpdate();
         } else {
-            return updateBatch();
+            return bulkUpdate();
         }
     }
 
-    private long updateOne() {
+    private long singleUpdate() {
         var filter = (Document) params.get("filter");
         filter = template.generate(filter);
 
@@ -61,11 +61,9 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
         return duration;
     }
 
-    abstract protected UpdateResult doUpdate(Document filter, Document update, UpdateOptions options);
-    abstract protected UpdateResult doUpdate(Document filter, List<Document> update, UpdateOptions options);
- 
 
-    private long updateBatch() {
+
+    private long bulkUpdate() {
 
         List operations = new ArrayList<>(batch);
 
@@ -87,11 +85,17 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
             operations.add(model);
         }
         var start = System.currentTimeMillis();
-        mongoColl.bulkWrite(operations, new BulkWriteOptions().ordered(params.getBoolean("ordered", false)));
+        var bulkWriteResult = mongoColl.bulkWrite(operations, new BulkWriteOptions().ordered(params.getBoolean("ordered", false)));
         long duration = System.currentTimeMillis() - start;
-        reporter.reportOp(name, batch, duration);
+        //LOGGER.debug("Modified {}, upserted {}", bulkWriteResult.getModifiedCount(), bulkWriteResult.getUpserts().size());
+        reporter.reportOp(name, bulkWriteResult.getModifiedCount() + bulkWriteResult.getUpserts().size(), duration);
         return duration;
     }
 
+    abstract protected UpdateResult doUpdate(Document filter, Document update, UpdateOptions options);
+    abstract protected UpdateResult doUpdate(Document filter, List<Document> update, UpdateOptions options);
+ 
+    abstract protected WriteModel<Document> updateModel(Document filter, Document update, UpdateOptions options);
+    abstract protected WriteModel<Document> updateModel(Document filter, List<Document> update, UpdateOptions options);
    
 }
