@@ -609,6 +609,11 @@ public class TemplateManager {
                 return t.getWorkloadName();
             };
 
+            case "%iteration": return () -> {
+                WorkloadThread t = (WorkloadThread) Thread.currentThread();
+                return (Long) t.getContextValue("iteration");
+            };
+
             // strings
             case "%stringConcat": return ValueGenerators.stringConcat(params);
             case "%toString": return ValueGenerators._toString(params);

@@ -1,0 +1,30 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "templates": [
+        {
+            "name": "simple",
+            "database": "simrunner",
+            "collection": "simple",
+            "drop": true,
+            "template": {
+                "_id": "%objectid",
+                "iteration": "%iteration",
+                "thread": "%threadNumber"
+            },
+            "remember": []
+        }
+    ],
+    "workloads": [
+
+        {
+            "comment": "Insert a simple record every 100ms",
+            "name": "Insert",
+            "template": "simple",
+            "op": "insert",
+            "threads": 2,
+            "pace": 1000,
+            "batch": 5
+        }
+    ]
+    
+}

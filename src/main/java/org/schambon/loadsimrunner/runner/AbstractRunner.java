@@ -52,9 +52,11 @@ public abstract class AbstractRunner implements Runnable {
         var keepGoing = true;
         while (keepGoing) {
             try {
+                ((WorkloadThread) Thread.currentThread()).setContextValue("iteration", Long.valueOf(counter));
                 template.setVariables(variables);
                 long duration = doRun();
                 counter++;
+
                 LoggerFactory.getLogger(getClass()).debug("Counter: {}, stopAfter: {}", counter, stopAfter);
                 if (stopAfter > 0 && counter >= stopAfter) {
                     LoggerFactory.getLogger(getClass()).info("Workload {} stopping.", name);
