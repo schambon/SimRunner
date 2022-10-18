@@ -18,8 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.javafaker.Faker;
 
-import ch.qos.logback.core.joran.conditional.ThenAction;
-
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.schambon.loadsimrunner.geodata.Place;
@@ -207,8 +205,14 @@ public class ValueGenerators {
         return () -> {
             var params = input.generateDocument();
 
+            var sep = params.getString("sep");
+            if (sep == null) {
+                sep = "";
+            }
+
+            var _sep = sep;
             List of = (List)params.get("of");
-            Optional<String> result = of.stream().reduce((a,b) -> a.toString() + b.toString());
+            Optional<String> result = of.stream().reduce((a,b) -> a.toString() + _sep + b.toString());
 
             if (result.isPresent()) return result.get(); else return "";
         };
