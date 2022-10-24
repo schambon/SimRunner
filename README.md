@@ -622,7 +622,7 @@ This will NOT remember fields as it inserts them, but it will preload them all r
 
 ### Mix remembered fields and variables
 
-The `#field` expression takes a value from the "field" bag at random every time it is executed. If you need the same value twice, use a variable (which is set once per template). For instance, to create a workload that finds a document by first name and creates a new field by appending a random number to the first name, you can do this:
+If `field` is a remembered field, the `#field` expression takes a value from the "field" bag at random every time it is executed. If you need the same value twice, use a variable (which is set once per template). For instance, to create a workload that finds a document by first name and creates a new field by appending a random number to the first name, you can do this:
 
 ```
 "workloads": [{
@@ -633,8 +633,8 @@ The `#field` expression takes a value from the "field" bag at random every time 
     },
     "op": "updateOne",
     "params": {
-        "filter": { "first": "##first" },
-        "update": { "$set": {"newfield": {"%stringConcat": ["##first", " - ", "%natural"]}}}
+        "filter": { "first": "#first" },
+        "update": { "$set": {"newfield": {"%stringConcat": ["#first", " - ", "%natural"]}}}
     }
 }]
 ```
@@ -642,6 +642,30 @@ The `#field` expression takes a value from the "field" bag at random every time 
 ### Comment your code!
 
 JSON has no syntax for comments... but SimRunner will happily ignore configuration keys it doesn't recognise. We consider it good practice to add a `comment` key to your workload definitions.
+
+### Bulk writes and variables
+
+If you use bulk writes (the `batch` argument in an `insert` or `update` workload), it is interesting to note that the value of workload variables is set once per batch (template variables are evaluated once per document). Also, any variables defined in the workload are inherited by the template generator (for inserts). This lets you create once-per-batch values.
+
+For instance if you are dealing with time series data, you may want to insert a bunch of values for a single sensor in a batch:
+
+```
+"templates": [{
+    "template": {
+        "sensorId": "#sensor",
+        "values": (...)
+    }
+}],
+"workloads": [{
+    "op": "insert",
+    "variables": {
+        "sensor": "%number"
+    },
+    "batch": 100
+}]
+```
+
+In the above example, for each batch of 100 values, the `sensor` variable is set once and inherited by template generation. Any variables set at the template level would, however, be re-evaluated every time a document is generated.
 
 Limitations
 -----------
