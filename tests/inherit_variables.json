@@ -1,0 +1,34 @@
+{
+    "comment": "Show how variables can be passed down from the workload to the template",
+    "connectionString": "mongodb://localhost:27017",
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "simple",
+            "database": "simrunner",
+            "collection": "inheritVars",
+            "drop": true,
+            "template": {
+                "_id": "%objectid",
+                "inherited": "#inherited"
+            },
+            "remember": []
+        }
+    ],
+    "workloads": [
+
+        {
+            "comment": "Insert a record, passing down a variable",
+            "name": "Insert",
+            "template": "simple",
+            "op": "insert",
+            "threads": 1,
+            "pace": 1000,
+            "batch": 10,
+            "variables": {
+                "inherited": "%natural"
+            }
+        }
+    ]
+    
+}

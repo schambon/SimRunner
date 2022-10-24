@@ -439,8 +439,13 @@ public class TemplateManager {
     }
 
     public Document generate() {
+        var previousVariables = localVariables.get();
+
         try {
-            localVariables.set(generate(variables));
+            var newVariables = generate(variables);
+            newVariables.putAll(previousVariables);
+
+            localVariables.set(newVariables);
 
             var doc = generate(template);
 
@@ -451,7 +456,8 @@ public class TemplateManager {
 
             return doc;
         } finally {
-            localVariables.remove();
+            //localVariables.remove();
+            localVariables.set(previousVariables);
         }
     }
 
