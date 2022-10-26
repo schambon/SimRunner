@@ -443,7 +443,8 @@ public class TemplateManager {
 
         try {
             var newVariables = generate(variables);
-            newVariables.putAll(previousVariables);
+            if (previousVariables != null)
+                newVariables.putAll(previousVariables);
 
             localVariables.set(newVariables);
 
@@ -457,7 +458,8 @@ public class TemplateManager {
             return doc;
         } finally {
             //localVariables.remove();
-            localVariables.set(previousVariables);
+            if (previousVariables != null) localVariables.set(previousVariables);
+            else localVariables.remove();
         }
     }
 
