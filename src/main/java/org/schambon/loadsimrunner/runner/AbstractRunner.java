@@ -67,7 +67,7 @@ public abstract class AbstractRunner implements Runnable {
                     Thread.sleep(wait);
                 }
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error("Error caught in execution", e);
+                LoggerFactory.getLogger(getClass()).error(String.format("Workload %s: Error caught in execution", name), e);
             } finally {
                 template.clearVariables();
             } 
