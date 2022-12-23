@@ -325,7 +325,7 @@ Note that views and collation options are not supported.
 
 A template can define basic sharding options:
 - shard key
-- presplit chunks
+- presplit chunks or a custom presplit class
 
 Example configuration:
 ```
@@ -337,6 +337,18 @@ Example configuration:
     ]
 }
 ```
+
+Example configuration using a custom presplit class:
+```
+"sharding": {
+    "key": {
+        "first": 1
+    },
+    "presplit": "org.schambon.loadsimrunner.sample.SamplePreSplitter"
+}
+```
+
+Copy the sample preslit class to create your own.
 
 Presplit is optional. It is not possible to presplit a hashed sharded collection.
 
