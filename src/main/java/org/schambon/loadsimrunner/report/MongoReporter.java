@@ -21,6 +21,7 @@ public class MongoReporter implements ReporterCallback {
     boolean initialized = false;
 
     MongoCollection<Document> collection;
+    String runIdentifier;
 
     public MongoReporter(Document config) {
         if (config == null) {
@@ -36,6 +37,7 @@ public class MongoReporter implements ReporterCallback {
                 var collectionName = config.getString("collection");
                 var drop = config.getBoolean("drop", false);
                 var runtimeSuffix = config.getBoolean("runtimeSuffix", false);
+                runIdentifier = config.getString("runIdentifier");
 
                 if (connstring == null || database == null || collectionName == null) {
                     LOGGER.error("connectionString, database and collection are mandatory parameters for mongoReporter");
@@ -66,7 +68,7 @@ public class MongoReporter implements ReporterCallback {
 
                 if (!exists) {
                     db.createCollection(collectionName, new CreateCollectionOptions().timeSeriesOptions(
-                        new TimeSeriesOptions("time").metaField("task").granularity(TimeSeriesGranularity.SECONDS)
+                        new TimeSeriesOptions("time").metaField("test").granularity(TimeSeriesGranularity.SECONDS)
                     ));
                 }
 
@@ -79,10 +81,15 @@ public class MongoReporter implements ReporterCallback {
     public void report(Report report) {
         if (initialized) {
             for (var task : report.getReport().keySet()) {
+               
+                var meta = new Document("task", task);
+                if (runIdentifier != null) {
+                    meta.append("runIdentifier", runIdentifier);
+                }
                 collection.insertOne(
                     new Document("time", report.getTime())
-                    .append("task", task)
-                    .append("measures", report.getReport().get(task))
+                        .append("test", meta)
+                        .append("measures", report.getReport().get(task))
                 );
             }
         }
