@@ -1,13 +1,19 @@
 package org.schambon.loadsimrunner;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.javafaker.Faker;
+
 public class Util {
     private static final Logger LOGGER = LoggerFactory.getLogger(Util.class);
+    private static final Faker faker = new Faker();
+    
 
     public static Object subdescend(Document in, List<String> path) {
         if (path == null || path.size() == 0) {
@@ -26,5 +32,34 @@ public class Util {
             LOGGER.debug("Descend stopped because found a scalar with remaining path elements, returning null");
             return null;
         }
+    }
+
+    
+    public static Object oneOf(Object[] array) {
+        return array[ThreadLocalRandom.current().nextInt(0, array.length)];
+    }
+
+    public static Generator nameFaker(String key) {
+        return faker(faker.name(), key);
+    }
+
+    public static Generator addressFaker(String key) {
+        return faker(faker.address(), key);
+    }
+
+    public static Generator loremFaker(String key) {
+        return faker(faker.lorem(), key);
+    }
+
+    private static Generator faker(Object function, String key) {
+        return () -> {
+            try {
+                var method = function.getClass().getMethod(key);
+                return method.invoke(function);
+            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                LOGGER.warn("Cannot call faker method", e);
+                return key;
+            } 
+        };
     }
 }

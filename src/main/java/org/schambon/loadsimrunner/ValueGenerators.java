@@ -20,6 +20,7 @@ import com.github.javafaker.Faker;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.schambon.loadsimrunner.generators.Address;
 import org.schambon.loadsimrunner.geodata.Place;
 import org.schambon.loadsimrunner.geodata.Places;
 import org.slf4j.Logger;
@@ -521,9 +522,9 @@ public class ValueGenerators {
     }
 
 
-    private static final char[] numbers;
-    private static final char[] letters;
-    private static final char[] LETTERS;
+    public static final char[] numbers;
+    public static final char[] letters;
+    public static final char[] LETTERS;
 
     static {
         numbers = new char[10];
@@ -624,4 +625,6 @@ public class ValueGenerators {
             }
         };
     }
+
+
 }
