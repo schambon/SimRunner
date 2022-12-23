@@ -46,7 +46,7 @@ public class Address {
         switch(key) {
             case "state": return state();
             case "latitude": return () -> String.format("%.8g", (ThreadLocalRandom.current().nextDouble() * 180) - 90);
-            case "longitude": String.format("%.8g", (ThreadLocalRandom.current().nextDouble() * 360) - 180);
+            case "longitude": return () -> String.format("%.8g", (ThreadLocalRandom.current().nextDouble() * 360) - 180);
             case "zipCode": return zipCode();
             case "country": return country();
             case "city": return city();
