@@ -30,6 +30,9 @@ import static com.mongodb.client.model.Filters.*;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
+import org.schambon.loadsimrunner.generators.Address;
+import org.schambon.loadsimrunner.generators.Name;
+import org.schambon.loadsimrunner.generators.Lorem;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.schambon.loadsimrunner.runner.WorkloadThread;
 import org.slf4j.LoggerFactory;
@@ -620,9 +623,9 @@ public class TemplateManager {
     }
 
     private Generator _valueGenerator(String operator, DocumentGenerator params) {
-        switch (operator) {
-            case "%objectid":
-                return ValueGenerators.objectId();
+        var split = operator.split("\\.");
+        switch (split[0]) {
+            case "%objectid": return ValueGenerators.objectId();
             case "%bool":
             case "%boolean":
                 return ValueGenerators.bool();
@@ -720,9 +723,13 @@ public class TemplateManager {
             case "%custom":
                 return ValueGenerators.custom(params);
 
-            // path descent
-            case "%descend":
-                return ValueGenerators.descend(params);
+            // path descent (deprecated)
+            case "%descend": return ValueGenerators.descend(params);
+
+            // hack to bypass common Faker functions that are very slow
+            case "%name": return Name.gen(split[1]);
+            case "%address": return Address.gen(split[1]);
+            case "%lorem": return Lorem.gen(split[1]);
 
             // faker
             default:
