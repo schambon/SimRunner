@@ -1,6 +1,8 @@
 package org.schambon.loadsimrunner;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -31,6 +33,19 @@ public class Util {
         } else {
             LOGGER.debug("Descend stopped because found a scalar with remaining path elements, returning null");
             return null;
+        }
+    }
+
+    public static List<Object> recurseUnwind(Object input) {
+        if (input instanceof List) {
+            var l = (List<Object>) input;
+            var result = new ArrayList<Object>();
+            for (var i: l) {
+                result.addAll(recurseUnwind(i));
+            }
+            return result;
+        } else {
+            return Collections.singletonList(input);
         }
     }
 

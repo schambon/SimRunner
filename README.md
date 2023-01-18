@@ -227,14 +227,46 @@ Dictionaries can be used in templates:
 - either directly (pick a word in the dict) with the `"#dict"` or `{"%dictionary": {"name": "dict"}}` syntaxes.
 - or by concatenating multiple entries of a dictionary. This is useful to create variable-length text based out of real words, rather than Lorem Ipsum. Most UNIX/Linux systems (including macOS) have a dictionary for spell checking at /usr/share/dict/words, that can be read directly by SimRunner to make a (nonsensical) text that you can query from, for example using Atlas Search.
 
-### Advanced remembered fields
+### Remembered values
 
-At its simplest, you can create a library of values by specifying `"remember": ["value"]` in the template. "value" can be a top-level or nested field (with `dotted.path` syntax), however note that the template manager will not traverse arrays (so if you have `{ a: [ {b:1}, {b:2}]})` you _cannot_ say `"remember": ["a.b"]`).
+SimRunner can "remember" a library of values that exist in the data set. These values can then be used in query templates, exactly like a dictionary.
 
-Beyond listing fields, you can use the following long form: `"remember": [ {"field": "x", "compound": ["x", "y"], "name": "name", "preload": true, "number": 10000} ]`. This long form provides the following features:
+These values can have two origins:
+- at initialization time, SimRunner will _preload_ values from the configured collection (if it exists)
+- every time a document is generated, SimRunner will extract values to remember
+
+At its simplest, you can create a library of values by specifying `"remember": ["value"]` in the template. This will turn on value collection both at init time (so-called _preloading_) and at generation time. "value" can be a top-level or nested field (with `dotted.path` syntax). If the field resolves to an array:
+- preloading will work fine (it unwinds the array)
+- currently, extraction of array fields at generation time does _not_ work
+
+Note that dots in the field name are replaced by underscores in the resulting dictionary. For example, if you have this template definition:
+
+```
+{
+    "template": {
+        "top": {
+            "bottom": "%number"
+        }
+    },
+    "remember": [ "top.bottom" ]
+}
+```
+
+Then you can use the following in workloads:
+
+```
+{
+    "op": "find",
+    "filter": { "top.bottom": "#top_bottom" }
+}
+```
+
+With this, you are guaranteed that `#top_bottom` will be resolved to the value of an actual `bottom` field.
+
+For more control, you can use the following long form: `"remember": [ {"field": "x", "compound": ["x", "y"], "name": "name", "preload": true, "number": 10000} ]`. This long form provides the following features:
 - `field`: field name or field path, like simply listing in `remember`
 - `compound`: instead of managing a single field, generate a document by compounding several fields. For example, `"compound": [ "x", "y.z" ]` will remember a value of the form `{"x": ..., "y_z": ...}`. Note that paths are descended for identifying values, but keys are named by substituting "_" for ".". If `compound` is present, `field` is ignored.
-- `name`: this is the name of the value library, which will be used in queries. By default, it is the same as `field`. If using `compound`, it is mandatory to specify a name.
+- `name`: this is the name of the value library, which will be used in queries. By default, it is the same as `field` with dots replaced by underscores. If using `compound`, it is mandatory to specify a name.
 - `preload`: should we load values from the existing collection at startup (default: true)?
 - `number`: how many distinct values should we preload from the existing collection at startup (default: one million)?
 
@@ -269,7 +301,7 @@ If you want to run a query on both `first` and `last`, you could do that by `rem
 }
 ```
 
-but it would pick a first name and a last name at random - most of the time yielding a combination that doesn't actually exist in the database. Instead, use a compound rembember specification:
+but it would pick a first name and a last name at random - most of the time yielding a combination that doesn't actually exist in the database. Instead, use a compound remember specification:
 
 ```
 {
@@ -308,7 +340,7 @@ and query it like this:
 When the system encounters a `#name` token, it is resolved in the following order:
 
 1. Variables
-2. Remembered fields
+2. Remembered values
 3. Dictionaries
 
 For compatibility's sake, the `##name` syntax can still be used to refer to variables.
@@ -605,32 +637,6 @@ Note that the HTTP interface doesn't need to be running for the MongoReporter to
 
 Tips and tricks
 ---------------
-
-### Preloading remembered nested fields
-
-Only top-level fields can be remembered at insert time. However, one neat trick is to first insert a lot of data, then apply the read patterns in a second step. If the fields are single-valued then you can use "remember" to preload nested data by using the dotted syntax.
-
-For instance:
-
-```
-{
-    "templates": [{
-        "name": "person",
-        "template": { ... },
-        "remember": [ "sub.doc" ]
-    }],
-    "workloads": [{
-        "name": "find by subdoc",
-        "template": "person",
-        "op": "find",
-        "params": {
-            "filter": { "sub.doc": "#sub.doc" }
-        }
-    }]
-}
-```
-
-This will NOT remember fields as it inserts them, but it will preload them all right! (Thanks to Khalid Dar for pointing that out)
 
 ### Mix remembered fields and variables
 

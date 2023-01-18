@@ -35,6 +35,7 @@ import org.schambon.loadsimrunner.generators.Name;
 import org.schambon.loadsimrunner.generators.Lorem;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.schambon.loadsimrunner.runner.WorkloadThread;
+import static org.schambon.loadsimrunner.Util.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -133,7 +134,7 @@ public class TemplateManager {
                 this.compound = compound;
             }
             if (name == null) {
-                this.name = field;
+                this.name = field.replace('.', '_');
             } else {
                 this.name = name;
             }
@@ -270,9 +271,9 @@ public class TemplateManager {
             }
 
             for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
-                values.add(result.get("_id"));
+                values.addAll(recurseUnwind(result.get("_id")));
             }
-            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s", values.size(), rfield.name));
+            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(), rfield.field, rfield.name));
 
             if (LOGGER.isDebugEnabled()) {
                 for (var v : values) {
@@ -616,7 +617,6 @@ public class TemplateManager {
             if (resolved instanceof Document) {
                 return Util.subdescend((Document) resolved, tail);
             } else {
-                LOGGER.debug("Hash key not a document, but there is a descent: {}", head);
                 return resolved;
             }
         };
