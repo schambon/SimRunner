@@ -32,16 +32,19 @@ import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.generators.Address;
 import org.schambon.loadsimrunner.generators.Name;
+import org.schambon.loadsimrunner.generators.ValueGenerators;
 import org.schambon.loadsimrunner.generators.Lorem;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.schambon.loadsimrunner.runner.WorkloadThread;
-import static org.schambon.loadsimrunner.Util.*;
+import org.schambon.loadsimrunner.template.RememberField;
+import org.schambon.loadsimrunner.template.RememberUtil;
+import org.schambon.loadsimrunner.template.TemplateUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 public class TemplateManager {
 
-    private static final int DEFAULT_NUMBER_TO_PRELOAD = 1000000;
+    public static final int DEFAULT_NUMBER_TO_PRELOAD = 1000000;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TemplateManager.class);
 
@@ -91,7 +94,7 @@ public class TemplateManager {
         if (rememberFields == null) {
             rememberFields = Collections.emptyList();
         }
-        var remember = parseRememberFields(rememberFields);
+        var remember = RememberUtil.parseRememberFields(rememberFields);
         for (var rfield : remember) {
             this.fieldsToRemember.add(rfield);
             this.remembrances.put(rfield.name, Collections.synchronizedList(new ArrayList<>()));
@@ -116,48 +119,6 @@ public class TemplateManager {
         }
 
         this.shardingConfig = (Document) config.get("sharding");
-    }
-
-    private static class RememberField {
-        String field;
-        boolean preload;
-        List<String> compound;
-        String name;
-        int number;
-
-        public RememberField(String field, List<String> compound, String name, boolean preload, int number) {
-            this.field = field;
-            this.preload = preload;
-            if (compound == null) {
-                this.compound = Collections.emptyList();
-            } else {
-                this.compound = compound;
-            }
-            if (name == null) {
-                this.name = field.replace('.', '_');
-            } else {
-                this.name = name;
-            }
-            this.number = number;
-        }
-
-        // compound trumps field, basically
-        public boolean isSimple() {
-            return compound.isEmpty();
-        }
-    }
-
-    private List<RememberField> parseRememberFields(List<Object> input) {
-        return input.stream().map(i -> {
-            if (i instanceof Document) {
-                var doc = (Document) i;
-                return new RememberField(doc.getString("field"), doc.getList("compound", String.class),
-                        doc.getString("name"), doc.getBoolean("preload", true),
-                        doc.getInteger("number", DEFAULT_NUMBER_TO_PRELOAD));
-            } else {
-                return new RememberField((String) i, null, null, true, DEFAULT_NUMBER_TO_PRELOAD);
-            }
-        }).collect(Collectors.toList());
     }
 
     public MongoCollection<Document> getCollection() {
@@ -271,7 +232,7 @@ public class TemplateManager {
             }
 
             for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
-                values.addAll(recurseUnwind(result.get("_id")));
+                values.addAll(RememberUtil.recurseUnwind(result.get("_id")));
             }
             reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(), rfield.field, rfield.name));
 
@@ -285,25 +246,11 @@ public class TemplateManager {
 
     private void _extractRememberedFields(Document doc) {
         for (var rfield : fieldsToRemember) {
-            Object value;
-            if (rfield.isSimple()) {
-                if (rfield.field.contains(".")) {
-                    value = Util.subdescend(doc, Arrays.asList(rfield.field.split("\\.")));
-                } else {
-                    value = doc.get(rfield.field);
-                }
+            var value = RememberUtil.extractRememberedValues(doc, rfield);
 
-            } else {
-                var cmp = new Document();
-                for (var key : rfield.compound) {
-                    cmp.append(key.replace('.', '_'), Util.subdescend(doc, Arrays.asList(key.split("\\."))));
-                }
-                value = cmp;
-            }
-
-            remembrances.get(rfield.name).add(value);
+            remembrances.get(rfield.name).addAll(value);
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Extracted value: {} for remembered field {}", value, rfield.name);
+                LOGGER.debug("Extracted values: {} for remembered field {}", value, rfield.name);
             }
         }
     }
@@ -615,7 +562,7 @@ public class TemplateManager {
 
             // 2. descend
             if (resolved instanceof Document) {
-                return Util.subdescend((Document) resolved, tail);
+                return TemplateUtil.subdescend((Document) resolved, tail);
             } else {
                 return resolved;
             }

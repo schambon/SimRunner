@@ -1,10 +1,10 @@
 package org.schambon.loadsimrunner.generators;
 
+import static org.schambon.loadsimrunner.template.TemplateUtil.*;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.schambon.loadsimrunner.Generator;
-import org.schambon.loadsimrunner.ValueGenerators;
-import static org.schambon.loadsimrunner.Util.*;
 
 
 public class Address {

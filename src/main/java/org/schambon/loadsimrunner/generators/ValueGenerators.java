@@ -1,4 +1,4 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.generators;
 
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
@@ -20,9 +20,11 @@ import com.github.javafaker.Faker;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.schambon.loadsimrunner.generators.Address;
+import org.schambon.loadsimrunner.DocumentGenerator;
+import org.schambon.loadsimrunner.Generator;
 import org.schambon.loadsimrunner.geodata.Place;
 import org.schambon.loadsimrunner.geodata.Places;
+import org.schambon.loadsimrunner.template.TemplateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -616,7 +618,7 @@ public class ValueGenerators {
 
                 var elems = Arrays.asList(path.split("\\."));
 
-                var result = Util.subdescend(inDoc, elems);
+                var result = TemplateUtil.subdescend(inDoc, elems);
                 LOGGER.debug("Descent param in {} path {}, result {}", inDoc.toJson(), path, result);
                 return result;
             } else {

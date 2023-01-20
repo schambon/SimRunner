@@ -2,7 +2,7 @@ package org.schambon.loadsimrunner.generators;
 
 import org.schambon.loadsimrunner.Generator;
 
-import static org.schambon.loadsimrunner.Util.*;
+import static org.schambon.loadsimrunner.template.TemplateUtil.*;
 
 import java.util.concurrent.ThreadLocalRandom;
 

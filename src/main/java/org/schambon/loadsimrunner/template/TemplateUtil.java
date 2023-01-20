@@ -1,55 +1,51 @@
-package org.schambon.loadsimrunner;
+package org.schambon.loadsimrunner.template;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.Generator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.javafaker.Faker;
 
-public class Util {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Util.class);
+public class TemplateUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TemplateUtil.class);
     private static final Faker faker = new Faker();
     
 
     public static Object subdescend(Document in, List<String> path) {
+        return _internalDescend(in, path);
+    }
+
+    private static Object _internalDescend(Object in, List<String> path) {
+        // if we are passed in a document, then descend
         if (path == null || path.size() == 0) {
+            // do not descend further
             return in;
         }
-        var head = path.get(0);
-        var sub = in.get(head);
-        if (sub == null) {
-            LOGGER.debug("Descend target not found, returning null");
-            return null;
-        } else if (sub instanceof Document) {
-            return subdescend((Document) sub, path.subList(1, path.size()));
-        } else if (path.size() == 1) {
-            return sub;
-        } else {
-            LOGGER.debug("Descend stopped because found a scalar with remaining path elements, returning null");
-            return null;
-        }
-    }
 
-    public static List<Object> recurseUnwind(Object input) {
-        if (input instanceof List) {
-            var l = (List<Object>) input;
-            var result = new ArrayList<Object>();
-            for (var i: l) {
-                result.addAll(recurseUnwind(i));
+        if (in instanceof Document) {
+            var doc = (Document) in;
+            var head = path.get(0);
+            var tail = path.subList(1, path.size());
+            var sub = doc.get(head);
+            if (sub == null) {
+                return null;
+            } else if (sub instanceof List) {
+                return ((List<Object>)sub).stream().map(elt -> _internalDescend(elt, tail)).collect(Collectors.toList());
+            } else {
+                return _internalDescend(sub, tail);
             }
-            return result;
         } else {
-            return Collections.singletonList(input);
+            // leaf node, return where we are
+            return in;
         }
     }
 
-    
     public static Object oneOf(Object[] array) {
         return array[ThreadLocalRandom.current().nextInt(0, array.length)];
     }

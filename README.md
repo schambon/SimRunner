@@ -229,17 +229,15 @@ Dictionaries can be used in templates:
 
 ### Remembered values
 
-SimRunner can "remember" a library of values that exist in the data set. These values can then be used in query templates, exactly like a dictionary.
+SimRunner can "remember" a library of values that exist in the data set. These values can then be used in query templates, exactly like a dictionary. They cannot however be used in document generation.
 
 These values can have two origins:
 - at initialization time, SimRunner will _preload_ values from the configured collection (if it exists)
 - every time a document is generated, SimRunner will extract values to remember
 
-At its simplest, you can create a library of values by specifying `"remember": ["value"]` in the template. This will turn on value collection both at init time (so-called _preloading_) and at generation time. "value" can be a top-level or nested field (with `dotted.path` syntax). If the field resolves to an array:
-- preloading will work fine (it unwinds the array)
-- currently, extraction of array fields at generation time does _not_ work
+At its simplest, you can create a library of values by specifying `"remember": ["value"]` in the template. This will turn on value collection both at init time (so-called _preloading_) and at generation time. "value" can be a top-level or nested field (with `dotted.path` syntax). If the field resolves to an array, it is recursively unwound until we get to a scalar value.
 
-Note that dots in the field name are replaced by underscores in the resulting dictionary. For example, if you have this template definition:
+Note that dots in the field path are replaced by underscores to name the field in the resulting dictionary. For example, if you have this template definition:
 
 ```
 {
@@ -265,7 +263,7 @@ With this, you are guaranteed that `#top_bottom` will be resolved to the value o
 
 For more control, you can use the following long form: `"remember": [ {"field": "x", "compound": ["x", "y"], "name": "name", "preload": true, "number": 10000} ]`. This long form provides the following features:
 - `field`: field name or field path, like simply listing in `remember`
-- `compound`: instead of managing a single field, generate a document by compounding several fields. For example, `"compound": [ "x", "y.z" ]` will remember a value of the form `{"x": ..., "y_z": ...}`. Note that paths are descended for identifying values, but keys are named by substituting "_" for ".". If `compound` is present, `field` is ignored.
+- `compound`: instead of managing a single field, generate a document by compounding several fields. For example, `"compound": [ "x", "y.z" ]` will remember a value of the form `{"x": ..., "y_z": ...}`. The behaviour is the same as for the simple syntax: paths are descended and dots (.) are replaced with underscores (_) in field names. If `compound` is present, `field` is ignored.
 - `name`: this is the name of the value library, which will be used in queries. By default, it is the same as `field` with dots replaced by underscores. If using `compound`, it is mandatory to specify a name.
 - `preload`: should we load values from the existing collection at startup (default: true)?
 - `number`: how many distinct values should we preload from the existing collection at startup (default: one million)?
@@ -333,6 +331,26 @@ and query it like this:
         }
     }
 }
+```
+
+Arrays are (now) supported in remembering values: they are unwound so only scalar values are remembered. If you have a compound remember specification, the cartesian product of arrays are unwound. For example, consider the following document:
+
+```
+{
+    "a": [ "one", "two" ],
+    "b": [ "three", "four" ]
+}
+```
+
+If you have a remember specification of `{ "compound": ["a", "b" ], "name": "cmp"}`, then the system will generate a dictionary called "cmp" with the following values:
+
+```
+[
+    { "a": "one", "b": "three" },
+    { "a": "one", "b": "four" },
+    { "a": "two", "b": "three" },
+    { "a": "two", "b": "four" }
+]
 ```
 
 ### Hash-name evaluation
