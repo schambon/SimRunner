@@ -363,7 +363,7 @@ When the system encounters a `#name` token, it is resolved in the following orde
 
 For compatibility's sake, the `##name` syntax can still be used to refer to variables.
 
-When a token like `#name.sub.document` is found, documents are descended as expected. Arrays are not descended.
+When a token like `#name.sub.document` is found, documents are descended as expected. Arrays are descended, yielding a list of values.
 
 ### Create Options
 
