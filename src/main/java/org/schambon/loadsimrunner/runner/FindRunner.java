@@ -5,9 +5,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.bson.Document;
 import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FindRunner extends AbstractRunner {
     
+    private static final Logger LOGGER = LoggerFactory.getLogger(FindRunner.class);
+
     public FindRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
     }
@@ -16,6 +20,10 @@ public class FindRunner extends AbstractRunner {
     protected long doRun() {
         Document filter = (Document) params.get("filter");
         filter = template.generate(filter);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Find filter: {}", filter);
+        }
 
         var limit = params.getInteger("limit", -1);
         var skip = params.getBoolean("skip", false);

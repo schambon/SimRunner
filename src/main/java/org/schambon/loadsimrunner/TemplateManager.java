@@ -234,11 +234,11 @@ public class TemplateManager {
             for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
                 values.addAll(RememberUtil.recurseUnwind(result.get("_id")));
             }
-            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(), rfield.field, rfield.name));
+            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(), rfield.getDescription(), rfield.name));
 
             if (LOGGER.isDebugEnabled()) {
                 for (var v : values) {
-                    LOGGER.debug("-- {}", v.toString());
+                    LOGGER.debug("-- {}", v != null ? v.toString(): "null");
                 }
             }
         }

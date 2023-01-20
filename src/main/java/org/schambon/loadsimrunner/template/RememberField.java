@@ -30,4 +30,17 @@ public class RememberField {
     public boolean isSimple() {
         return compound.isEmpty();
     }
+
+    public Object getDescription() {
+        if (field != null) {
+            return field;
+        } else if (compound != null) {
+            StringBuilder sb = new StringBuilder("(");
+            sb.append(String.join(", ", compound));
+            sb.append(")");
+            return sb.toString();
+        } else {
+            return name;
+        }
+    }
 }

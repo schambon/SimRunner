@@ -23,7 +23,8 @@
       <logger name="org.schambon.loadsimrunner.SimRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.TemplateManager" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.Reporter" level="INFO"/>
-      <logger name="org.schambon.loadsimrunner.InsertRunner" level="INFO"/>
+      <logger name="org.schambon.loadsimrunner.runner.InsertRunner" level="DEBUG"/>
+      <logger name="org.schambon.loadsimrunner.runner.FindRunner" level="DEBUG"/>
       <root level="INFO">
           <!-- Change to File to log to a file -->
           <appender-ref ref="STDOUT"/>
