@@ -1,0 +1,60 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "remember",
+            "database": "simrunner",
+            "collection": "remember",
+            "dictionaries": {
+                "cities": ["Paris", "London", "Stockholm", "New York", "Tokyo", "Beijing", "Lagos", "Cairo"],
+                "countries": ["US", "China", "France", "Sweden", "Nigeria"]
+            },
+            "template": {
+                "_id": "%objectid",
+                "data": {
+                    "%array": {
+                        "min": 1,
+                        "max": 4,
+                        "of": {
+                            "city": "#cities",
+                            "country": "#countries"
+                        }
+                    }
+                }
+             },
+            "remember": ["data"],
+            "indexes": [],
+            "drop": true
+        }
+    ],
+    "workloads": [
+        {
+            "name": "Insert",
+            "template": "remember",
+            "op": "insert",
+            "pace": 100
+        },
+        {
+            "name": "Find",
+            "template": "remember",
+            "op": "find",
+            "variables": {
+                "dataVar": "#data"
+            },
+            "params": {
+                "filter": {
+                    "data": { "$elemMatch": {"city": "#dataVar.city", "country": "#dataVar.country"}}
+                }
+            },
+            "pace": 100
+        }
+ 
+    ]
+    
+}
