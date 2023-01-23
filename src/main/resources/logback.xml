@@ -22,7 +22,7 @@
       <!-- Set to DEBUG to eyeball generated documents -->
       <logger name="org.schambon.loadsimrunner.SimRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.TemplateManager" level="INFO"/>
-      <logger name="org.schambon.loadsimrunner.Reporter" level="INFO"/>
+      <logger name="org.schambon.loadsimrunner.report.Reporter" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.runner.InsertRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.runner.FindRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.template.RememberUtil" level="INFO"/>

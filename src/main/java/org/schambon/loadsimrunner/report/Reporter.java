@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.bson.Document;
@@ -70,8 +69,8 @@ public class Reporter {
         });
     }
 
-    public void reportOp(String name, long i, long duration) {
-        LOGGER.debug("Reported {} {} {}", name, i, duration);
+    public synchronized void reportOp(String name, long i, long duration) {
+        //LOGGER.debug("Reported {} {} {}", name, i, duration);
         StatsHolder h = stats.get(name);
         if (h == null) {
             h = new StatsHolder();
