@@ -95,4 +95,18 @@ public class ExtractRememberFieldsTest {
         assertTrue(values.contains(new Document("arrayOfObjectsWithArrays_cities", "Jakarta").append("arrayOfObjectsWithArrays_continent", "APAC")));
   
     }
+
+    @Test
+    void testNotFoundSimple() {
+        var specification = new RememberField("nothing", null, null, false, 0);
+        var values = extractRememberedValues(doc, specification);
+        assertEquals(0, values.size());
+    }
+
+    @Test
+    void testNotFoundCompound() {
+        var specification = new RememberField(null, asList("nichts", "nada"), "nope", false, 0);
+        var values = extractRememberedValues(doc, specification);
+        assertEquals(0, values.size());
+    }
 }

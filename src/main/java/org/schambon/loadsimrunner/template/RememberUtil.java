@@ -71,7 +71,7 @@ public class RememberUtil {
     private static List<List<Object>> _internalCartesian(Document input, List<String> keys) {
         var head = keys.get(0);
         var tail = keys.subList(1, keys.size());
-    
+
         var headValues = input.getList(head, Object.class);
     
         if (tail.size() == 0) {
@@ -106,7 +106,13 @@ public class RememberUtil {
             // 1. extract and flatten all values for each key in the compound
             var extract = new Document();
             for (var key: specification.compound) {
-                extract.append(key.replace('.', '_'), recurseUnwind(TemplateUtil.subdescend(input, Arrays.asList(key.split("\\.")))));
+                var found = recurseUnwind(TemplateUtil.subdescend(input, Arrays.asList(key.split("\\.")))).stream().filter(x -> x != null).toList();
+                if (found != null) {
+                    extract.append(key.replace('.', '_'), found);
+                } else {
+                    LOGGER.debug("Key {} not found in document for extraction; skipping", key);
+                }
+                
             }    
     
             // 2. cartesian product
@@ -116,7 +122,7 @@ public class RememberUtil {
             LOGGER.debug("Extracted values for {}: {}", specification.getDescription(), value);
         }
     
-        return value;
+        return value.stream().filter(x -> x != null).toList();
     }
     
 
