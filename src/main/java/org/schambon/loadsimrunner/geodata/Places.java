@@ -522,7 +522,7 @@ public class Places {
         new Place(73,40.93333,"Jalal-Abad","KG"),
         new Place(102.56365,13.65805,"Paoy Paet","KH"),
         new Place(128.63083,36.82167,"Eisen","KR"),
-        new Place(128.9889,37.1759,"T‚Äôaebaek","KR"),
+        new Place(128.9889,37.1759,"Taebaek","KR"),
         new Place(127.08472,36.20389,"Nonsan","KR"),
         new Place(126.835,37.65639,"Goyang-si","KR"),
         new Place(126.665,36.6009,"Hongseong","KR"),
