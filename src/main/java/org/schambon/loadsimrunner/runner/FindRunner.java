@@ -22,7 +22,7 @@ public class FindRunner extends AbstractRunner {
         filter = template.generate(filter);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Find filter: {}", filter);
+            LOGGER.debug("{} - filter: {}", name, filter);
         }
 
         var limit = params.getInteger("limit", -1);

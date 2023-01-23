@@ -208,39 +208,13 @@ public class TemplateManager {
                 continue;
             }
 
-            List<Object> values = remembrances.get(rfield.name);
+            var preloadedValues = RememberUtil.preloadValues(rfield, mongoColl);
 
-            var pipeline = new ArrayList<Document>();
+            var values = remembrances.get(rfield.name);
+            values.addAll(preloadedValues);
 
-            if (rfield.isSimple()) {
-                // load by field
-                pipeline.add(new Document("$group", new Document("_id", String.format("$%s", rfield.field))));
-            } else {
-                var compoundKey = new Document();
-                for (var key : rfield.compound) {
-                    compoundKey.append(key.replace('.', '_'), String.format("$%s", key));
-                }
-
-                pipeline.add(new Document("$group",
-                        new Document("_id", compoundKey)));
-            }
-
-            pipeline.add(new Document("$limit", rfield.number));
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Preload pipeline is {}", pipeline);
-            }
-
-            for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
-                values.addAll(RememberUtil.recurseUnwind(result.get("_id")));
-            }
             reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(), rfield.getDescription(), rfield.name));
-
-            if (LOGGER.isDebugEnabled()) {
-                for (var v : values) {
-                    LOGGER.debug("-- {}", v != null ? v.toString(): "null");
-                }
-            }
+            
         }
     }
 

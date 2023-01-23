@@ -10,8 +10,14 @@ import java.util.stream.Collectors;
 
 import org.bson.Document;
 import org.schambon.loadsimrunner.TemplateManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mongodb.client.MongoCollection;
 
 public class RememberUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RememberUtil.class);
 
     public static List<RememberField> parseRememberFields(List<Object> input) {
         return input.stream().map(i -> {
@@ -106,8 +112,62 @@ public class RememberUtil {
             // 2. cartesian product
             value = cartesian(extract);
         }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Extracted values for {}: {}", specification.getDescription(), value);
+        }
     
         return value;
     }
     
+
+    public static List<Object> preloadValues(RememberField rfield, MongoCollection<Document> mongoColl) {
+
+        if (!rfield.isSimple()) {
+            return _slowPreloadValues(rfield, mongoColl);
+        }
+
+        var pipeline = new ArrayList<Document>();
+
+        pipeline.add(new Document("$group", new Document("_id", String.format("$%s", rfield.field))));
+        pipeline.add(new Document("$limit", rfield.number));
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Preload pipeline is {}", pipeline);
+        }
+
+        var values = new ArrayList<Object>();
+
+        for (var result : mongoColl.aggregate(pipeline).allowDiskUse(true)) {
+            values.addAll(
+                RememberUtil.recurseUnwind(result.get("_id"))
+            );
+        }
+        
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Preloaded values for {}:", rfield.name);
+            for (var v : values) {
+                LOGGER.debug("-- {}", v != null ? v.toString(): "null");
+            }
+        }
+        return values;
+    }
+
+    private static List<Object> _slowPreloadValues(RememberField rfield, MongoCollection<Document> mongoColl) {
+
+        var pipeline = new ArrayList<Document>();
+        var projection = new Document("_id", 0);
+        for (var key: rfield.compound) {
+            projection.append(key, 1);
+        }
+        pipeline.add(new Document("$project", projection));
+        pipeline.add(new Document("$limit", rfield.number));
+
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("Slow preload pipeline is {}}", pipeline);
+
+        var values = new ArrayList<Object>();
+        for (var result: mongoColl.aggregate(pipeline)) {
+            values.addAll(extractRememberedValues(result, rfield));
+        }
+        return values;
+    }
 }

@@ -6,9 +6,12 @@ import org.bson.Document;
 import org.schambon.loadsimrunner.TemplateManager;
 import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractRunner implements Runnable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRunner.class);
 
     protected TemplateManager template;
     protected MongoCollection<Document> mongoColl;
@@ -57,9 +60,9 @@ public abstract class AbstractRunner implements Runnable {
                 long duration = doRun();
                 counter++;
 
-                LoggerFactory.getLogger(getClass()).debug("Counter: {}, stopAfter: {}", counter, stopAfter);
+                LOGGER.debug("Counter: {}, stopAfter: {}", counter, stopAfter);
                 if (stopAfter > 0 && counter >= stopAfter) {
-                    LoggerFactory.getLogger(getClass()).info("Workload {} stopping.", name);
+                    LOGGER.info("Workload {} stopping.", name);
                     keepGoing = false;
                 }
                 if (pace != 0) {
@@ -67,7 +70,7 @@ public abstract class AbstractRunner implements Runnable {
                     Thread.sleep(wait);
                 }
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error(String.format("Workload %s: Error caught in execution", name), e);
+                LOGGER.error(String.format("Workload %s: Error caught in execution", name), e);
             } finally {
                 template.clearVariables();
             } 
