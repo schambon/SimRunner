@@ -75,7 +75,7 @@ public class RememberUtil {
         var headValues = input.getList(head, Object.class);
     
         if (tail.size() == 0) {
-            return headValues.stream().map(x -> Arrays.asList(x)).toList();
+            return headValues.stream().map(x -> Arrays.asList(x)).collect(Collectors.toList());
         } else {
     
             var result = new ArrayList<List<Object>>();
@@ -106,7 +106,7 @@ public class RememberUtil {
             // 1. extract and flatten all values for each key in the compound
             var extract = new Document();
             for (var key: specification.compound) {
-                var found = recurseUnwind(TemplateUtil.subdescend(input, Arrays.asList(key.split("\\.")))).stream().filter(x -> x != null).toList();
+                var found = recurseUnwind(TemplateUtil.subdescend(input, Arrays.asList(key.split("\\.")))).stream().filter(x -> x != null).collect(Collectors.toList());
                 if (found != null) {
                     extract.append(key.replace('.', '_'), found);
                 } else {
@@ -122,7 +122,7 @@ public class RememberUtil {
             LOGGER.debug("Extracted values for {}: {}", specification.getDescription(), value);
         }
     
-        return value.stream().filter(x -> x != null).toList();
+        return value.stream().filter(x -> x != null).collect(Collectors.toList());
     }
     
 
