@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.eclipse.jetty.server.Request;
@@ -36,15 +37,20 @@ public class ReportHandler extends AbstractHandler {
 
             Collection<Report> reports;
             String since = request.getParameter("since");
-            if (since != null) {
-                try {
-                    Instant sinceInstant = Instant.from(DateTimeFormatter.ISO_INSTANT.parse(since));
-                    reports = reporter.getReportsSince(sinceInstant);
-                } catch (DateTimeParseException e) {
-                    throw new ServletException(String.format("'since' parameter must be in ISO8601 strict Zulu format (found: %s)", since));
+            synchronized(reporter) {
+                Collection<Report> tempReports;
+                if (since != null) {
+                    try {
+                        Instant sinceInstant = Instant.from(DateTimeFormatter.ISO_INSTANT.parse(since));
+                        tempReports = reporter.getReportsSince(sinceInstant);
+                    } catch (DateTimeParseException e) {
+                        throw new ServletException(String.format("'since' parameter must be in ISO8601 strict Zulu format (found: %s)", since));
+                    }
+                } else {
+                    tempReports = reporter.getAllReports();
                 }
-            } else {
-                reports = reporter.getAllReports();
+                reports = new ArrayList<Report>(tempReports.size());
+                reports.addAll(tempReports);
             }
             var writer = response.getWriter();
             writer.print("[");

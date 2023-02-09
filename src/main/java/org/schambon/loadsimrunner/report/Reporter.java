@@ -55,7 +55,9 @@ public class Reporter {
         
                 Instant reportInstant = Instant.ofEpochMilli(now);
                 Report report = new Report(reportInstant, reportDoc);
-                reports.put(reportInstant, report);
+                synchronized(this) {
+                    reports.put(reportInstant, report);
+                }
         
                 LOGGER.info(report.toString());
 
@@ -83,7 +85,7 @@ public class Reporter {
         return reports.values();
     }
 
-    public Collection<Report> getReportsSince(Instant start) {
+    public synchronized Collection<Report> getReportsSince(Instant start) {
         return reports.tailMap(start, false).values();
     }
     
