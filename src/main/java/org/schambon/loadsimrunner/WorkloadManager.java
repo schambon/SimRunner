@@ -1,6 +1,8 @@
 package org.schambon.loadsimrunner;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -29,7 +31,6 @@ public class WorkloadManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkloadManager.class);
 
     String name;
-    String template;
     String op; 
     Document params = null;
     Document variables = null;
@@ -47,9 +48,21 @@ public class WorkloadManager {
 
     private MongoClient client;
 
-    public WorkloadManager(Document config) {
-        this.name = config.getString("name");
-        this.template = config.getString("template");
+    public static List<WorkloadManager> newInstances(Document config, Map<String, List<TemplateManager>> templatesByBaseName) {
+        var templateBaseName = config.getString("template");
+        var templates = templatesByBaseName.get(templateBaseName);
+        return templates.stream().map( template -> new WorkloadManager(config, template)).collect(Collectors.toList());
+    }
+
+    private WorkloadManager(Document config, TemplateManager templateConfig) {
+        var _name = config.getString("name");
+        if (templateConfig.getInstance() == -1) {
+            this.name = _name;
+        } else {
+            this.name = String.format("%s_%d", _name, templateConfig.getInstance());
+        }
+
+        this.templateConfig = templateConfig;
         this.op = config.getString("op");
         if (config.containsKey("params")) {
             this.params = (Document) config.get("params");
@@ -115,9 +128,8 @@ public class WorkloadManager {
         }
     }
 
-    public void initAndStart(MongoClient client, Map<String, TemplateManager> templates, Reporter reporter) {
+    public void initAndStart(MongoClient client, Reporter reporter) {
         this.client = client;
-        this.templateConfig = templates.get(template);
         this.reporter = reporter;
 
         for (var i = 0; i < threads; i++) {

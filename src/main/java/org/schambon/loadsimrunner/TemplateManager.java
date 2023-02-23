@@ -48,6 +48,10 @@ public class TemplateManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TemplateManager.class);
 
+    private String _name;
+    private String _basename;
+    private int _instance;
+
     private MongoClient mongoClient;
     private String database;
     private String collection;
@@ -78,10 +82,40 @@ public class TemplateManager {
     // dictionaries
     private Map<String, List<? extends Object>> dictionaries = new TreeMap<>();
 
-    public TemplateManager(Document config, Reporter reporter) {
+    public static List<TemplateManager> newInstances(Document config, Reporter reporter) {
+        var instances = config.getInteger("instances", 0);
+        var basename = config.getString("name");
+        config.put("basename", basename);
+        if (instances == 0) {
+            config.put("instance", -1);
+            return Collections.singletonList(new TemplateManager(config, reporter));
+        } else {
+            var instanceStartAt = config.getInteger("instancesStartAt", 0);
+            var result = new ArrayList<TemplateManager>(instances);
+            for (var i = instanceStartAt; i < instanceStartAt + instances; i++) {
+                config.put("name", String.format("%s_%d", basename, i));
+                config.put("instance", i);
+                result.add(new TemplateManager(config, reporter));
+            }
+            return result;
+        }
+ 
+    }
+
+    private TemplateManager(Document config, Reporter reporter) {
+        this._name = config.getString("name");
+        this._basename = config.getString("basename");
+        this._instance = config.getInteger("instance", -1);
         this.reporter = reporter;
         this.database = config.getString("database");
-        this.collection = config.getString("collection");
+
+        var _collection = config.getString("collection");
+        if (_instance == -1) {
+            this.collection = _collection;
+        } else {
+            this.collection = String.format("%s_%d", _collection, _instance);
+        }
+
         this.drop = config.getBoolean("drop", false);
 
         this.template = (Document) config.get("template");
@@ -452,6 +486,18 @@ public class TemplateManager {
             LOGGER.debug("Generated: {}", doc.toJson());
         }
         return doc;
+    }
+
+    public String getName() {
+        return _name;
+    }
+
+    public String getBaseName() {
+        return _basename;
+    }
+
+    public int getInstance() {
+        return _instance;
     }
 
     /*

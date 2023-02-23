@@ -2,6 +2,8 @@ package org.schambon.loadsimrunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -53,7 +55,7 @@ public class SimRunner {
     //////////// Fields /////////////
     Document config;
     MongoClient client;
-    Map<String, TemplateManager> templates = new TreeMap<>();
+    Map<String, List<TemplateManager>> templatesByBaseName = new HashMap<>();
     List<WorkloadManager> workloads = new ArrayList<>();
 
     Reporter reporter = new Reporter();
@@ -70,15 +72,18 @@ public class SimRunner {
 
     public void start() {
         validateConfig();
-        for (var entry: templates.entrySet()) {
-            entry.getValue().initialize(client);
+        for (var templates : templatesByBaseName.values()) {
+            for (var template : templates) {
+                template.initialize(client);
+            }
         }
+
         var mongoReporter = new MongoReporter((Document) config.get("mongoReporter"));
         var reporterCallbacks = Collections.singletonList(mongoReporter);
 
         reporter.start(); // start the clock
         for (var workload: workloads) {
-            workload.initAndStart(client, templates, reporter);
+            workload.initAndStart(client, reporter);
         }
 
         if (httpServer != null) {
@@ -124,8 +129,13 @@ public class SimRunner {
             throw new InvalidConfigException("Missing or invalid templates section");
         }
         for (var templateConfig: (List<Document>) config.get("templates")) {
-            var name = templateConfig.getString("name");
-            templates.put(name, new TemplateManager(templateConfig, reporter));
+            for (var template : TemplateManager.newInstances(templateConfig, reporter)) {
+                var basename = template.getBaseName();
+                if (templatesByBaseName.get(basename) == null) {
+                    templatesByBaseName.put(basename, new LinkedList<TemplateManager>());
+                }
+                templatesByBaseName.get(basename).add(template);
+            }
         }
 
         if (config.get("workloads") == null || !(config.get("workloads") instanceof List)) {
@@ -133,7 +143,7 @@ public class SimRunner {
         }
         for (var workloadConfig: (List<Document>) config.get("workloads")) {
             if ((! workloadConfig.containsKey("disabled")) || (!(workloadConfig.getBoolean("disabled", false))))
-                workloads.add(new WorkloadManager(workloadConfig));
+                workloads.addAll(WorkloadManager.newInstances(workloadConfig, templatesByBaseName));
         }
 
         if (config.get("http") != null || (config.get("http") instanceof Document)) {

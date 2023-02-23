@@ -408,6 +408,28 @@ Some notes:
 - if a collection is sharded, even if sharding isn't configured, the `drop` option is reinterpreted to be `deleteMany({})` (delete all documents rather than dropping). This is because dropping a collection drop requires flushing the cache on all routers, which is not practical from the client side.
 - it is up to the user to make sure the cluster configuration (like the number and names of the shards) aligns with the sharding configuration here. No checks are made.
 
+### Template instances
+
+If you want to test a set of identical workloads across multiple collections, you can use _template instances_. In your template definition, add a `instances` parameter (and optionally, `instancesStartAt` for more control) and this will clone your template definition and all associated workload definitions the specified number of times.
+
+For example:
+
+```
+{
+    "name": "myTemplate",
+    "database": "db",
+    "collection": "coll",
+    "instances": 20,
+    "template": { ... }
+}
+```
+
+This will create collections `coll_0` through `coll_19` and apply duplicate workloads (also named `workload_name_0` through `workload_name_19`) on these collections.
+
+If you don’t like the numbering to start at 0, use `"instancesStartAt": n` to specify your starting point. It may be interesting in case you’re running a clustered Simrunner to spread the instances - so Simrunner A would target collections 0 through 99 and Simrunner B would target collections 100 through 199.
+
+Be aware that all workloads are duplicated! So if you run 100 instances and have a workload that defines 100 threads, you will end up with 10000 client threads! Be sure to adjust thread counts and pacing so you don’t overwhelm your hardware.
+
 Workloads
 ---------
 
