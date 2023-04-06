@@ -2,7 +2,9 @@ package org.schambon.loadsimrunner.report;
 
 import static java.lang.System.currentTimeMillis;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -57,6 +59,9 @@ public class Reporter {
                 Report report = new Report(reportInstant, reportDoc);
                 synchronized(this) {
                     reports.put(reportInstant, report);
+                    // evict reports older than one hour
+                    var oneHourAgo = reportInstant.minus(Duration.ofHours(1));
+                    reports.headMap(oneHourAgo).clear();
                 }
         
                 LOGGER.info(report.toString());
