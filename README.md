@@ -36,6 +36,8 @@ For distributed metrics collection (aggregate results from multiple SimRunners, 
 
 For easy setup in EC2, a quick and dirty script to provision a machine etc. is at https://github.com/schambon/launchSimRunner
 
+If you want to run it as a Docker container a Dockerfile is provided. In this case, you need to create a config file in the `bin` directory named `config.json` and then build your Docker image.
+
 Config file
 -----------
 
