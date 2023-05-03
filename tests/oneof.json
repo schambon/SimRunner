@@ -1,0 +1,33 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "oneof",
+            "database": "simrunner",
+            "collection": "oneof",
+            "drop": true,
+            "template": {
+                "x": { "%oneOf": { "options": ["a", null, 18], "weights": [50, 10, 40] }},
+                "y": { "%oneOf": { "options": ["a", "b", "c"]} }
+             }
+        }
+    ],
+    "workloads": [
+
+        {
+            "name": "Insert",
+            "template": "oneof",
+            "op": "insert",
+            "threads": 1,
+            "pace": 100
+        }
+ 
+    ]
+    
+}

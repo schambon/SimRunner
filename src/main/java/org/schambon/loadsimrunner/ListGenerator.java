@@ -15,5 +15,12 @@ public class ListGenerator implements Generator {
     public Object generate() {
         return subgenerators.stream().map(it -> it.generate()).collect(Collectors.toList());
     }
+
+    public Object generate(int index) {
+        return subgenerators.get(index).generate();
+    }
     
+    public int size() {
+        return subgenerators.size();
+    }
 }

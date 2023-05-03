@@ -670,6 +670,8 @@ public class TemplateManager {
                 return ValueGenerators.uuidBinary();
             case "%array":
                 return ValueGenerators.array(params);
+            case "%oneOf":
+                return ValueGenerators.oneOf(params);
             case "%keyValueMap":
                 return ValueGenerators.keyValueMap(params);
 

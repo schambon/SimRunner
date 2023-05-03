@@ -413,6 +413,57 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator oneOf(DocumentGenerator input) {
+        return () -> {
+            var size = input.subGeneratorArraySize("options");
+            List<Integer> applicableWeights = new ArrayList<>(size);
+            int totalWeights = 0;
+
+            var weights = input.subGenerate("weights");
+            if (weights != null && weights instanceof List) {
+                var lweights = (List<Number>) weights;
+                var tmp = new ArrayList<Integer>(size);
+
+                if (lweights.size() > size) {
+                    for (var i = 0; i < size; i++) {
+                        tmp.add(i, lweights.get(i).intValue());
+                    }
+                } else {
+                    for (var i = 0; i < lweights.size(); i++) {
+                        tmp.add(i, lweights.get(i).intValue());
+                    }
+                    for (var i = lweights.size(); i < size; i++) {
+                        tmp.add(i, 1);
+                    }
+                }
+
+                for (var w: tmp) {
+                    applicableWeights.add(totalWeights);
+                    totalWeights += w;
+                }
+            } else {
+                for (var i = 0; i < size; i++) {
+                    applicableWeights.add(i, i);
+                }
+                totalWeights = size;
+            }
+
+            var roll = ThreadLocalRandom.current().nextInt(totalWeights);
+
+            var i = 0;
+            var found = false;
+            while(!found && i < size) {
+                if (applicableWeights.get(i) > roll) {
+                    found = true;
+                } else {
+                    i++;
+                }
+            }
+
+            return input.subGenerateFromArray("options", i-1);
+
+        };
+    }
 
     public static Generator keyValueMap(DocumentGenerator input) {
         return () -> {

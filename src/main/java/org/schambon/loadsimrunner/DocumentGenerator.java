@@ -30,8 +30,36 @@ public class DocumentGenerator implements Generator {
                 return kg.gen.generate();
             }
         }
-        LOGGER.error("Cannot generate for key {}: not found", key);
+        //LOGGER.error("Cannot generate for key {}: not found", key);
         return null;
+    }
+
+    public Object subGenerateFromArray(String arrayKey, int index) {
+        for (var kg: subgenerators) {
+            if (arrayKey.equals(kg.key)) {
+                if (kg.gen instanceof ListGenerator) {
+                    return ((ListGenerator) kg.gen).generate(index);
+                } else {
+                    LOGGER.error("Key {} is not an array", arrayKey);
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    public int subGeneratorArraySize(String arrayKey) {
+        for (var kg: subgenerators) {
+            if (kg.key.equals(arrayKey)) {
+                if (kg.gen instanceof ListGenerator) {
+                    return ((ListGenerator) kg.gen).size();
+                } else {
+                    LOGGER.error("Key {} is not an array", arrayKey);
+                    return 0;
+                }
+            }
+        }
+        return 0;
     }
 
     /* package */ void addSubgenerator(String key, Generator sub) {
