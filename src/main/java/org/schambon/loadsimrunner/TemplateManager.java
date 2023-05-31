@@ -312,7 +312,7 @@ public class TemplateManager {
         }
     }
 
-    private List<String> _loadCollectionDictionary(Document config) {
+    private List<Object> _loadCollectionDictionary(Document config) {
         var dbName = (config.containsKey("db")) ? config.getString("db") : this.database;
         var _coll = mongoClient.getDatabase(dbName).getCollection(config.getString("collection"));
 
@@ -324,17 +324,27 @@ public class TemplateManager {
         var limit = config.getInteger("limit", DEFAULT_NUMBER_TO_PRELOAD);
 
         var attribute = config.getString("attribute");
-        if (attribute == null) {
-            attribute = "_id";
-        }
-        var projectionDocument = new Document(attribute, true);
-        if (!"_id".equals(attribute))
-            projectionDocument.append("_id", false);
-        List<String> result = new ArrayList<>();
+        // if (attribute == null) {
+        //     attribute = "_id";
+        // }
+      
+        List<Object> result = new ArrayList<>();
 
-        for (var r : _coll.find(effectiveQuery).limit(limit).projection(projectionDocument)) {
-            var v = r.get(attribute);
-            result.add(v == null ? "null" : v.toString());
+        var cursor = _coll.find(effectiveQuery).limit(limit);
+        if (attribute != null) {
+            var projectionDocument = new Document(attribute, true);
+            if (!"_id".equals(attribute)){
+                projectionDocument.append("_id", false);
+            }
+            cursor = cursor.projection(projectionDocument);
+        }
+        for (var r : cursor) {
+            if (attribute != null) {
+                var v = r.get(attribute);
+                result.add(v == null ? "null" : v);
+            } else {
+                result.add(r);
+            }
         }
         return result;
     }
