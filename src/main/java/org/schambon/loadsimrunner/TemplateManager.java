@@ -333,14 +333,15 @@ public class TemplateManager {
         var cursor = _coll.find(effectiveQuery).limit(limit);
         if (attribute != null) {
             var projectionDocument = new Document(attribute, true);
-            if (!"_id".equals(attribute)){
-                projectionDocument.append("_id", false);
-            }
+            // if (!"_id".equals(attribute)){
+            //     projectionDocument.append("_id", false);
+            // }
             cursor = cursor.projection(projectionDocument);
         }
         for (var r : cursor) {
             if (attribute != null) {
-                var v = r.get(attribute);
+                var v = TemplateUtil.subdescend(r, Arrays.asList(attribute.split("\\.")));
+                //var v = r.get(attribute);
                 result.add(v == null ? "null" : v);
             } else {
                 result.add(r);
