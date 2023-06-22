@@ -539,11 +539,11 @@ public class ValueGenerators {
         return () -> {
             var params = input.generateDocument();
             var from = params.getString("from");
-            var at = params.getInteger("at", 0);
+            var at = params.getLong("at");
 
             var dict = dictionaries.get(from);
 
-            return dict.get(at);
+            return dict.get(at.intValue());
         };
     }
 
