@@ -543,7 +543,7 @@ public class ValueGenerators {
 
             var dict = dictionaries.get(from);
 
-            return dict.get(at.intValue());
+            return dict.get(at.intValue() % dict.size());
         };
     }
 
