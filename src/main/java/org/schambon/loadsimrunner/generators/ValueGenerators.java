@@ -535,6 +535,17 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator dictionaryAt(DocumentGenerator input, Map<String, List<? extends Object>> dictionaries) {
+        return () -> {
+            var params = input.generateDocument();
+            var from = params.getString("from");
+            var at = params.getInteger("at", 0);
+
+            var dict = dictionaries.get(from);
+
+            return dict.get(at);
+        };
+    }
 
     public static Generator longlat(DocumentGenerator input) {
         return () -> {

@@ -691,6 +691,8 @@ public class TemplateManager {
                 return ValueGenerators.dictionary(params, dictionaries);
             case "%dictionaryConcat":
                 return ValueGenerators.dictionaryConcat(params, dictionaries);
+            case "%dictionaryAt":
+                return ValueGenerators.dictionaryAt(params, dictionaries);
 
             // geo
             case "%longlat":
