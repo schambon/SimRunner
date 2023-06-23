@@ -672,6 +672,9 @@ public class TemplateManager {
                 return ValueGenerators.ceilDate(params);
             case "%floorDate":
                 return ValueGenerators.floorDate(params);
+            case "%extractDate":
+                return ValueGenerators.extractDate(params);
+
 
             case "%binary":
                 return ValueGenerators.binary(params);

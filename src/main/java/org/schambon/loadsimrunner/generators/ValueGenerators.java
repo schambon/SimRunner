@@ -4,8 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import static java.time.ZoneOffset.UTC;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -307,6 +309,36 @@ public class ValueGenerators {
             if (unit == null) unit = "day";
             var chronoUnit = _chronoUnit(unit);
             return base.truncatedTo(chronoUnit);
+        };
+    }
+
+    public static Generator extractDate(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            if (params.keySet().size() >= 1) {
+                var key = params.keySet().iterator().next();
+                var base = Instant.ofEpochMilli(params.get(key, Date.class).getTime()).atZone(UTC);
+
+                switch (key) {
+                    case "minute":
+                        return base.getMinute();
+                    case "hour":
+                        return base.getHour();
+                    case "day":
+                        return base.getDayOfMonth();
+                    case "month":
+                        return base.getMonth();
+                    case "year":
+                        return base.getYear();
+                    case "second":
+                        return base.getSecond();
+                    default:
+                        return base.toInstant().getEpochSecond();
+                }
+            } else {
+                LOGGER.warn("%extractDate found with empty argument");
+                return null;
+            }
         };
     }
 
