@@ -88,7 +88,7 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
         var bulkWriteResult = mongoColl.bulkWrite(operations, new BulkWriteOptions().ordered(params.getBoolean("ordered", false)));
         long duration = System.currentTimeMillis() - start;
         //LOGGER.debug("Modified {}, upserted {}", bulkWriteResult.getModifiedCount(), bulkWriteResult.getUpserts().size());
-        reporter.reportOp(name, bulkWriteResult.getModifiedCount() + bulkWriteResult.getUpserts().size(), duration);
+        reporter.reportOp(name, batch, duration);
         return duration;
     }
 
