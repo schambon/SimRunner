@@ -139,7 +139,7 @@ The following template expressions are supported:
 * `%threadSequence`: create a sequential number from a *per-thread* sequence.
 * `%uuidString`: random UUID, as String
 * `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
-* `{"%array": {"min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate).
+* `{"%array": {"size": integer, "min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate). If `size` is present, `min`/`max` are ignored.
 * `{"%oneOf": {"options": [ ... list of options ...], "weights": [ ... list of weights ...]}}`: pick among options. `weights` is optional; only use positive ints (or expressions that resolve to ints).
 * `{"%keyValueMap": {"min": integer, "max": integer, "key": { template resolving to string }, "value": { template } }}`: variable-length subdocument with keys/values generated from the provided templates. Key uniqueness is enforced at generation time.
 * `{"%dictionary": {"name": "dictionary name"}}`: pick a value from a dictionary (synonym with `"#dictionary name"`)

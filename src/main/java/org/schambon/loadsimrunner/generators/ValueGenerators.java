@@ -435,8 +435,10 @@ public class ValueGenerators {
 
             int min = params.getInteger("min", 0);
             int max = params.getInteger("max", 10);
+            int size = params.getInteger("size", -1);
 
-            int size = ThreadLocalRandom.current().nextInt(min, max + 1); // plus one so I can say "min:5, max:6" and that will generate exactly 5, as the bound is exclusive
+            // plus one so I can say "min:5, max:6" and that will generate exactly 5, as the bound is exclusive
+            size = size == -1 ? ThreadLocalRandom.current().nextInt(min, max + 1) : size;
             List<Object> result = new ArrayList<>();
             for (var i = 0; i < size; i++) {
                 result.add(input.subGenerate("of"));
