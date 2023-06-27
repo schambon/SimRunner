@@ -469,7 +469,11 @@ public class TemplateManager {
 
     public void setVariables(Document variables) {
         if (variables != null) {
-            localVariables.set(generate(variables));
+            var var = generate(variables);
+            localVariables.set(var);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Extracted variables: {}", var);
+            }
         }
     }
 
