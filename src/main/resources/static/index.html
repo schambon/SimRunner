@@ -34,6 +34,26 @@
                 return res;
             }
 
+            function loadPercentileData(names, pnames, data) {
+                let res = [];
+
+                names.forEach((name, i) => {
+                    pnames.forEach((p, j) => {
+                        const entryname = `${name} P${p}`;
+                        const values = [];
+                        const borderColor = DURATION_COLOURS[i % DURATION_COLOURS.length];
+                        const borderDash = [5, 10 * (j+1)];
+                        data.forEach(item => {
+                            const report = item.report;
+                            values.push(report[name].percentiles.filter(entry => entry.p === p)[0].value);
+                        });
+                        res.push({label: entryname, data: values, borderColor, backgroundColor: "rgb(132,132,132)", borderDash});
+                    });
+                });
+
+                return res;
+            }
+
             fetch(`http://${window.location.hostname}:${window.location.port}/report`)
                 .then(response => response.json())
                 .then(data => {
@@ -44,6 +64,7 @@
                     } else {
                         let firstReport = data[0].report;
                         const dsNames = Object.keys(firstReport);
+                        const percentileNames = data[0].report[dsNames[0]].percentiles.map(p => p.p);
 
                         let labels = data.map( report => report.time );
 
@@ -53,7 +74,7 @@
                             datasets: datasetsNumber
                         };
 
-                        const datasetsDuration = loadData(dsNames, "mean duration", data, false).concat(loadData(dsNames, "95th percentile", data, true));
+                        const datasetsDuration = loadData(dsNames, "mean duration", data, false).concat(loadPercentileData(dsNames, percentileNames, data));
                         const chartDataDuration = {
                             labels,
                             datasets: datasetsDuration
@@ -116,11 +137,32 @@
                                         const updateData = function(i, name, offset, dataset) {
                                             newdata.map( report => dsNames[i] in report.report ? report.report[dsNames[i]][name] : 0).forEach( x => {dataset[i + offset * dsNames.length].data.push(x);});
                                         };
+                                        const updatePercentiles = function(i, dataset) {
+                                            const name = dsNames[i];
+                                            newdata.forEach(item => {
+                                                const report = item.report;
+                                                if (name in report) {
+                                                    percentileNames.forEach(p => {
+                                                        dataset.filter(x => x.label === `${name} P${p}`).forEach(x => {
+                                                            report[name].percentiles.filter(entry => entry.p === p).forEach(entry => {
+                                                                x.data.push(entry.value);
+                                                            });
+                                                        });
+                                                    });
+                                                } else {
+                                                    percentileNames.forEach(p => {
+                                                        dataset.filter(x => x.label === `${name} P${p}`).forEach(x => {
+                                                            x.data.push(0);
+                                                        });
+                                                    });
+                                                }
+                                            });
+                                        };
                                         for (let i = 0; i < dsNames.length; i++) {
                                             updateData(i, "ops", 0, datasetsNumber);
                                             updateData(i, "records", 1, datasetsNumber);
                                             updateData(i, "mean duration", 0, datasetsDuration);
-                                            updateData(i, "95th percentile", 1, datasetsDuration);
+                                            updatePercentiles(i, datasetsDuration);
                                         }
 
                                         if (labels.length > MAXPOINTS) {

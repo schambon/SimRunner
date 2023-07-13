@@ -27,6 +27,11 @@ public class Reporter {
     private volatile Map<String, StatsHolder> stats = null;
     private long startTime = 0;
     private TreeMap<Instant, Report> reports = new TreeMap<>();
+    private List<Integer> percentiles;
+
+    public Reporter(List<Integer> reportPercentiles) {
+        this.percentiles = reportPercentiles;
+    }
 
     public void start() {
         stats = new TreeMap<>();
@@ -51,7 +56,7 @@ public class Reporter {
         
                 Document reportDoc = new Document();
                 for (var workload: oldStats.keySet()) {
-                    reportDoc.append(workload, oldStats.get(workload).compute(interval));
+                    reportDoc.append(workload, oldStats.get(workload).compute(interval, percentiles));
                 }
         
                 Instant reportInstant = Instant.ofEpochMilli(now);
@@ -105,18 +110,31 @@ public class Reporter {
 
         // Compute some statistics
         // interval is the overall duration
-        public Document compute(long interval) {
+        public Document compute(long interval, List<Integer> percentiles) {
 
             var __startCompute = currentTimeMillis();
 
             List<Long> durations = new ArrayList<>();
             durations.addAll(durationsBatch);
-            var ninetyFifthIndex = (int)Math.ceil(.95d * (double)durations.size());
-            if (ninetyFifthIndex >= durations.size()) {
-                ninetyFifthIndex = Math.max(0, durations.size()-1);
+
+            List<Document> computedPercentiles = new ArrayList<>(percentiles.size());
+            for (int _p : percentiles) {
+                double p = (double)_p/100d;
+
+                var index = (int)Math.ceil(p * (double)durations.size());
+                if (index >= durations.size()) {
+                    index = Math.max(0, durations.size() - 1);
+                }
+                long pctVal = durations.get(index);
+                computedPercentiles.add(new Document("p", _p).append("value", pctVal));
             }
-            long ninetyFifth = durations.get(ninetyFifthIndex);
-            long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2) : 0;
+
+            // var ninetyFifthIndex = (int)Math.ceil(.95d * (double)durations.size());
+            // if (ninetyFifthIndex >= durations.size()) {
+            //     ninetyFifthIndex = Math.max(0, durations.size()-1);
+            // }
+            // long ninetyFifth = durations.get(ninetyFifthIndex);
+            // long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2) : 0;
 
             Stats batchStats = Stats.of(durations);
             var meanBatch = batchStats.mean();
@@ -129,8 +147,7 @@ public class Reporter {
             wlReport.append("total ops", numberStats.count());
             wlReport.append("total records", (long)numberStats.sum());
             wlReport.append("mean duration", meanBatch);
-            wlReport.append("median duration", fiftieth);
-            wlReport.append("95th percentile", ninetyFifth);
+            wlReport.append("percentiles", computedPercentiles);
             wlReport.append("mean batch size", numberStats.mean());
             wlReport.append("min batch size", numberStats.min());
             wlReport.append("max batch size", numberStats.max());

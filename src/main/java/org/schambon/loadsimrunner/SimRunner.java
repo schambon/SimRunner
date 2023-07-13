@@ -1,6 +1,7 @@
 package org.schambon.loadsimrunner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -57,11 +58,10 @@ public class SimRunner {
     Map<String, List<TemplateManager>> templatesByBaseName = new HashMap<>();
     List<WorkloadManager> workloads = new ArrayList<>();
 
-    Reporter reporter = new Reporter();
+    Reporter reporter = null;
     HttpServer httpServer = null;
 
     int reportInterval = 1000;
-
 
     /////////// Implementation //////////
 
@@ -106,6 +106,11 @@ public class SimRunner {
     }
 
     private void validateConfig() {
+
+        reportInterval = config.getInteger("reportInterval", 1000);
+        List<Integer> reportPercentiles = config.getList("reportPercentiles", Integer.class, Arrays.asList(95));
+        reporter = new Reporter(reportPercentiles);
+
         try {
             if (config.getString("connectionString") == null) {
                 throw new InvalidConfigException("Connection String not present");
@@ -149,6 +154,5 @@ public class SimRunner {
             this.httpServer = new HttpServer((Document) config.get("http"), reporter);
         }
 
-        reportInterval = config.getInteger("reportInterval", 1000);
     }
 }

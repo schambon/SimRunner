@@ -5,7 +5,8 @@
         "port": 3000,
         "host": "localhost"
     },
-    "reportInterval": 10000,
+    "reportInterval": 1000,
+
     "mongoReporter": {
         "enabled": true,
         "connectionString": "mongodb://localhost:27017",
@@ -39,7 +40,7 @@
             "pace": 100
         },
         {
-            "disabled": true,
+            "disabled": false,
             "name": "find by _id",
             "template": "simple",
             "op": "find",
