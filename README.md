@@ -153,6 +153,7 @@ The following template expressions are supported:
 * `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents. This should be mostly legacy, as `#document.dot.delimited.path` is equivalent.
 * `%workloadName`: name of the current workload
 * `%threadNumber`: number of the thread in the current workload
+* `{"%head": {"of": xxx}}`: get the first element of `of`. Supports Strings, UUIDs, ObjectId, Binary, BSON arrays (aka Java Lists).
 
 Any other expression will be passed to JavaFaker - to call `lordOfTheRings().character()` just write `%lordOfTheRings.character`. You can only call faker methods that take no arguments.
 

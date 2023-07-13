@@ -1,7 +1,9 @@
 package org.schambon.loadsimrunner.generators;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -725,4 +727,34 @@ public class ValueGenerators {
     }
 
 
+    public static Generator head(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var of = params.get("of");
+            if (of == null) {
+                LOGGER.debug("%head.of parameter not provided in input {}", params.toJson());
+                return null;
+            } else {
+                if (of instanceof UUID) {
+                    var uuid = (UUID) of;
+                    ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+                    bb.putLong(uuid.getMostSignificantBits());
+                    bb.putLong(uuid.getLeastSignificantBits());
+                    return bb.array()[0];
+                } else if (of instanceof String) {
+                    return ((String) of).charAt(0);
+                } else if (of instanceof List) {
+                    return ((List<?>)of).get(0);
+                } else if (of instanceof byte[]) {
+                    return ((byte[])of)[0];
+                } else if (of instanceof ObjectId) {
+                    var oid = (ObjectId)of;
+                    return oid.toByteArray()[0];
+                } else {
+                    LOGGER.debug("Input of %head does not appear to be an array: {}", of.getClass());
+                    return null;
+                }
+            }
+        };
+    }
 }

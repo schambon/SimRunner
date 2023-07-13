@@ -720,6 +720,8 @@ public class TemplateManager {
             case "%address": return Address.gen(split[1]);
             case "%lorem": return Lorem.gen(split[1]);
 
+            case "%head": return ValueGenerators.head(params);
+
             // faker
             default:
                 return ValueGenerators.autoFaker(operator);

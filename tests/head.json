@@ -1,0 +1,53 @@
+{
+    "comment": [
+        "Show how to use the %head operator to pick the first n elements of an array or array-ish value",
+        "Scope: work with Strings, UUIDs, and Binary as well as BSON arrays"
+    ],
+    "connectionString": "mongodb://localhost:27017",
+    "http": {
+        "enabled": true,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "head",
+            "database": "simrunner",
+            "collection": "head",
+            "drop": true,
+            "variables": {
+                "oid": "%objectid",
+                "uuid": "%uuidBinary",
+                "string": "%lorem.word",
+                "bin": {"%binary": {"size": 10}},
+                "array": {"%array": {"size": 5, "of": {"first": "%name.firstName", "last": "%name.lastName"}}}
+            },
+            "template": {
+                "_id": "#oid",
+                "uuid": "#uuid",
+                "string": "#string",
+                "bin": "#bin",
+                "array": "#array",
+                "headOID": {"%head": {"of": "#oid"}},
+                "headUuid": {"%head": {"of": "#uuid"}},
+                "headString": {"%head": {"of": "#string"}},
+                "headBin": {"%head": {"of": "#bin"}},
+                "headArray": {"%head": {"of":"#array"}}
+
+             }
+        }
+    ],
+    "workloads": [
+
+        {
+            "name": "Insert",
+            "template": "head",
+            "op": "insert",
+            "threads": 1,
+            "pace": 100
+        }
+ 
+    ]
+    
+}
