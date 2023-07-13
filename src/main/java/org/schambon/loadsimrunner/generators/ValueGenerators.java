@@ -740,7 +740,7 @@ public class ValueGenerators {
                     ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
                     bb.putLong(uuid.getMostSignificantBits());
                     bb.putLong(uuid.getLeastSignificantBits());
-                    return bb.array()[0];
+                    return bb.array()[0] & 0xff;
                 } else if (of instanceof String) {
                     return ((String) of).charAt(0);
                 } else if (of instanceof List) {
@@ -749,7 +749,7 @@ public class ValueGenerators {
                     return ((byte[])of)[0];
                 } else if (of instanceof ObjectId) {
                     var oid = (ObjectId)of;
-                    return oid.toByteArray()[0];
+                    return oid.toByteArray()[0] & 0xff;
                 } else {
                     LOGGER.debug("Input of %head does not appear to be an array: {}", of.getClass());
                     return null;
