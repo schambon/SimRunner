@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.lang.System;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -111,25 +112,23 @@ public class SimRunner {
         List<Integer> reportPercentiles = config.getList("reportPercentiles", Integer.class, Arrays.asList(95));
         reporter = new Reporter(reportPercentiles);
 
-        System.getenv().forEach((k, v) -> {
-            System.out.println(k + ":" + v);
-        });
-
         try {
             String connectionString = config.getString("connectionString");
 
-            LOGGER.error("Resolved connection string: [" + connectionString + "]");
             if (connectionString == null) {                
-                
-            } else if (connectionString.startsWith("$")) {                
+                throw new InvalidConfigException("Connection String not present");
+            } 
+            
+            if (connectionString.startsWith("$")) {                
                 String envVariable = connectionString.substring(1);                 
-                String envConnectionString = java.lang.System.getenv(envVariable);
+                String envConnectionString = System.getenv(envVariable);
                 if (envConnectionString == null) {
                     LOGGER.error("Resolved connection string from env variable: [" + envConnectionString + "]");
                     throw new InvalidConfigException("Can not resolve connection string from envVariable: [" + envConnectionString + "]");
                 }
                 config.put("connectionString", envConnectionString);
-            } 
+            }
+
         } catch (ClassCastException t) {
             throw new InvalidConfigException("Invalid Connection String");
         }
