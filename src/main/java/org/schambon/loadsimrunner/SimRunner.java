@@ -122,8 +122,7 @@ public class SimRunner {
             if (connectionString.startsWith("$")) {                
                 String envVariable = connectionString.substring(1);                 
                 String envConnectionString = System.getenv(envVariable);
-                if (envConnectionString == null) {
-                    LOGGER.error("Resolved connection string from env variable: [" + envConnectionString + "]");
+                if (envConnectionString == null) {                    
                     throw new InvalidConfigException("Can not resolve connection string from envVariable: [" + envConnectionString + "]");
                 }
                 config.put("connectionString", envConnectionString);
