@@ -20,7 +20,7 @@ TL;DR
 Build with `mvn package` and run with `java -jar SimRunner.jar <config file>`. Needs at least Java 11 (tested with 17 as well).
 
 The config file specifies:
-* a connection string to MongoDB
+* a connection string to MongoDB - if it starts with '$' SimRunner will use environment variables
 * a number of `templates` which specify document shapes and map them to collections
 * a number of `workloads` which specify actions to take on those templates
 
@@ -46,7 +46,7 @@ The config file is parsed as Extended JSON - so you can specify things like date
 Let's look at an example:
 ```
 {
-    "connectionString": "mongodb://localhost:27017",
+    "connectionString": "$MONGO_URI",
     "reportInterval": 1000,
     "http": {
         "enabled": false,
@@ -100,6 +100,8 @@ Let's look at an example:
 ```
 
 This config specifies a connection to a local MongoDB without authentication, a simple "person" template that maps to the `test.people` collection, and two workloads: one that inserts new people in the database at a rate of one batch of 1000 every 100ms, and one that looks up a single person by `_id`.
+
+Note that `connectionString` can be either a MongoDB URI itself (e.g. `mongodb://localhost:27017`) or a reference to an environment variable (e.g. `$MONGO_URI`).
 
 A few things can be seen already:
 * templates are _named_ and referenced by name in the workloads.
@@ -664,7 +666,7 @@ Configuration:
 ```
 "mongoReporter": {
     "enabled": true,
-    "connectionString": "mongodb://localhost:27017",
+    "connectionString": "$REPORTER_MONGO_URI",
     "database": "simrunner",
     "collection": "report",
     "drop": false,
@@ -673,7 +675,7 @@ Configuration:
 ```
 
 * `enabled`: should we log results to MongoDB ? (default: `false`)
-* `connectionString`: MongoDB connection string. Does not have to be the same as the tested cluster (arguably, should not.)
+* `connectionString`: MongoDB connection string. Does not have to be the same as the tested cluster (arguably, should not). This can be either the connection URI itself (e.g. `mongodb+srv://<user>:<pass>@cluster.xprv.mongodb.net`) or a reference to an environment variable.
 * `database`: database in which to store the reports
 * `collection`: collection in which to store the reports
 * `drop`: drop the collection? (default: `false`)
