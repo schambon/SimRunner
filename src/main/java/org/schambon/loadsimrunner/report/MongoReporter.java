@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,15 @@ public class MongoReporter implements ReporterCallback {
                 if (connstring == null || database == null || collectionName == null) {
                     LOGGER.error("connectionString, database and collection are mandatory parameters for mongoReporter");
                     System.exit(1);
+                }
+
+                if (connstring.startsWith("$")) {
+                    var envVariable = connstring.substring(1);
+                    var envConnectionString = System.getenv(envVariable);
+                    if (envConnectionString == null) {
+                        throw new InvalidConfigException("Can not resolve connection string from environment variable: [" + envConnectionString + "]");
+                    }
+                    connstring = envConnectionString;
                 }
 
                 if (runtimeSuffix) {
