@@ -1,6 +1,6 @@
 {
     "connectionString": "mongodb://localhost:27017",
-    
+    "reportInterval": 10000,
     "templates": [
         {
             "name": "metrics",
@@ -27,6 +27,7 @@
     "workloads": [
 
         {
+            "disabled": true,
             "comment": "Insert historical data",
             "name": "Insert",
             "template": "metrics",
@@ -50,6 +51,28 @@
                         "Increment a timer based on step / jitter. This is useful for backfilling history.",
                         "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"
                     ]
+                },
+                "insertType": "single",
+                "workers": 1000
+            }
+        },
+        {
+            "disabled": false,
+            "comment": "Insert new data",
+            "name": "Insert",
+            "template": "metrics",
+            "op": "timeseries",
+            "pace": 1000,
+            "params": {
+                "meta": {
+                    "metaField": "sensorId",
+                    "dictionary": "sensors",
+                    "generate": "all",
+                    "comment": "At each iteration of the workload, iterate over the full dictionary"
+                },
+                "time": {
+                    "timeField": "ts",
+                    "value": "%now"
                 },
                 "insertType": "single",
                 "workers": 1000

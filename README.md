@@ -206,7 +206,7 @@ Note: variables can also be defined in a workload definition, and used in templa
 
 ### Dictionaries
 
-Dictionaries let you create custom sets of data that the template system will pick into. Dictionaries can be a static list, a JSON file read on disk, a plain text file read on disk, or even a MongoDB collection from your cluster.
+Dictionaries let you create custom sets of data that the template system will pick into. Dictionaries can be a static list, a JSON file read on disk, a plain text file read on disk, a fixed number of objects generated through a template expression, or even a MongoDB collection from your cluster.
 
 Example:
 
@@ -216,6 +216,7 @@ Example:
     "statuses": ["RUNNING", {"status": "DONE", "substatus": "OK"}, {"status": "DONE", "substatus": "NOK"}],
     "characters": {"file": "characters.json", "type": "json"},
     "locations": {"file": "locations.txt", "type": "text"},
+    "dates": {"type": "templateUnique", "size": 10, "template": "%natural"}
     "identifiers": {"type": "collection", "collection": "referenceIdentifiers", "db": "refdb", "query": {"valid": true}, "limit": 1000, "attribute": "name"}
 }
 ```
@@ -341,7 +342,7 @@ and query it like this:
 }
 ```
 
-Arrays are (now) supported in remembering values: they are unwound so only scalar values are remembered. If you have a compound remember specification, the cartesian product of arrays are unwound. For example, consider the following document:
+Arrays are supported in remembering values: they are unwound so only scalar values are remembered. If you have a compound remember specification, the cartesian product of arrays are unwound. For example, consider the following document:
 
 ```
 {
@@ -576,6 +577,60 @@ Run an aggregation pipeline.
 
 Options:
 * pipeline: the pipeline to run. No particular restrictions (if on Atlas, this can call Atlas search `$search` indexes for example). All stages are run through the template generator.
+
+### timeseries
+
+This is a special workload type for timeseries insertion.
+
+```
+{
+    "comment": "Insert historical data",
+    "name": "Insert",
+    "template": "metrics",
+    "op": "timeseries",
+    "threads": 1,
+    "commentThreads": "threads should always be 1 in timeseries - there is a worker threads param below",
+    "params": {
+        "meta": {
+            "metaField": "sensorId",
+            "dictionary": "sensors",
+            "generate": "all",
+            "comment": "At each iteration of the workload, iterate over the full dictionary"
+        },
+        "time": {
+            "timeField": "ts",
+            "start": {"$date": "2023-01-01"},
+            "stop": {"$date": "2023-01-31"},
+            "step": 300000,
+            "jitter": 30000,
+            "comment": [
+                "Increment a timer based on step / jitter. This is useful for backfilling history.",
+                "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"
+            ]
+        },
+        "insertType": "single",
+        "workers": 1000
+    }
+}
+```
+
+Each record in a time series has a `meta` field (which identifies the series) and a time field. In a timeseries workload:
+- you should always set `threads` to 1. Setting threads to more than 1 will just run several times the workload in parallel, each with its own "timeline" so this is probably not what you want. Parallelization is achieved through the `workers` parameter instead.
+- `pace` works as usual.
+- the associated template should __NOT__ contain time fields or meta fields. This is set by the workload.
+- you _must_ provide a dictionary that contains the `meta` values.
+
+Each time the workload runs, it will generate documents for a number of series (controlled by the `meta.generate` option; currently only `all` is supported, meaning it will generate a document for each `meta` value). It will then generate a timestamp with one of two options:
+- `start` / `stop` / `step`: the workload keeps a clock initalized at `start`. At each run it will increase by `step` milliseconds. When the clock reaches `stop`, the workload stops. This clock will be used for all series generated in the run. You can add per-series noise using the `jitter` option (in milliseconds): each individual record's timestamp will be the global clock plus or minus jitter milliseconds. `stop` and `jitter` are optional.
+- `value` pass in an expression that resolves to a date.
+
+In general you will use `start`/`step` to populate historical data, then use `value` (often with `%now`) to simulate ongoing activity.
+
+Once all records are generated, they are inserted according to `insertType`:
+- `single` will issue a single (non-bulk) write for each record
+- Future options (probably `bulk` or a number) will group records in insertMany statements.
+
+Write operations are spread out over a number of `worker` threads (defaulting to 1).
 
 Output
 ------

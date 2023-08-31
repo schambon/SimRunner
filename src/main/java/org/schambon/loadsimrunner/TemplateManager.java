@@ -526,10 +526,7 @@ public class TemplateManager {
     }
 
     public Object generateExpression(Object expression) {
-        
-        var temp = new Document("expression", expression);
-        var gen = _compile(temp);
-        return gen.generateDocument().get("expression");
+        return generate(new Document("expression", expression)).get("expression");
     }
 
     public String getName() {
