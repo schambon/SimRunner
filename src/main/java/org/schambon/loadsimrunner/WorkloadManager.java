@@ -20,6 +20,7 @@ import org.schambon.loadsimrunner.runner.FindRunner;
 import org.schambon.loadsimrunner.runner.InsertRunner;
 import org.schambon.loadsimrunner.runner.ReplaceOneRunner;
 import org.schambon.loadsimrunner.runner.ReplaceWithNewRunner;
+import org.schambon.loadsimrunner.runner.TimeSeriesRunner;
 import org.schambon.loadsimrunner.runner.UpdateManyRunner;
 import org.schambon.loadsimrunner.runner.UpdateOneRunner;
 import org.schambon.loadsimrunner.runner.WorkloadThread;
@@ -149,6 +150,7 @@ public class WorkloadManager {
             case "replaceOne": return new ReplaceOneRunner(this, reporter);
             case "replaceWithNew": return new ReplaceWithNewRunner(this, reporter);
             case "aggregate": return new AggregationRunner(this, reporter);
+            case "timeseries": return new TimeSeriesRunner(this, reporter);
             case "custom": return new CustomRunner(this, reporter);
             default:
                 LOGGER.warn("Not implemented (yet?)");

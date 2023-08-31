@@ -1,0 +1,60 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    
+    "templates": [
+        {
+            "name": "metrics",
+            "database": "simrunner",
+            "collection": "timeseries",
+            "createOptions": {
+                "timeseries": {
+                    "timeField": "ts",
+                    "metaField": "sensorId",
+                    "granularity": "minutes"
+                }
+            },
+            "template": {
+                "intensity": "%natural",
+                "voltage": "%natural"
+            },
+            "comment1": "Timeseries template should have only the metrics part - timeField and metaField are set in the workload. Alternatively, consider setting everything in the workload?",
+            "dictionaries": {
+                "sensors": { "type": "templateUnique", "size": 1000, "template": {"%natural": {"min": 0, "max": 1000000}}}
+            },
+            "comment2": "Define a dictionary for sensors. Alongside the usual dictionary options we have a new option, 'templateUnique' which creates a set of unique values based on a template"
+        }
+    ],
+    "workloads": [
+
+        {
+            "comment": "Insert historical data",
+            "name": "Insert",
+            "template": "metrics",
+            "op": "timeseries",
+            "threads": 1,
+            "commentThreads": "threads should always be 1 in timeseries - there is a worker threads param below",
+            "params": {
+                "meta": {
+                    "metaField": "sensorId",
+                    "dictionary": "sensors",
+                    "generate": "all",
+                    "comment": "At each iteration of the workload, iterate over the full dictionary"
+                },
+                "time": {
+                    "timeField": "ts",
+                    "start": {"$date": "2023-01-01"},
+                    "stop": {"$date": "2023-01-31"},
+                    "step": 300000,
+                    "jitter": 30000,
+                    "comment": [
+                        "Increment a timer based on step / jitter. This is useful for backfilling history.",
+                        "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"
+                    ]
+                },
+                "insertType": "single",
+                "workers": 1000
+            }
+        }
+    ]
+    
+}

@@ -189,7 +189,7 @@ public class TemplateManager {
             }
         }
 
-        if (!found) {
+        if (drop || !found) {
             var options = new CreateCollectionOptions();
             options.capped(createOptions.getBoolean("capped", false));
             if (createOptions.containsKey("timeseries")) {
@@ -198,7 +198,7 @@ public class TemplateManager {
                     options.expireAfter(createOptions.getLong("expireAfterSeconds"), TimeUnit.SECONDS);
                 var tsOptions = new TimeSeriesOptions(timeseries.getString("timeField"));
                 if (timeseries.containsKey("granularity"))
-                    tsOptions.granularity(TimeSeriesGranularity.valueOf(timeseries.getString("granularity")));
+                    tsOptions.granularity(TimeSeriesGranularity.valueOf(timeseries.getString("granularity").toUpperCase()));
                 if (timeseries.containsKey("metaField"))
                     tsOptions.metaField(timeseries.getString("metaField"));
                 options.timeSeriesOptions(tsOptions);
@@ -275,6 +275,10 @@ public class TemplateManager {
         }
     }
 
+    public List<? extends Object> dictionary(String dictionary) {
+        return dictionaries.get(dictionary);
+    }
+
     private List<? extends Object> _loadDictionary(Document config) {
 
         String type = config.getString("type");
@@ -287,6 +291,8 @@ public class TemplateManager {
                 return _loadTextDictionary(config);
             case "collection":
                 return _loadCollectionDictionary(config);
+            case "templateUnique":
+                return _loadTemplateUniqueDictionary(config);
             default:
                 LOGGER.warn("Cannot read dictionary of type: {}", type);
                 return Collections.emptyList();
@@ -346,6 +352,22 @@ public class TemplateManager {
             } else {
                 result.add(r);
             }
+        }
+        return result;
+    }
+
+    private List<Object> _loadTemplateUniqueDictionary(Document config) {
+        LOGGER.debug("Initialising templateunique dictionary with config {}", config);
+        var size = config.getInteger("size", 1000);
+        var result = new ArrayList<>(size);
+        var t = (Document) config.get("template");
+        for (var i = 0; i < size; i++) {
+            var v = generateExpression(t);
+            while (result.contains(v)) {
+                v = generateExpression(t);
+            }
+            LOGGER.debug("Added {}", v);
+            result.add(v);
         }
         return result;
     }
@@ -501,6 +523,13 @@ public class TemplateManager {
             LOGGER.debug("Generated: {}", doc.toJson());
         }
         return doc;
+    }
+
+    public Object generateExpression(Object expression) {
+        
+        var temp = new Document("expression", expression);
+        var gen = _compile(temp);
+        return gen.generateDocument().get("expression");
     }
 
     public String getName() {
