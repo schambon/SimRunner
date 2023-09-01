@@ -34,7 +34,8 @@
             "template": "metrics",
             "op": "timeseries",
             "threads": 1,
-            "batch": 200,
+            "batch": 100,
+            "pace": 0,
             "comments": [
                 "Threads should always be 1 or absent for timeseries",
                 "Batch groups insert statements into insertMany",
@@ -44,15 +45,14 @@
                 "meta": {
                     "metaField": "sensorId",
                     "dictionary": "sensors",
-                    "generate": "all",
-                    "comment": "At each iteration of the workload, iterate over the full dictionary"
+                    "generate": {"random": 10},
+                    "comment": "At each iteration of the workload, take 10 random sensors"
                 },
                 "time": {
                     "timeField": "ts",
                     "start": {"$date": "2023-01-01"},
                     "stop": {"$date": "2023-01-31"},
                     "step": 300000,
-                    "jitter": 30000,
                     "comment": [
                         "Increment a timer based on step / jitter. This is useful for backfilling history.",
                         "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"

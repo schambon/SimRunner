@@ -90,72 +90,82 @@ public class TimeSeriesRunner extends AbstractRunner {
         }
 
         // now we have a base
-        String generateOption = metaConfig.getString("generate");
+        
+        var allSeries = template.dictionary(metaConfig.getString("dictionary"));
+        if (allSeries == null) {
+            LOGGER.error("Series dictionary {} not found", metaConfig.getString("dictionary"));
+            throw new InvalidConfigException("Series dictionary");
+        }
+
+        List<?> series;
+        var generateOption = metaConfig.get("generate");
         if (generateOption == null || "all".equals(generateOption)) {
-            var series = template.dictionary(metaConfig.getString("dictionary"));
-            if (series == null) {
-                LOGGER.error("Series dictionary {} not found", metaConfig.getString("dictionary"));
-                throw new InvalidConfigException("Series dictionary");
+            series = allSeries;
+        } else if (isDocKey("random", generateOption)) {
+            var rnd = template.generateExpression(((Document)generateOption).get("random"));
+            if (!(rnd instanceof Integer)) {
+                throw new InvalidConfigException("generate: {random: xxx} should evaluate to an integer");
             }
+            series = randomSubList(allSeries, (int) rnd);
+        } else {
+            throw new NotImplementedException("Timeseries generation option {} not supported", generateOption.toString());
+        }
 
-            List<Callable<Void>> tasks = new ArrayList<>();
+        List<Callable<Void>> tasks = new ArrayList<>();
 
-            if (batch <= 0) {
-                for (var metaVal: series) {
-                    var doc = getDoc(base, metaVal);
+        if (batch <= 0) {
+            for (var metaVal: series) {
+                var doc = getDoc(base, metaVal);
 
-                    tasks.add(() -> {
-                        var _s = System.currentTimeMillis();
-                        mongoColl.insertOne(doc);
-                        reporter.reportOp(name, 1, System.currentTimeMillis() - _s);
-                        return null;
-                    });
-                }
-            } else {
-                var docs = new ArrayList<Document>(batch);
-                for (var metaVal: series) {
-                    docs.add(getDoc(base, metaVal));
-                    if (docs.size() == batch) {
-                        final var _docs = new ArrayList<>(docs); // make a final copy
-                        final var _batch = batch;
-                        tasks.add(() -> {
-                            var _s = System.currentTimeMillis();
-                            mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
-                            reporter.reportOp(name, _batch, System.currentTimeMillis() - _s);
-                            return null;
-                        });
-                        docs.clear();
-                    }
-                }
-
-                if (docs.size() > 0) {
-                    final var _docs = new ArrayList<>(docs);
-                    tasks.add(() -> {
+                tasks.add(() -> {
                     var _s = System.currentTimeMillis();
-                    mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
-                    reporter.reportOp(name, _docs.size(), System.currentTimeMillis() - _s);
+                    mongoColl.insertOne(doc);
+                    reporter.reportOp(name, 1, System.currentTimeMillis() - _s);
                     return null;
                 });
-                }
-                
             }
-
-
-            try {
-                var _s = System.currentTimeMillis();
-                List<Future<Void>> futures = exec.invokeAll(tasks);
-                for (var f : futures) {
-                    f.get();
-                }
-                return System.currentTimeMillis() - _s;
-            } catch (InterruptedException|ExecutionException e) {
-                LOGGER.error("Interrupted", e);
-                throw new RuntimeException(e);
-            }
-
         } else {
-            throw new NotImplementedException("Timeseries generation option {} not supported", generateOption);
+            var docs = new ArrayList<Document>(batch);
+            for (var metaVal: series) {
+                docs.add(getDoc(base, metaVal));
+                if (docs.size() == batch) {
+                    final var _docs = new ArrayList<>(docs); // make a final copy
+                    final var _batch = batch;
+                    tasks.add(() -> {
+                        var _s = System.currentTimeMillis();
+                        mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
+                        reporter.reportOp(name, _batch, System.currentTimeMillis() - _s);
+                        return null;
+                    });
+                    docs.clear();
+                }
+            }
+
+            if (docs.size() > 0) {
+                final var _docs = new ArrayList<>(docs);
+                tasks.add(() -> {
+                var _s = System.currentTimeMillis();
+                mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
+                reporter.reportOp(name, _docs.size(), System.currentTimeMillis() - _s);
+                return null;
+            });
+            }
+            
         }
+
+
+        try {
+            var _s = System.currentTimeMillis();
+            List<Future<Void>> futures = exec.invokeAll(tasks);
+            for (var f : futures) {
+                f.get();
+            }
+            return System.currentTimeMillis() - _s;
+        } catch (InterruptedException|ExecutionException e) {
+            LOGGER.error("Interrupted", e);
+            throw new RuntimeException(e);
+        }
+
     }
 
     private Document getDoc(Instant base, Object metaVal) {
@@ -179,4 +189,25 @@ public class TimeSeriesRunner extends AbstractRunner {
         return doc;
     }
     
+    static boolean isDocKey(String key, Object test) {
+        return test instanceof Document && ((Document)test).containsKey(key);
+    }
+
+    static List<?> randomSubList(List<?> source, int number) {
+        var result = new ArrayList<>(number);
+
+        var indices = new ArrayList<Integer>();
+
+        var rnd = ThreadLocalRandom.current();
+
+        while (result.size() < number) {
+            var i = rnd.nextInt(source.size());
+            while (indices.contains(i)) {
+                i = rnd.nextInt(source.size());
+            }
+            result.add(source.get(i));
+        }
+
+        return result;
+    }
 }

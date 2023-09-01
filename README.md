@@ -671,7 +671,7 @@ Each record in a time series has a `meta` field (which identifies the series) an
 - the associated template should __NOT__ contain time fields or meta fields. This is set by the workload.
 - you _must_ provide a dictionary that contains the `meta` values.
 
-Each time the workload runs, it will generate documents for a number of series (controlled by the `meta.generate` option; currently only `all` is supported, meaning it will generate a document for each `meta` value). It will then generate a timestamp with one of two options:
+Each time the workload runs, it will generate documents for a number of series (controlled by the `generate` option; supported are `"all"` and `{"random": "expression"}`). It will then generate a timestamp with one of two options:
 - `start` / `stop` / `step`: the workload keeps a clock initalized at `start`. At each run it will increase by `step` milliseconds. When the clock reaches `stop`, the workload stops. This clock will be used for all series generated in the run. You can add per-series noise using the `jitter` option (in milliseconds): each individual record's timestamp will be the global clock plus or minus jitter milliseconds. `stop` and `jitter` are optional.
 - `value` pass in an expression that resolves to a date.
 
