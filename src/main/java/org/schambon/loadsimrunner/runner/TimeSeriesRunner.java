@@ -46,6 +46,7 @@ public class TimeSeriesRunner extends AbstractRunner {
 
     @Override
     protected long doRun() {
+        LOGGER.debug("Timeseries runner {} waking up", name);
 
         Instant base = null;
         if (timeConfig.containsKey("value")) {

@@ -133,6 +133,8 @@ public class WorkloadManager {
         this.client = client;
         this.reporter = reporter;
 
+        LOGGER.info("Starting workload {}", name);
+
         for (var i = 0; i < threads; i++) {
             Thread thread = new WorkloadThread(name, i, getRunnable());
             thread.start();

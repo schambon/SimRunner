@@ -13,6 +13,42 @@ Thanks to all this, SimRunner can reproduce fairly closely realistic workloads o
 
 It should be considered a "work in progress" and comes without any support or guarantee, either from MongoDB, Inc. or myself.
 
+Contents
+--------
+
+- [SimRunner](#simrunner)
+  - [Contents](#contents)
+  - [TL;DR](#tldr)
+  - [What's new?](#whats-new)
+  - [Config file](#config-file)
+  - [Templates](#templates)
+    - [Template expressions](#template-expressions)
+    - [Template variables (interdependant fields)](#template-variables-interdependant-fields)
+    - [Dictionaries](#dictionaries)
+    - [Remembered values](#remembered-values)
+    - [Hash-name evaluation](#hash-name-evaluation)
+    - [Create Options](#create-options)
+    - [Sharding](#sharding)
+    - [Template instances](#template-instances)
+  - [Workloads](#workloads)
+    - [Common parameters](#common-parameters)
+    - [Insert](#insert)
+    - [find](#find)
+    - [updateOne and updateMany](#updateone-and-updatemany)
+    - [replaceOne](#replaceone)
+    - [replaceWithNew](#replacewithnew)
+    - [aggregate](#aggregate)
+    - [timeseries](#timeseries)
+  - [Output](#output)
+  - [HTTP interface](#http-interface)
+  - [MongoDB Reporting](#mongodb-reporting)
+  - [Tips and tricks](#tips-and-tricks)
+    - [Mix remembered fields and variables](#mix-remembered-fields-and-variables)
+    - [Comment your code!](#comment-your-code)
+    - [Bulk writes and variables](#bulk-writes-and-variables)
+  - [Limitations](#limitations)
+
+
 
 TL;DR
 -----
@@ -37,6 +73,15 @@ For distributed metrics collection (aggregate results from multiple SimRunners, 
 For easy setup in EC2, a quick and dirty script to provision a machine etc. is at https://github.com/schambon/launchSimRunner
 
 If you want to run it as a Docker container a Dockerfile is provided. In this case, you need to create a config file in the `bin` directory named `config.json` and then build your Docker image.
+
+
+What's new?
+-----------
+
+| Date       |                                                     |
+|------------|-----------------------------------------------------|
+| 2023-09-XX | [Timeseries support](#timeseries)                   |
+| 2023-08-22 | Enviroment variables support for connection strings |
 
 Config file
 -----------

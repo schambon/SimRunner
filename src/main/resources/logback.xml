@@ -25,7 +25,7 @@
       <logger name="org.schambon.loadsimrunner.report.Reporter" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.runner.InsertRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.runner.FindRunner" level="INFO"/>
-      <logger name="org.schambon.loadsimrunner.runner.TimeSeriesRunner" level="DEBUG"/>
+      <logger name="org.schambon.loadsimrunner.runner.TimeSeriesRunner" level="INFO"/>
       <logger name="org.schambon.loadsimrunner.template.RememberUtil" level="INFO"/>
       <root level="INFO">
           <!-- Change to File to log to a file -->
