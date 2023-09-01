@@ -80,7 +80,7 @@ What's new?
 
 | Date       |                                                     |
 |------------|-----------------------------------------------------|
-| 2023-09-XX | [Timeseries support](#timeseries)                   |
+| 2023-09-01 | [Timeseries support](#timeseries)                   |
 | 2023-08-22 | Enviroment variables support for connection strings |
 
 Config file
