@@ -20,6 +20,8 @@ import org.schambon.loadsimrunner.report.Reporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mongodb.client.model.InsertManyOptions;
+
 public class TimeSeriesRunner extends AbstractRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesRunner.class);
@@ -96,36 +98,49 @@ public class TimeSeriesRunner extends AbstractRunner {
                 throw new InvalidConfigException("Series dictionary");
             }
 
-            // only support insertType: "single" now
-            // TODO insertType: "batch"
-
             List<Callable<Void>> tasks = new ArrayList<>();
-            for (var metaVal: series) {
-                Instant ts;
-                if (timeConfig.containsKey("jitter") && timeConfig.get("jitter") instanceof Number) {
-                    long maxJitter = ((Number) timeConfig.get("jitter")).longValue();
-                    long jitter = ThreadLocalRandom.current().nextLong(maxJitter);
-                    long flip = ThreadLocalRandom.current().nextInt(2);
-                    if (flip == 0) {
-                        ts = base.plus(jitter, ChronoUnit.MILLIS);
-                    } else {
-                        ts = base.minus(jitter, ChronoUnit.MILLIS);
+
+            if (batch <= 0) {
+                for (var metaVal: series) {
+                    var doc = getDoc(base, metaVal);
+
+                    tasks.add(() -> {
+                        var _s = System.currentTimeMillis();
+                        mongoColl.insertOne(doc);
+                        reporter.reportOp(name, 1, System.currentTimeMillis() - _s);
+                        return null;
+                    });
+                }
+            } else {
+                var docs = new ArrayList<Document>(batch);
+                for (var metaVal: series) {
+                    docs.add(getDoc(base, metaVal));
+                    if (docs.size() == batch) {
+                        final var _docs = new ArrayList<>(docs); // make a final copy
+                        final var _batch = batch;
+                        tasks.add(() -> {
+                            var _s = System.currentTimeMillis();
+                            mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
+                            reporter.reportOp(name, _batch, System.currentTimeMillis() - _s);
+                            return null;
+                        });
+                        docs.clear();
                     }
-                } else {
-                    ts = base;
                 }
 
-                var doc = template.generate();
-                doc.append(metaConfig.getString("metaField"), metaVal);
-                doc.append(timeConfig.getString("timeField"), ts);
-
-                tasks.add(() -> {
+                if (docs.size() > 0) {
+                    final var _docs = new ArrayList<>(docs);
+                    tasks.add(() -> {
                     var _s = System.currentTimeMillis();
-                    mongoColl.insertOne(doc);
-                    reporter.reportOp(name, 1, System.currentTimeMillis() - _s);
+                    mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
+                    reporter.reportOp(name, _docs.size(), System.currentTimeMillis() - _s);
                     return null;
                 });
+                }
+                
             }
+
+
             try {
                 var _s = System.currentTimeMillis();
                 List<Future<Void>> futures = exec.invokeAll(tasks);
@@ -141,6 +156,27 @@ public class TimeSeriesRunner extends AbstractRunner {
         } else {
             throw new NotImplementedException("Timeseries generation option {} not supported", generateOption);
         }
+    }
+
+    private Document getDoc(Instant base, Object metaVal) {
+        Instant ts;
+        if (timeConfig.containsKey("jitter") && timeConfig.get("jitter") instanceof Number) {
+            long maxJitter = ((Number) timeConfig.get("jitter")).longValue();
+            long jitter = ThreadLocalRandom.current().nextLong(maxJitter);
+            long flip = ThreadLocalRandom.current().nextInt(2);
+            if (flip == 0) {
+                ts = base.plus(jitter, ChronoUnit.MILLIS);
+            } else {
+                ts = base.minus(jitter, ChronoUnit.MILLIS);
+            }
+        } else {
+            ts = base;
+        }
+
+        var doc = template.generate();
+        doc.append(metaConfig.getString("metaField"), metaVal);
+        doc.append(timeConfig.getString("timeField"), ts);
+        return doc;
     }
     
 }

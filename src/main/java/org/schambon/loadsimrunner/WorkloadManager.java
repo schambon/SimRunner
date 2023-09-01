@@ -123,8 +123,8 @@ public class WorkloadManager {
 
 
         if (this.batch > 0) {
-            if (! ("insert".equals(op) || "updateOne".equals(op) || "updateMany".equals(op) || "replaceWithNew".equals(op) )) {
-                throw new InvalidConfigException("Op must be insert or update(One|Many) or replaceWithNew for batch/bulk work");
+            if (! ("insert".equals(op) || "updateOne".equals(op) || "updateMany".equals(op) || "replaceWithNew".equals(op) || "timeseries".equals(op) )) {
+                throw new InvalidConfigException("Op must be insert, update(One|Many), replaceWithNew, or timeseries for batch/bulk work");
             }
         }
     }

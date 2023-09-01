@@ -6,6 +6,7 @@
             "name": "metrics",
             "database": "simrunner",
             "collection": "timeseries",
+            "drop": true,
             "createOptions": {
                 "timeseries": {
                     "timeField": "ts",
@@ -27,13 +28,18 @@
     "workloads": [
 
         {
-            "disabled": true,
+            "disabled": false,
             "comment": "Insert historical data",
             "name": "Insert",
             "template": "metrics",
             "op": "timeseries",
             "threads": 1,
-            "commentThreads": "threads should always be 1 in timeseries - there is a worker threads param below",
+            "batch": 200,
+            "comments": [
+                "Threads should always be 1 or absent for timeseries",
+                "Batch groups insert statements into insertMany",
+                "Pace will pause if needed between runs of the workload. Note that each run generates inserts for all configured series."
+            ],
             "params": {
                 "meta": {
                     "metaField": "sensorId",
@@ -52,12 +58,11 @@
                         "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"
                     ]
                 },
-                "insertType": "single",
                 "workers": 1000
             }
         },
         {
-            "disabled": false,
+            "disabled": true,
             "comment": "Insert new data",
             "name": "Insert",
             "template": "metrics",
@@ -74,7 +79,6 @@
                     "timeField": "ts",
                     "value": "%now"
                 },
-                "insertType": "single",
                 "workers": 1000
             }
         }

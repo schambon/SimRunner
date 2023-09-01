@@ -634,7 +634,12 @@ This is a special workload type for timeseries insertion.
     "template": "metrics",
     "op": "timeseries",
     "threads": 1,
-    "commentThreads": "threads should always be 1 in timeseries - there is a worker threads param below",
+    "batch": 200,
+    "pace": 10,
+    "comments": [
+        "Threads should always be 1 or absent for timeseries",
+        "Batch and Pace work as expected"
+    ],
     "params": {
         "meta": {
             "metaField": "sensorId",
@@ -653,11 +658,12 @@ This is a special workload type for timeseries insertion.
                 "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"
             ]
         },
-        "insertType": "single",
         "workers": 1000
     }
 }
 ```
+
+__NOTE__: Timeseries workloads do not check whether the underlying collection is a timeseries collection. It actually works very well with regular collections too! It just will not leverage MongoDB 5+'s timeseries optimizations. Ensure (in the template or in an out-of-band init script) that the collection is setup as you want.
 
 Each record in a time series has a `meta` field (which identifies the series) and a time field. In a timeseries workload:
 - you should always set `threads` to 1. Setting threads to more than 1 will just run several times the workload in parallel, each with its own "timeline" so this is probably not what you want. Parallelization is achieved through the `workers` parameter instead.
@@ -671,9 +677,9 @@ Each time the workload runs, it will generate documents for a number of series (
 
 In general you will use `start`/`step` to populate historical data, then use `value` (often with `%now`) to simulate ongoing activity.
 
-Once all records are generated, they are inserted according to `insertType`:
-- `single` will issue a single (non-bulk) write for each record
-- Future options (probably `bulk` or a number) will group records in insertMany statements.
+Once all records are generated, they are inserted according to the `batch` option:
+- a numeric value will cause insertMany statements with `batch` documents per statement
+- any other value will cause single insertOne statements to be issued for each document
 
 Write operations are spread out over a number of `worker` threads (defaulting to 1).
 
