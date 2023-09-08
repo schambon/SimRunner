@@ -646,6 +646,7 @@ public class TemplateManager {
                 return ValueGenerators.natural(params);
             case "%long":
                 return ValueGenerators.longValue(params);
+            case "%float":
             case "%double":
                 return ValueGenerators.doubleValue(params);
             case "%decimal":
@@ -664,6 +665,13 @@ public class TemplateManager {
                 return ValueGenerators.abs(params);
             case "%mod":
                 return ValueGenerators.mod(params);
+            case "%toInt":
+                return ValueGenerators.toNumber("int", params);
+            case "%toLong":
+                return ValueGenerators.toNumber("long", params);
+            case "%toFloat":
+            case "%toDouble":
+                return ValueGenerators.toNumber("double", params);
 
             // workload
             case "%threadNumber":

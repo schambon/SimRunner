@@ -210,6 +210,24 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator toNumber(String target, DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var of = params.get("of").toString();
+
+            switch(target) {
+                case "int":
+                    return Integer.parseInt(of);
+                case "long":
+                    return Long.parseLong(of);    
+                case "double":
+                    return Double.parseDouble(of);
+                default:
+                    return 0;
+            }
+        };
+    }
+
     public static Generator stringConcat(DocumentGenerator input) {
         return () -> {
             var params = input.generateDocument();

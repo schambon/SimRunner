@@ -78,10 +78,11 @@ If you want to run it as a Docker container a Dockerfile is provided. In this ca
 What's new?
 -----------
 
-| Date       |                                                     |
-|------------|-----------------------------------------------------|
-| 2023-09-01 | [Timeseries support](#timeseries)                   |
-| 2023-08-22 | Enviroment variables support for connection strings |
+| Date       |                                                                                                  |
+|------------|--------------------------------------------------------------------------------------------------|
+| 2023-09-08 | `%toInt`/`%toLong`/`%toDouble` expressions. `float` is now aliased to `double` as convenience.   |
+| 2023-09-01 | [Timeseries support](#timeseries)                                                                |
+| 2023-08-22 | Enviroment variables support for connection strings                                              |
 
 Config file
 -----------
@@ -166,37 +167,68 @@ Templates
 
 The following template expressions are supported:
 
+__Binary values__
+
 * `%objectid`: generate a new ObjectId
+* `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes). Use `"as": "hex"` to encode in a hex string rather than a binary array
+* `%uuidString`: random UUID, as String
+* `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
+
+__Numbers__
+
 * `%integer` / `%number`: generate an int. Optionally use this form: `{"%integer": {"min": 0, "max": 50}}` to specify bounds
 * `%natural`: generate a positive int. Optionally use this form: `{"%natural": {"min": 400, "max": 5000}}` to specify bounds
-* `%long`, `%double`, and `%decimal` work as `%number` and yield longs, doubles, and decimals. Note that BSON doesn't have a 32 bit float type, so we don't support floats.
+* `%long`, `%double`, and `%decimal` work as `%number` and yield longs, doubles, and decimals. Note that BSON doesn't have a 32 bit float type, so we don't support floats. Instead, `%float` is an alias for `%double`.
 * `%gaussian`: generate a number following an approximate Gaussian distribution. Specify `mean`, `sd` for the mean / standard deviation of the Gaussian. Optionally, set `type` to `int` or `long` for integer values (any other value is understood as double)
 * `%product`: product of number array specified by `of`. Parameter `type` (either `long` or `double`, default `long`) specifies how to cast the result
 * `%sum`: like `%product` but sums the `of` array
 * `%abs`: absolute value
 * `{"%mod": {"of": number, "by": number}}`: modulus (`of` mod `by`)
+* `%toInt`, `%toLong`, `%toDouble` (or `%toFloat`): parse a string and return a number
+
+__Strings and text__
+
+* `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
+* `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
+* `{"%toString": {"of": template}}`: make "template" into a string (eg long -> string)
+* `%name.firstName`, `%name.lastName`, `%name.femaleFirstName`, `%name.maleFirstName`, `%name.name`: generate names
+* `%address.state`, `%address.latitude`, `%address.longitude`, `%address.zipCode`, `%address.country`, `%address.city`, `%address.fullAddress`: generate addresses
+
+__Dates__
+
 * `%now`: current date
 * `%date`: create a date between the Unix Epoch and 10 years in the future, or specify `min`/`max` bounds in a subdocument, either as ISO8601 or as EJSON dates (hint: `{$date: "2021-01-01"}` works but `"2021-01-01"` doesn't as it's not valid ISO8601).
 * `{"%plusDate": {"base": date, "plus": amount, "unit": unit}}`: adds some time to a date. `unit` is either: `year`, `month`, `day`, `minute`
 * `{"%ceilDate": {"base": date, "unit": unit}}`: align date to the next unit (eg next hour, day...) - default unit is `day`
 * `{"%floorDate": {"base": date, "unit": unit}}`: truncate date to the unit (eg hour, day...) - default unit is `day`
 * `{"%extractDate": {"minute": date}}`: extract UTC time field (second, minute, hour, day, month, year) from date.
-* `%binary`: create random blob of bytes. Use this form: `{"%binary": {"size": 1024}}` to specify the size (default 512 bytes). Use `"as": "hex"` to encode in a hex string rather than a binary array
+
+__Sequential values__
+
 * `%sequence`: create a sequential number from a *global* sequence.
 * `%threadSequence`: create a sequential number from a *per-thread* sequence.
-* `%uuidString`: random UUID, as String
-* `%uuidBinary`: random UUID, as native MongoDB UUID (binary subtype 4)
+
+__Arrays and objects__
+
 * `{"%array": {"size": integer, "min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate). If `size` is present, `min`/`max` are ignored.
-* `{"%oneOf": {"options": [ ... list of options ...], "weights": [ ... list of weights ...]}}`: pick among options. `weights` is optional; only use positive ints (or expressions that resolve to ints).
 * `{"%keyValueMap": {"min": integer, "max": integer, "key": { template resolving to string }, "value": { template } }}`: variable-length subdocument with keys/values generated from the provided templates. Key uniqueness is enforced at generation time.
+* `{"%head": {"of": "expression"}}`: first element of `expression` (should resolve to array or string)
+
+__Alternative values__
+
+* `{"%oneOf": {"options": [ ... list of options ...], "weights": [ ... list of weights ...]}}`: pick among options. `weights` is optional; only use positive ints (or expressions that resolve to ints).
 * `{"%dictionary": {"name": "dictionary name"}}`: pick a value from a dictionary (synonym with `"#dictionary name"`)
 * `{"%dictionaryConcat": {"from": "dictionary name", "length": (number), "sep": "separator}}`: string _length_ values from a dictionary, separated by _sep_.
 * `{"%dictionaryAt": {"from": "dictionary name", "at": (integer)}}`: get the nth element of a dictionary.
+
+__Geospatial__
+
 * `{"%longlat": {"countries": ["FR", "DE"], "jitter": 0.5}}`: create a longitude / latitude pair in one of the provided countries. `jitter` adds some randomness - there are only 30ish places per country at most in the dataset, so if you want locations to have a bit of variability, this picks a random location within `jitter` nautical miles (1/60th of a degree) of the raw selection. A nautical mile equals roughly 1800 metres.
 * `{"%coordLine": {"from": [x, y], "to": [x, y]}}`: create a long,lat pair (really an x,y pair) that is on the line between `from` and `to`.
-* `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
-* `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
-* `{"%toString": {"of": template}}`: make "template" into a string (eg long -> string)
+
+
+__Utility__
+
 * `{"%descend": {"in": {document}, "path": "dot.delimited.path"}}` is used to traverse documents. This should be mostly legacy, as `#document.dot.delimited.path` is equivalent.
 * `%workloadName`: name of the current workload
 * `%threadNumber`: number of the thread in the current workload
