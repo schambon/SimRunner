@@ -34,7 +34,7 @@
             "template": "metrics",
             "op": "timeseries",
             "threads": 1,
-            "batch": 100,
+            "batch": 10,
             "pace": 0,
             "comments": [
                 "Threads should always be 1 or absent for timeseries",
@@ -45,7 +45,7 @@
                 "meta": {
                     "metaField": "sensorId",
                     "dictionary": "sensors",
-                    "generate": {"random": 10},
+                    "generate": {"random": 100},
                     "comment": "At each iteration of the workload, take 10 random sensors"
                 },
                 "time": {
@@ -58,7 +58,8 @@
                         "For ongoing, use 'value': '%now' (or other template) instead of start/stop/step/jitter"
                     ]
                 },
-                "workers": 1000
+                "workers": 2,
+                "comment": "Here we generate metrics for 100 series (generate), split them in batches of 10 (batch) and queue them. Finally we have 2 threads (workers) that pick batches from the queue and insert them in MongoDB."
             }
         },
         {
