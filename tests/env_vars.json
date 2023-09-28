@@ -1,0 +1,21 @@
+{
+    "connectionString": "$MONGODB_URI",
+    "templates": [
+        {
+            "name": "simple",
+            "database": "simrunner",
+            "collection": "$COLLECTION",
+            "template": {
+                "_id": "%objectid"
+            }
+        }
+    ],
+    "workloads": [
+        {
+            "name": "simple",
+            "template": "simple",
+            "op": "insert",
+            "pace": 100
+        }
+    ]
+}

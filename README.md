@@ -87,7 +87,7 @@ What's new?
 Config file
 -----------
 
-The config file is parsed as Extended JSON - so you can specify things like dates or specific numeric types if you want to.
+The config file is parsed as Extended JSON - so you can specify things like dates or specific numeric types if you want to. In addition, any string value starting with `$` gets substituted with an environment variable lookup (if the lookup returns nothing then the original string, $ included, is returned).
 
 Let's look at an example:
 ```
@@ -146,8 +146,6 @@ Let's look at an example:
 ```
 
 This config specifies a connection to a local MongoDB without authentication, a simple "person" template that maps to the `test.people` collection, and two workloads: one that inserts new people in the database at a rate of one batch of 1000 every 100ms, and one that looks up a single person by `_id`.
-
-Note that `connectionString` can be either a MongoDB URI itself (e.g. `mongodb://localhost:27017`) or a reference to an environment variable (e.g. `$MONGO_URI`).
 
 A few things can be seen already:
 * templates are _named_ and referenced by name in the workloads.
@@ -813,7 +811,7 @@ Configuration:
 ```
 
 * `enabled`: should we log results to MongoDB ? (default: `false`)
-* `connectionString`: MongoDB connection string. Does not have to be the same as the tested cluster (arguably, should not). This can be either the connection URI itself (e.g. `mongodb+srv://<user>:<pass>@cluster.xprv.mongodb.net`) or a reference to an environment variable.
+* `connectionString`: MongoDB connection string. Does not have to be the same as the tested cluster (arguably, should not).
 * `database`: database in which to store the reports
 * `collection`: collection in which to store the reports
 * `drop`: drop the collection? (default: `false`)

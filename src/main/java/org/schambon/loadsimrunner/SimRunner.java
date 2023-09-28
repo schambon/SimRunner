@@ -48,7 +48,9 @@ public class SimRunner {
 
         String configString = Files.readString(Path.of(list.get(0)));
 
-        var config = Document.parse(configString);
+        var config = EnvVarSub.subEnvVars(Document.parse(configString));
+
+        LOGGER.debug("Applying config file: {}", config.toJson());
 
         new SimRunner(config).start();
     }
@@ -118,15 +120,6 @@ public class SimRunner {
             if (connectionString == null) {                
                 throw new InvalidConfigException("Connection String not present");
             } 
-            
-            if (connectionString.startsWith("$")) {                
-                String envVariable = connectionString.substring(1);                 
-                String envConnectionString = System.getenv(envVariable);
-                if (envConnectionString == null) {                    
-                    throw new InvalidConfigException("Can not resolve connection string from envVariable: [" + envConnectionString + "]");
-                }
-                config.put("connectionString", envConnectionString);
-            }
 
         } catch (ClassCastException t) {
             throw new InvalidConfigException("Invalid Connection String");

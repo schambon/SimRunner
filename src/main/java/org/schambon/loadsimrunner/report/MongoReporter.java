@@ -45,15 +45,6 @@ public class MongoReporter implements ReporterCallback {
                     System.exit(1);
                 }
 
-                if (connstring.startsWith("$")) {
-                    var envVariable = connstring.substring(1);
-                    var envConnectionString = System.getenv(envVariable);
-                    if (envConnectionString == null) {
-                        throw new InvalidConfigException("Can not resolve connection string from environment variable: [" + envConnectionString + "]");
-                    }
-                    connstring = envConnectionString;
-                }
-
                 if (runtimeSuffix) {
                     var formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm").withZone(ZoneId.of("Z"));
                     collectionName = collectionName + "_" + formatter.format(Instant.now());
