@@ -189,7 +189,7 @@ __Numbers__
 __Strings and text__
 
 * `{"%stringTemplate": {"template": "some string}}`: string based on a template, where `&` is a random digit, `?` is a random lowercase letter and `!` is a random uppercase letter. All other characters in the template are copied as-is.
-* `{"%stringConcat": {"of": [x, y, z, ...]}}`: concatenate as string the list of inputs.
+* `{"%stringConcat": {"of": [x, y, z, ...], "sep": " "}}`: concatenate as string the list of inputs.
 * `{"%toString": {"of": template}}`: make "template" into a string (eg long -> string)
 * `%name.firstName`, `%name.lastName`, `%name.femaleFirstName`, `%name.maleFirstName`, `%name.name`: generate names
 * `%address.state`, `%address.latitude`, `%address.longitude`, `%address.zipCode`, `%address.country`, `%address.city`, `%address.fullAddress`: generate addresses
