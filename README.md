@@ -212,6 +212,7 @@ __Arrays and objects__
 * `{"%array": {"size": integer, "min": integer, "max": integer, "of": { template }}}`: variable-length array (min/max elements, of subtemplate). If `size` is present, `min`/`max` are ignored.
 * `{"%keyValueMap": {"min": integer, "max": integer, "key": { template resolving to string }, "value": { template } }}`: variable-length subdocument with keys/values generated from the provided templates. Key uniqueness is enforced at generation time.
 * `{"%head": {"of": "expression"}}`: first element of `expression` (should resolve to array or string)
+* `{"%arrayElement": {"from": [...], "at": integer}}`: `at`th element (0-based) of `array`
 
 __Alternative values__
 

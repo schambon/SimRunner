@@ -756,7 +756,9 @@ public class TemplateManager {
             case "%address": return Address.gen(split[1]);
             case "%lorem": return Lorem.gen(split[1]);
 
+            // arrays
             case "%head": return ValueGenerators.head(params);
+            case "%arrayElement": return ValueGenerators.arrayElemAt(params);
 
             // faker
             default:

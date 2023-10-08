@@ -790,4 +790,18 @@ public class ValueGenerators {
             }
         };
     }
+
+    public static Generator arrayElemAt(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            var arr = params.get("from");
+            if (arr == null || ! (arr instanceof List)) {
+                LOGGER.info("%arrayElement.from parameter not provided");
+                return null;
+            }
+            var at = params.getInteger("at", 0);
+
+            return ((List) arr).get(at);
+        };
+    }
 }
