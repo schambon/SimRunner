@@ -245,6 +245,17 @@ public class ValueGenerators {
         };
     }
 
+    public static Generator stringTrim(DocumentGenerator input) {
+        return () -> {
+            var of = input.generateDocument().getString("of");
+            if (of == null) {
+                return "";
+            } else {
+                return of.trim();
+            }
+        };
+    }
+
     public static Generator _toString(DocumentGenerator input) {
         return () -> {
             var params = input.generateDocument();
