@@ -137,7 +137,10 @@ public class ValueGenerators {
             var sd = ((Number) params.get("sd")).doubleValue();
             var gaussian = ThreadLocalRandom.current().nextGaussian() * sd + mean;
 
-            switch (params.getString("type")) {
+            var type = params.getString("type");
+            if (type == null) type = "double";
+
+            switch (type) {
                 case "int": return (int) Math.round(gaussian);
                 case "long": return Math.round(gaussian);
                 default:
