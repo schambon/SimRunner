@@ -44,6 +44,7 @@ public class Address {
 
     public static Generator gen(String key) {
         switch(key) {
+            case "stateAbbrev": return stateAbbrev();
             case "state": return state();
             case "latitude": return () -> String.format("%.8g", (ThreadLocalRandom.current().nextDouble() * 180) - 90);
             case "longitude": return () -> String.format("%.8g", (ThreadLocalRandom.current().nextDouble() * 360) - 180);
