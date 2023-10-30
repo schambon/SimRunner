@@ -7,12 +7,17 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -28,6 +33,8 @@ import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.client.model.ValidationOptions;
 import static com.mongodb.client.model.Filters.*;
 
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.generators.Address;
@@ -92,14 +99,37 @@ public class TemplateManager {
         } else {
             var instanceStartAt = config.getInteger("instancesStartAt", 0);
             var result = new ArrayList<TemplateManager>(instances);
+
+            // Pool Executor with NN threads
+            var NN = 500;
+            ExecutorService poolExecutor = Executors.newFixedThreadPool(NN);
+            ArrayList<Future<?>> f_result = new ArrayList<>(instances);
             for (var i = instanceStartAt; i < instanceStartAt + instances; i++) {
                 config.put("name", String.format("%s_%d", basename, i));
                 config.put("instance", i);
-                result.add(new TemplateManager(config, reporter));
+                f_result.add(poolExecutor.submit(new Runnable() {
+                    public void run() {
+                        result.add(new TemplateManager(config, reporter));
+                    }
+                }));
             }
+            try {
+                for (Future<?> f : f_result) {
+                    f.get();
+                };
+                poolExecutor.shutdown();
+                poolExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+                LOGGER.info("All threads completed");
+            } catch (InterruptedException e) {
+                LOGGER.error("Await termination exception: " + e.getMessage());
+            } catch (ExecutionException e) {
+                LOGGER.error("Await termination exception: " + e.getMessage());
+            }
+
+            //
             return result;
         }
- 
+
     }
 
     private TemplateManager(Document config, Reporter reporter) {
@@ -198,7 +228,8 @@ public class TemplateManager {
                     options.expireAfter(createOptions.getLong("expireAfterSeconds"), TimeUnit.SECONDS);
                 var tsOptions = new TimeSeriesOptions(timeseries.getString("timeField"));
                 if (timeseries.containsKey("granularity"))
-                    tsOptions.granularity(TimeSeriesGranularity.valueOf(timeseries.getString("granularity").toUpperCase()));
+                    tsOptions.granularity(
+                            TimeSeriesGranularity.valueOf(timeseries.getString("granularity").toUpperCase()));
                 if (timeseries.containsKey("metaField"))
                     tsOptions.metaField(timeseries.getString("metaField"));
                 options.timeSeriesOptions(tsOptions);
@@ -247,8 +278,9 @@ public class TemplateManager {
             var values = remembrances.get(rfield.name);
             values.addAll(preloadedValues);
 
-            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(), rfield.getDescription(), rfield.name));
-            
+            reporter.reportInit(String.format("\tLoaded %d existing keys for field: %s (refer as #%s)", values.size(),
+                    rfield.getDescription(), rfield.name));
+
         }
     }
 
@@ -331,23 +363,23 @@ public class TemplateManager {
 
         var attribute = config.getString("attribute");
         // if (attribute == null) {
-        //     attribute = "_id";
+        // attribute = "_id";
         // }
-      
+
         List<Object> result = new ArrayList<>();
 
         var cursor = _coll.find(effectiveQuery).limit(limit);
         if (attribute != null) {
             var projectionDocument = new Document(attribute, true);
             // if (!"_id".equals(attribute)){
-            //     projectionDocument.append("_id", false);
+            // projectionDocument.append("_id", false);
             // }
             cursor = cursor.projection(projectionDocument);
         }
         for (var r : cursor) {
             if (attribute != null) {
                 var v = TemplateUtil.subdescend(r, Arrays.asList(attribute.split("\\.")));
-                //var v = r.get(attribute);
+                // var v = r.get(attribute);
                 result.add(v == null ? "null" : v);
             } else {
                 result.add(r);
@@ -633,7 +665,8 @@ public class TemplateManager {
     private Generator _valueGenerator(String operator, DocumentGenerator params) {
         var split = operator.split("\\.");
         switch (split[0]) {
-            case "%objectid": return ValueGenerators.objectId();
+            case "%objectid":
+                return ValueGenerators.objectId();
             case "%bool":
             case "%boolean":
                 return ValueGenerators.bool();
@@ -715,7 +748,6 @@ public class TemplateManager {
             case "%extractDate":
                 return ValueGenerators.extractDate(params);
 
-
             case "%binary":
                 return ValueGenerators.binary(params);
             case "%uuidString":
@@ -749,16 +781,22 @@ public class TemplateManager {
                 return ValueGenerators.custom(params);
 
             // path descent (deprecated)
-            case "%descend": return ValueGenerators.descend(params);
+            case "%descend":
+                return ValueGenerators.descend(params);
 
             // hack to bypass common Faker functions that are very slow
-            case "%name": return Name.gen(split[1]);
-            case "%address": return Address.gen(split[1]);
-            case "%lorem": return Lorem.gen(split[1]);
+            case "%name":
+                return Name.gen(split[1]);
+            case "%address":
+                return Address.gen(split[1]);
+            case "%lorem":
+                return Lorem.gen(split[1]);
 
             // arrays
-            case "%head": return ValueGenerators.head(params);
-            case "%arrayElement": return ValueGenerators.arrayElemAt(params);
+            case "%head":
+                return ValueGenerators.head(params);
+            case "%arrayElement":
+                return ValueGenerators.arrayElemAt(params);
 
             // faker
             default:
