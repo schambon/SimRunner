@@ -11,12 +11,8 @@
             "name": "person",
             "database": "simrunnerOptim",
             "collection": "sharded",
-            "sharding": {
-                "key": {
-                    "_id": "hashed"
-                }
-            },
-            "instances": 10,
+            "drop": true,
+            "instances": 20000,
             "template": {
                 "_id": "%objectid",
                 "first": "%name.firstName",
