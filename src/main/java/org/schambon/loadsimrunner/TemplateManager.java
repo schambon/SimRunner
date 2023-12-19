@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,8 +32,6 @@ import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.client.model.ValidationOptions;
 import static com.mongodb.client.model.Filters.*;
 
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.generators.Address;
@@ -101,7 +98,7 @@ public class TemplateManager {
             var result = new ArrayList<TemplateManager>(instances);
 
             // Pool Executor with NN threads
-            var NN = 500;
+            var NN = config.getInteger("numWorkers", 500);
             ExecutorService poolExecutor = Executors.newFixedThreadPool(NN);
             ArrayList<Future<?>> f_result = new ArrayList<>(instances);
             for (var i = instanceStartAt; i < instanceStartAt + instances; i++) {
