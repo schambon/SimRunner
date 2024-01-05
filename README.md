@@ -39,6 +39,7 @@ Contents
     - [replaceWithNew](#replacewithnew)
     - [aggregate](#aggregate)
     - [timeseries](#timeseries)
+  - [Encryption](#encryption)
   - [Output](#output)
   - [HTTP interface](#http-interface)
   - [MongoDB Reporting](#mongodb-reporting)
@@ -716,6 +717,47 @@ Once all records are generated, they are inserted according to the `batch` optio
 - any other value will cause single insertOne statements to be issued for each document
 
 Write operations are spread out over a number of `worker` threads (defaulting to 1).
+
+Encryption
+----------
+
+Simrunner has basic support for [Queryable Encryption](https://www.mongodb.com/docs/manual/core/queryable-encryption/) using automatic encryption (explicit encryption is not supported).
+
+In order to setup QE, add an `encryption` stanza in the configuration file, with the following structure:
+
+```
+"encryption": {
+    "enabled": true,
+    "sharedlib": "<Shared lib path>",
+    "keyVaultUri": "<Key vault URI>",
+    "keyProviders": {
+        "local": {
+            "key": "<path to your master key>"
+        }
+    },
+    "keyVaultNamespace": "encryption.__keyvault",
+    "collections": [
+        {
+            "database": "db",
+            "collection": "coll",
+            "kmsProvider": "local",
+            "fields": [
+                // encrypted field map
+            ]
+        }
+    ]
+}
+```
+
+A full example is in [tests/queryable-enc.json].
+
+Noteworthy:
+- you MUST install the MongoDB Crypt Shared library, downloadable as part of [MongoDB Enterprise Advanced distributions](https://www.mongodb.com/download-center/enterprise/releases). In the config file, provide the full path to the `mongo_crypt_v1` library (for instance on a Mac, this is `mongo_crypt_v1.dylib`) as the `sharedlib` parameter.
+- you can use a different MongoDB instance as a key vault. If you do not provide a `keyVaultUri` parameter, Simrunner will use the global `connectionString`.
+- you MUST provide a keyVaultNamespace (it can be anything you like).
+- only `local` key provider is supported currently. AWS, GCP, Azure and KMIP will be added in the future (PRs are welcome ^_^)
+
+This has been tested against MongoDB 7.0 in Atlas on a Mac using Rosetta. If you are using another configuration and encounter issues, feel free to file a bug report.
 
 Output
 ------
