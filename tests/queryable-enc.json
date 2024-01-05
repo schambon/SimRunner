@@ -1,0 +1,85 @@
+{
+    "connectionString": "$MONGODB_URI",
+    "encryption": {
+        "enabled": true,
+        "sharedlib": "$SHARED_LIB_PATH",
+        "keyVaultUri": "$MONGODB_URI",
+        "keyProviders": {
+            "local": {
+                "key": "dummy-master-key.txt"
+            }
+        },
+        "keyVaultNamespace": "simrunner.keyvault",
+        "collections": [
+            {
+                "database": "simrunner",
+                "collection": "medicalRecords",
+                "kmsProvider": "local",
+                "fields": [
+                    {
+                        "keyId": null,
+                        "path": "patient.name",
+                        "bsonType": "string",
+                        "queries": { "queryType": "equality"}
+                    },
+                    {
+                        "keyId": null,
+                        "path": "patient.ssn",
+                        "bsonType": "string",
+                        "queries": { "queryType": "equality"}
+                    }
+                ]
+            }
+        ]
+    },
+    "templates": [
+        {
+            "name": "medicalRecords",
+            "database": "simrunner",
+            "collection": "medicalRecords",
+            "drop": false,
+            "dictionaries": {
+                "people": { "type": "templateUnique", "size": 1000, "template": {
+                    "_id": "%objectid",
+                    "ssn": "%idNumber.ssnValid",
+                    "name": "%name.fullName"
+                } },
+                "conditions": ["Flu", "Runny nose", "Broken ankle", "Sprained elbow", "Stubbed toe", "Sprained left ear", "Feeling blue", "Sprained right ear"]
+            },
+            "template": {
+                "patient": {
+                    "name": "#person.name",
+                    "ssn": "#person.ssn"
+                },
+                "recordId": "%sequence",
+                "recordDate": "%now",
+                "condition": "#conditions"
+            }
+        }
+    ],
+    "workloads": [
+        {
+            "name": "insert records",
+            "template": "medicalRecords",
+            "op": "insert",
+            "variables": {
+                "person": "#people"
+            },
+            "threads": 1,
+            "pace": 100
+        },
+        {
+            "name": "find records by ssn",
+            "template": "medicalRecords",
+            "op": "find",
+            "variables": {
+                "person": "#people"
+            },
+            "params": {
+                "filter": {
+                    "ssn": "#person.ssn"
+                }
+            }
+        }
+    ]
+}

@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.lang.System;
 
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,7 +19,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.bson.Document;
-import org.bson.UuidRepresentation;
+import org.schambon.loadsimrunner.client.MongoClientHelper;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.http.HttpServer;
 import org.schambon.loadsimrunner.report.MongoReporter;
@@ -65,6 +62,7 @@ public class SimRunner {
     HttpServer httpServer = null;
 
     int reportInterval = 1000;
+    private String database;
 
     /////////// Implementation //////////
 
@@ -114,8 +112,9 @@ public class SimRunner {
         List<Integer> reportPercentiles = config.getList("reportPercentiles", Integer.class, Arrays.asList(95));
         reporter = new Reporter(reportPercentiles);
 
+        String connectionString = null;
         try {
-            String connectionString = config.getString("connectionString");
+            connectionString = config.getString("connectionString");
 
             if (connectionString == null) {                
                 throw new InvalidConfigException("Connection String not present");
@@ -125,10 +124,10 @@ public class SimRunner {
             throw new InvalidConfigException("Invalid Connection String");
         }
 
-        this.client = MongoClients.create(MongoClientSettings.builder()
-            .applyConnectionString(new ConnectionString(config.getString("connectionString")))
-            .uuidRepresentation(UuidRepresentation.STANDARD)
-            .build());
+        // bit ugly: we have to drop collections before initialising the main MongoClient since it can create encrypted collections, which would error out if they already exist
+        dropCollectionsIfNecessary(connectionString, (List<Document>) config.get("templates"));
+
+        this.client = MongoClientHelper.client(connectionString, (Document) config.get("encryption"));
 
         Document commandResult = client.getDatabase("admin").runCommand(new Document("isMaster", 1));
         if (!commandResult.getBoolean("ismaster")) {
@@ -160,5 +159,20 @@ public class SimRunner {
             this.httpServer = new HttpServer((Document) config.get("http"), reporter);
         }
 
+    }
+
+    private void dropCollectionsIfNecessary(String uri, List<Document> templates) {
+        MongoClientHelper.doInTemporaryClient(uri, (client) -> {
+            for (Document tpl : templates) {
+                if (tpl.getBoolean("drop", false)) {
+                    var database = tpl.getString("database");
+                    var collection = tpl.getString("collection");
+                    client.getDatabase(database).getCollection(collection).drop();
+                    client.getDatabase(database).getCollection(String.format("enxcol_.%s.ecoc", collection)).drop();
+                    client.getDatabase(database).getCollection(String.format("enxcol_.%s.esc", collection)).drop();
+                    reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
+                }
+            }
+        });
     }
 }

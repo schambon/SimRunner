@@ -33,6 +33,7 @@ import com.mongodb.client.model.ValidationOptions;
 import static com.mongodb.client.model.Filters.*;
 
 import org.bson.Document;
+import org.schambon.loadsimrunner.client.MongoClientHelper;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.generators.Address;
 import org.schambon.loadsimrunner.generators.Name;
@@ -59,7 +60,6 @@ public class TemplateManager {
     private MongoClient mongoClient;
     private String database;
     private String collection;
-    private boolean drop = false;
 
     private Document template;
     private Document createOptions;
@@ -143,8 +143,6 @@ public class TemplateManager {
             this.collection = String.format("%s_%d", _collection, _instance);
         }
 
-        this.drop = config.getBoolean("drop", false);
-
         this.template = (Document) config.get("template");
         this.variables = (Document) config.get("variables");
         if (this.variables == null) {
@@ -191,32 +189,28 @@ public class TemplateManager {
         this.mongoClient = client;
 
         var db = client.getDatabase(database);
-        var found = false;
-        for (var name : db.listCollectionNames()) {
-            if (name.equals(collection)) {
-                found = true;
-                break;
-            }
-        }
+        var found = MongoClientHelper.collExists(db, collection);
 
         this.mongoColl = db.getCollection(collection);
 
-        if (drop) {
-            // if we are sharded, do a delete all instead of a drop
-            if (client.getDatabase("config").getCollection("collections").find(eq("_id", database + "." + collection))
-                    .first() != null) {
-                reporter.reportInit(String.format(
-                        "Collection %s.%s is sharded. Deleting all records instead of dropping (https://docs.mongodb.com/manual/reference/method/db.collection.drop)",
-                        database, collection));
-                mongoColl.deleteMany(new Document());
-                reporter.reportInit(String.format("Deleted all records from collection %s.%s", database, collection));
-            } else {
-                mongoColl.drop();
-                reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
-            }
-        }
+        // if (drop) {
+        //     // if we are sharded, do a delete all instead of a drop
+        //     // TODO change that if we are MongoDB ⩾ 5.0
+        //     if (client.getDatabase("config").getCollection("collections").find(eq("_id", database + "." + collection))
+        //             .first() != null) {
+        //         reporter.reportInit(String.format(
+        //                 "Collection %s.%s is sharded. Deleting all records instead of dropping (https://docs.mongodb.com/manual/reference/method/db.collection.drop)",
+        //                 database, collection));
+        //         mongoColl.deleteMany(new Document());
+        //         reporter.reportInit(String.format("Deleted all records from collection %s.%s", database, collection));
+        //     } else {
+        //         mongoColl.drop();
+        //         reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
+        //     }
 
-        if (drop || !found) {
+        // }
+
+        if (!found) {
             var options = new CreateCollectionOptions();
             options.capped(createOptions.getBoolean("capped", false));
             if (createOptions.containsKey("timeseries")) {
