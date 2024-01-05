@@ -749,7 +749,7 @@ In order to setup QE, add an `encryption` stanza in the configuration file, with
 }
 ```
 
-A full example is in [tests/queryable-enc.json].
+A full example is in [tests/queryable-enc.json](tests/queryable-enc.json).
 
 Noteworthy:
 - you MUST install the MongoDB Crypt Shared library, downloadable as part of [MongoDB Enterprise Advanced distributions](https://www.mongodb.com/download-center/enterprise/releases). In the config file, provide the full path to the `mongo_crypt_v1` library (for instance on a Mac, this is `mongo_crypt_v1.dylib`) as the `sharedlib` parameter.
