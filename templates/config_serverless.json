@@ -1,0 +1,56 @@
+{
+    "connectionString": "mongodb+srv://foo:foo@abc.defgh.mongodb.net",
+    "http": {
+        "enabled": false,
+        "port": 3000,
+        "host": "localhost"
+    },
+    "reportInterval": 10000,
+    "templates": [
+        {
+            "name": "person",
+            "database": "simrunnerOptim",
+            "collection": "sharded",
+            "drop": true,
+            "instances": 20000,
+            "template": {
+                "_id": "%objectid",
+                "first": "%name.firstName",
+                "last": "%name.lastName",
+                "creationDate": {"%plusDate": {"base": {"$date": "2023-01-01"}, "plus": "%sequence", "unit": "minute"}},
+                "text": "%lorem.sentence",
+                "padding": {
+                    "%array": {
+                        "min": 10,
+                        "max": 100,
+                        "of": {
+                            "key": "%lorem.word",
+                            "value": "%natural"
+                        }
+                    }
+                }
+            },
+            "indexes": [
+                {
+                    "_id": "hashed"
+                },
+                {
+                    "creationDate": -1
+                },
+                {
+                    "first": 1, "last":1, "creationDate":-1
+                }
+            ]
+        }
+    ],
+    "workloads": [
+        {
+            "name": "Insert",
+            "template": "person",
+            "op": "insert",
+            "threads": 10,
+            "instances": 50,
+            "batch": 100
+        }
+    ]
+}

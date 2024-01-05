@@ -514,6 +514,8 @@ This will create collections `coll_0` through `coll_19` and apply duplicate work
 
 If you don’t like the numbering to start at 0, use `"instancesStartAt": n` to specify your starting point. It may be interesting in case you’re running a clustered Simrunner to spread the instances - so Simrunner A would target collections 0 through 99 and Simrunner B would target collections 100 through 199.
 
+Note that the template instances are created in parallel; by default up to 500 worker threads are allocated to initialize templates. If this number doesn't suit you, you can change it with the `"numWorkers": n` parameter.
+
 Be aware that all workloads are duplicated! So if you run 100 instances and have a workload that defines 100 threads, you will end up with 10000 client threads! Be sure to adjust thread counts and pacing so you don’t overwhelm your hardware.
 
 Workloads
