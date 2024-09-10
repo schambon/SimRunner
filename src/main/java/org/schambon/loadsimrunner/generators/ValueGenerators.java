@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import static java.time.ZoneOffset.UTC;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.github.javafaker.Faker;
 
@@ -272,6 +275,45 @@ public class ValueGenerators {
                 return of.toString();
             }
         };
+    }
+
+    public static Generator ngram(DocumentGenerator input) {
+        return () -> {
+            var params = input.generateDocument();
+            Object of = params.get("of");
+            var min = params.getInteger("min", 3);
+            var split = params.getBoolean("split", true);
+            var lowercase = params.getBoolean("lowercase", true);
+
+            if (of == null) {
+                return Collections.emptyList();
+            } else if (of instanceof String) {
+                return __ngram((String) of, min, split, lowercase);
+            } else {
+                return __ngram(of.toString(), min, split, lowercase);
+            }
+        };
+    }
+
+    private static List<String> __ngram(String input, int min, boolean split, boolean lowercase) {
+        var _in = lowercase ? input.toLowerCase() : input;
+
+        var words = split ? Arrays.asList(_in.split(" ")) : Collections.singletonList(input);
+
+        List<String> res = new ArrayList<>();
+        words.stream().map(it -> _ngram(it, min)).forEach(it -> res.addAll(it));;
+
+        return res;
+    }
+
+    private static List<String> _ngram(String input, int min) {
+        List<String> result = new ArrayList<>();
+        for (var i = min; i <= input.length(); i++) {
+            for (var j = 0; j + i <= input.length(); j++) {
+                result.add(input.substring(j, j+i));
+            }
+        }
+        return result;
     }
 
     /* Dates */

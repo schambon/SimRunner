@@ -193,6 +193,7 @@ __Strings and text__
 * `{"%stringTrim": {"of": "string expression"}}`: removes leading and trailing spaces from `string expression`
 * `%name.firstName`, `%name.lastName`, `%name.femaleFirstName`, `%name.maleFirstName`, `%name.name`: generate names
 * `%address.state`, `%address.latitude`, `%address.longitude`, `%address.zipCode`, `%address.country`, `%address.city`, `%address.fullAddress`: generate addresses
+* `{"%ngram": {"of": "string expression", "min": 3, "split": true, "lowercase": true}}`: compute ngrams of min size "min" (default 3)
 
 __Dates__
 

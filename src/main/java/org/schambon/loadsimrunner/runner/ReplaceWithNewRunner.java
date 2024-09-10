@@ -10,8 +10,13 @@ import java.util.List;
 import org.bson.Document;
 import org.schambon.loadsimrunner.WorkloadManager;
 import org.schambon.loadsimrunner.report.Reporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReplaceWithNewRunner extends AbstractRunner {
+
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(ReplaceWithNewRunner.class);
 
     public ReplaceWithNewRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);

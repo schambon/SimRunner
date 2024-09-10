@@ -722,6 +722,8 @@ public class TemplateManager {
                 return ValueGenerators._toString(params);
             case "%stringTrim":
                 return ValueGenerators.stringTrim(params);
+            case "%ngram":
+                return ValueGenerators.ngram(params);
 
             // dates
             case "%now":
