@@ -1,0 +1,84 @@
+{
+    "connectionString": "mongodb://localhost:27017",
+    "reportInterval": 1000,
+    
+    "templates": [
+        { 
+            "name": "symbols",
+            "database": "tradedemo",
+            "collection": "symbols",
+            "template": {
+                "_id": {"%stringTemplate": {"template": "!!!!"}}
+            }
+        },
+        {
+            "name": "price",
+            "database": "simrunner",
+            "collection": "dummy",
+            "dictionaries": {
+                "symbol": {"type": "collection", "db": "tradedemo", "collection": "symbols", "attribute": "_id"}
+            },
+            "template": {
+                "_id": "%objectid",
+                "symbol": "#symbol",
+                "date": "%now",
+                "price": {"%natural": {"min": 100, "max": 1000}}
+            }
+        },
+
+        {
+            "name": "trade",
+            "database": "simrunner",
+            "collection": "dummy",
+            "dictionaries": {
+                "symbol": {"type": "collection", "db": "tradedemo", "collection": "symbols", "attribute": "_id"}
+            },
+            "template": {
+                "_id": "%objectid",
+                "symbol": "#symbol",
+                "date": "%now",
+                "quantity": {"%integer": {"min": -200, "max": 200}},
+                "tradeInfo": {"%keyValueMap": {"min": 10, "max": 20, "key": "%lorem.word", "value": "%lorem.sentence"}}
+            }
+        }
+    ],
+    "workloads": [
+        {
+            "disabled": true,
+            "name": "insert symbols",
+            "op": "insert",
+            "template": "symbols",
+            "threads": 1,
+            "stopAfter": 200
+        },
+
+        {
+            "disabled": false,
+            "comment": "Insert a price record in Kafka every 1000ms",
+            "name": "Price",
+            "template": "price",
+            "op": "kafkaInsert",
+            "params": {
+                "bootstrap-servers": "localhost:9092",
+                "topic": "prices"
+            },
+            "threads": 1,
+            "pace": 1000
+        },
+
+        {
+            "disabled": false,
+            "comment": "Insert a trade record in Kafka every 100ms",
+            "name": "Trades",
+            "template": "trade",
+            "op": "kafkaInsert",
+            "params": {
+                "bootstrap-servers": "localhost:9092",
+                "topic": "trades"
+            },
+            "threads": 1,
+            "pace": 100
+        }
+    ]
+    
+}

@@ -24,6 +24,7 @@ import org.schambon.loadsimrunner.runner.TimeSeriesRunner;
 import org.schambon.loadsimrunner.runner.UpdateManyRunner;
 import org.schambon.loadsimrunner.runner.UpdateOneRunner;
 import org.schambon.loadsimrunner.runner.WorkloadThread;
+import org.schambon.loadsimrunner.runner.kafka.KafkaInsertRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,6 +155,7 @@ public class WorkloadManager {
             case "aggregate": return new AggregationRunner(this, reporter);
             case "timeseries": return new TimeSeriesRunner(this, reporter);
             case "custom": return new CustomRunner(this, reporter);
+            case "kafkaInsert": return new KafkaInsertRunner(this, reporter);
             default:
                 LOGGER.warn("Not implemented (yet?)");
                 return new Runnable() {
