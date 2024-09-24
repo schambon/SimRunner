@@ -746,6 +746,7 @@ Params:
 
 No support is built in (yet) for security, authentication, and other advanced options.
 
+_Important note_: you still need a MongoDB instance, even if it doesn't do anything. Simrunner won't start if the `connectionString` at the top of the config file is invalid. Templates are mapped to collections, so even though you are writing to Kafka, an empty collection will be created in MongoDB for your template. (Fixing this would require a deep refactoring of Simrunner; contributions welcome.)
 
 Encryption
 ----------
