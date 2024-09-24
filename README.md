@@ -39,6 +39,7 @@ Contents
     - [replaceWithNew](#replacewithnew)
     - [aggregate](#aggregate)
     - [timeseries](#timeseries)
+    - [kafkaInsert](#kafkainsert)
   - [Encryption](#encryption)
   - [Output](#output)
   - [HTTP interface](#http-interface)
@@ -718,6 +719,33 @@ Once all records are generated, they are inserted according to the `batch` optio
 - any other value will cause single insertOne statements to be issued for each document
 
 Write operations are spread out over a number of `worker` threads (defaulting to 1).
+
+
+### kafkaInsert
+
+Sometimes you just want to write JSON documents with a certain template to a Kafka topic. This workload type will do just that.
+
+```
+    {
+        "comment": "Insert a price record in Kafka every 1000ms",
+        "name": "Price",
+        "template": "price",
+        "op": "kafkaInsert",
+        "params": {
+            "bootstrap-servers": "localhost:9092",
+            "topic": "prices"
+        },
+        "threads": 1,
+        "pace": 1000
+    }
+```
+
+Params:
+- `boostrap-servers`: your Kafka brokers
+- `topic`: topic to write to
+
+No support is built in (yet) for security, authentication, and other advanced options.
+
 
 Encryption
 ----------
