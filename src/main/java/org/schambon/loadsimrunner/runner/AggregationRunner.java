@@ -17,7 +17,7 @@ public class AggregationRunner extends AbstractRunner {
 
         var start = System.currentTimeMillis();
         var i = 0;
-        var iterator = mongoColl.aggregate(pipeline).iterator();
+        var iterator = mongoColl.aggregate(pipeline).allowDiskUse(true).iterator();
         while (iterator.hasNext()) {
             iterator.next();
             i++;
