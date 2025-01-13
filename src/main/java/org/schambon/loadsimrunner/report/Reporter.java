@@ -56,7 +56,10 @@ public class Reporter {
         
                 Document reportDoc = new Document();
                 for (var workload: oldStats.keySet()) {
-                    reportDoc.append(workload, oldStats.get(workload).compute(interval, percentiles));
+                    Document computedStats = oldStats.get(workload).compute(interval, percentiles);
+                    if (computedStats != null) {
+                        reportDoc.append(workload, computedStats);
+                    }
                 }
         
                 Instant reportInstant = Instant.ofEpochMilli(now);
@@ -141,8 +144,16 @@ public class Reporter {
             var util = 100. * batchStats.sum() / (double) interval;
             var numberStats = Stats.of(numbers);
 
+            long totalOps = (long) (numberStats.count() / (double) (interval/1000));
+            // TODO fix this properly - there are times when the number goes through the roof, either because of an overflow or because `interval` is too small.
+            if (totalOps > 1e10) {
+                LOGGER.warn("Computed very large ops number {}. Count is {}, interval is {}", totalOps, numberStats.count(), interval);
+                return null;
+            }
+
             Document wlReport = new Document();
-            wlReport.append("ops", (long) (numberStats.count() / (double) (interval/1000)));
+
+            wlReport.append("ops", totalOps);
             wlReport.append("records", (long) (numberStats.sum() / (double) (interval/1000)));
             wlReport.append("total ops", numberStats.count());
             wlReport.append("total records", (long)numberStats.sum());
