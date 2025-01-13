@@ -306,7 +306,7 @@ public class TemplateManager {
 
         String type = config.getString("type");
         if (type == null)
-            type = "text ";
+            type = "text";
         switch (type) {
             case "json":
                 return _loadJSONDictionary(config);
@@ -376,6 +376,7 @@ public class TemplateManager {
                 result.add(r);
             }
         }
+        LOGGER.info("Loaded {} entries into dictionary from namespace {}.{}", result.size(), dbName, config.getString("collection"));
         return result;
     }
 
@@ -648,6 +649,7 @@ public class TemplateManager {
             if (resolved instanceof Document) {
                 return TemplateUtil.subdescend((Document) resolved, tail);
             } else {
+                LoggerFactory.getLogger("HashGenerator").debug("Resolved from: {} to {}", key, resolved);
                 return resolved;
             }
         };
