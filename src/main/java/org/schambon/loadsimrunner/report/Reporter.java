@@ -144,7 +144,7 @@ public class Reporter {
             var util = 100. * batchStats.sum() / (double) interval;
             var numberStats = Stats.of(numbers);
 
-            long totalOps = (long) (numberStats.count() / (double) (interval/1000));
+            long totalOps = (long) (numberStats.count() /  ((double)interval/1000.d));
             // TODO fix this properly - there are times when the number goes through the roof, either because of an overflow or because `interval` is too small.
             if (totalOps > 1e10) {
                 LOGGER.warn("Computed very large ops number {}. Count is {}, interval is {}", totalOps, numberStats.count(), interval);
