@@ -29,8 +29,10 @@ public class TimeSeriesRunner extends AbstractRunner {
     Instant currentTime = null;
     ExecutorService exec = null;
 
-    Document timeConfig;
-    Document metaConfig;
+    protected Document timeConfig;
+    protected String timeField;
+    protected Document metaConfig;
+    protected String metaField;
 
     public TimeSeriesRunner(WorkloadManager workloadConfiguration, Reporter reporter) {
         super(workloadConfiguration, reporter);
@@ -39,8 +41,10 @@ public class TimeSeriesRunner extends AbstractRunner {
         if (timeConfig.containsKey("start")) {
             currentTime =  ((Date) timeConfig.get("start")).toInstant();
         }
+        this.timeField = timeConfig.getString("timeField");
 
         this.metaConfig = (Document) params.get("meta");
+        this.metaField = metaConfig.getString("metaField");
 
         var workers = params.getInteger("workers", 1);
         exec = Executors.newFixedThreadPool(workers);
@@ -117,12 +121,7 @@ public class TimeSeriesRunner extends AbstractRunner {
             for (var metaVal: series) {
                 var doc = getDoc(base, metaVal);
 
-                tasks.add(() -> {
-                    var _s = System.currentTimeMillis();
-                    mongoColl.insertOne(doc);
-                    reporter.reportOp(name, 1, System.currentTimeMillis() - _s);
-                    return null;
-                });
+                tasks.add(addOneMeasure(doc));
             }
         } else {
             var docs = new ArrayList<Document>(batch);
@@ -143,12 +142,7 @@ public class TimeSeriesRunner extends AbstractRunner {
 
             if (docs.size() > 0) {
                 final var _docs = new ArrayList<>(docs);
-                tasks.add(() -> {
-                var _s = System.currentTimeMillis();
-                mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
-                reporter.reportOp(name, _docs.size(), System.currentTimeMillis() - _s);
-                return null;
-            });
+                tasks.add(addManyMeasures(_docs));
             }
             
         }
@@ -168,6 +162,25 @@ public class TimeSeriesRunner extends AbstractRunner {
 
     }
 
+
+    protected Callable<Void> addOneMeasure(Document doc) {
+        return () -> {
+            var _s = System.currentTimeMillis();
+            mongoColl.insertOne(doc);
+            reporter.reportOp(name, 1, System.currentTimeMillis() - _s);
+            return null;
+        };
+    }
+
+    protected Callable<Void> addManyMeasures(final ArrayList<Document> _docs) {
+        return () -> {
+            var _s = System.currentTimeMillis();
+            mongoColl.insertMany(_docs, new InsertManyOptions().ordered(false));
+            reporter.reportOp(name, _docs.size(), System.currentTimeMillis() - _s);
+            return null;
+        };
+    }
+
     private Document getDoc(Instant base, Object metaVal) {
         Instant ts;
         if (timeConfig.containsKey("jitter") && timeConfig.get("jitter") instanceof Number) {
@@ -184,8 +197,8 @@ public class TimeSeriesRunner extends AbstractRunner {
         }
 
         var doc = template.generate();
-        doc.append(metaConfig.getString("metaField"), metaVal);
-        doc.append(timeConfig.getString("timeField"), ts);
+        doc.append(metaField, metaVal);
+        doc.append(timeField, ts);
         return doc;
     }
     

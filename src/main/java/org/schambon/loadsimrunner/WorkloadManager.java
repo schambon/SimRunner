@@ -13,6 +13,7 @@ import org.bson.Document;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.report.Reporter;
 import org.schambon.loadsimrunner.runner.AggregationRunner;
+import org.schambon.loadsimrunner.runner.BucketTimeSeriesRunner;
 import org.schambon.loadsimrunner.runner.CustomRunner;
 import org.schambon.loadsimrunner.runner.DeleteManyRunner;
 import org.schambon.loadsimrunner.runner.DeleteOneRunner;
@@ -124,7 +125,7 @@ public class WorkloadManager {
 
 
         if (this.batch > 0) {
-            if (! ("insert".equals(op) || "updateOne".equals(op) || "updateMany".equals(op) || "replaceWithNew".equals(op) || "timeseries".equals(op) )) {
+            if (! ("insert".equals(op) || "updateOne".equals(op) || "updateMany".equals(op) || "replaceWithNew".equals(op) || "timeseries".equals(op) || "bucketTimeseries".equals(op))) {
                 throw new InvalidConfigException("Op must be insert, update(One|Many), replaceWithNew, or timeseries for batch/bulk work");
             }
         }
@@ -154,6 +155,7 @@ public class WorkloadManager {
             case "replaceWithNew": return new ReplaceWithNewRunner(this, reporter);
             case "aggregate": return new AggregationRunner(this, reporter);
             case "timeseries": return new TimeSeriesRunner(this, reporter);
+            case "bucketTimeseries": return new BucketTimeSeriesRunner(this, reporter);
             case "custom": return new CustomRunner(this, reporter);
             case "kafkaInsert": return new KafkaInsertRunner(this, reporter);
             default:
