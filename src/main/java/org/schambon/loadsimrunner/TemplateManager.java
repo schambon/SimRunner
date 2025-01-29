@@ -185,76 +185,69 @@ public class TemplateManager {
     }
 
     public void initialize(MongoClient client) {
-        reporter.reportInit(String.format("Initializing collection %s.%s", database, collection));
-        this.mongoClient = client;
+        reporter.reportInit(String.format("Initializing template %s", _name));
 
-        var db = client.getDatabase(database);
-        var found = MongoClientHelper.collExists(db, collection);
+        if (client != null) {
 
-        this.mongoColl = db.getCollection(collection);
 
-        // if (drop) {
-        //     // if we are sharded, do a delete all instead of a drop
-        //     // TODO change that if we are MongoDB ⩾ 5.0
-        //     if (client.getDatabase("config").getCollection("collections").find(eq("_id", database + "." + collection))
-        //             .first() != null) {
-        //         reporter.reportInit(String.format(
-        //                 "Collection %s.%s is sharded. Deleting all records instead of dropping (https://docs.mongodb.com/manual/reference/method/db.collection.drop)",
-        //                 database, collection));
-        //         mongoColl.deleteMany(new Document());
-        //         reporter.reportInit(String.format("Deleted all records from collection %s.%s", database, collection));
-        //     } else {
-        //         mongoColl.drop();
-        //         reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
-        //     }
+            reporter.reportInit(String.format("Initializing collection %s.%s", database, collection));
+            this.mongoClient = client;
 
-        // }
+            var db = client.getDatabase(database);
+            var found = MongoClientHelper.collExists(db, collection);
 
-        if (!found) {
-            var options = new CreateCollectionOptions();
-            options.capped(createOptions.getBoolean("capped", false));
-            if (createOptions.containsKey("timeseries")) {
-                var timeseries = (Document) createOptions.get("timeseries");
-                if (createOptions.containsKey("expireAfterSeconds"))
-                    options.expireAfter(createOptions.getLong("expireAfterSeconds"), TimeUnit.SECONDS);
-                var tsOptions = new TimeSeriesOptions(timeseries.getString("timeField"));
-                if (timeseries.containsKey("granularity"))
-                    tsOptions.granularity(
-                            TimeSeriesGranularity.valueOf(timeseries.getString("granularity").toUpperCase()));
-                if (timeseries.containsKey("metaField"))
-                    tsOptions.metaField(timeseries.getString("metaField"));
-                options.timeSeriesOptions(tsOptions);
-            }
-            if (createOptions.containsKey("size"))
-                options.sizeInBytes(createOptions.getLong("size"));
-            if (createOptions.containsKey("validator")) {
-                ValidationOptions validationOptions = new ValidationOptions()
-                        .validator((Document) createOptions.get("validator"));
-                if (createOptions.containsKey("validationLevel"))
-                    validationOptions
-                            .validationLevel(ValidationLevel.valueOf(createOptions.getString("validationLevel")));
-                if (createOptions.containsKey("validationAction"))
-                    validationOptions
-                            .validationAction(ValidationAction.valueOf(createOptions.getString("validationAction")));
-                options.validationOptions(validationOptions);
+            this.mongoColl = db.getCollection(collection);
+
+            if (!found) {
+                var options = new CreateCollectionOptions();
+                options.capped(createOptions.getBoolean("capped", false));
+                if (createOptions.containsKey("timeseries")) {
+                    var timeseries = (Document) createOptions.get("timeseries");
+                    if (createOptions.containsKey("expireAfterSeconds"))
+                        options.expireAfter(createOptions.getLong("expireAfterSeconds"), TimeUnit.SECONDS);
+                    var tsOptions = new TimeSeriesOptions(timeseries.getString("timeField"));
+                    if (timeseries.containsKey("granularity"))
+                        tsOptions.granularity(
+                                TimeSeriesGranularity.valueOf(timeseries.getString("granularity").toUpperCase()));
+                    if (timeseries.containsKey("metaField"))
+                        tsOptions.metaField(timeseries.getString("metaField"));
+                    options.timeSeriesOptions(tsOptions);
+                }
+                if (createOptions.containsKey("size"))
+                    options.sizeInBytes(createOptions.getLong("size"));
+                if (createOptions.containsKey("validator")) {
+                    ValidationOptions validationOptions = new ValidationOptions()
+                            .validator((Document) createOptions.get("validator"));
+                    if (createOptions.containsKey("validationLevel"))
+                        validationOptions
+                                .validationLevel(ValidationLevel.valueOf(createOptions.getString("validationLevel")));
+                    if (createOptions.containsKey("validationAction"))
+                        validationOptions
+                                .validationAction(ValidationAction.valueOf(createOptions.getString("validationAction")));
+                    options.validationOptions(validationOptions);
+                }
+
+                db.createCollection(collection, options);
             }
 
-            db.createCollection(collection, options);
-        }
+            _preloadRememberedFields();
 
-        _preloadRememberedFields();
+            for (Document indexDef : indexes) {
+                mongoColl.createIndex(indexDef);
+            }
+            reporter.reportInit(String.format("\tCreated %d indexes", indexes.size()));
 
-        for (Document indexDef : indexes) {
-            mongoColl.createIndex(indexDef);
+            _initializeSharding(client);
+        } else {
+            reporter.reportInit("No MongoDB connection string, skipping MongoDB initialisation");
         }
-        reporter.reportInit(String.format("\tCreated %d indexes", indexes.size()));
 
         _initializeDictionaries();
         reporter.reportInit(String.format("\tLoaded %d dictionaries", dictionaries.size()));
 
-        _initializeSharding(client);
-
-        generators.put(template, _compile(template));
+        if (template != null) {
+            generators.put(template, _compile(template));
+        }
     }
 
     private void _preloadRememberedFields() {

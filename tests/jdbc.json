@@ -2,12 +2,18 @@
     "reportInterval": 1000,
     
     "templates": [
-      
+        {
+            "name": "pg",
+            "dictionaries": {
+                "words": {"file": "/usr/share/dict/words", "type": "text"}
+            }
+        }
     ],
     "workloads": [
         {
             "disabled": false,
             "name": "insert into pg",
+            "template": "pg",
             "op": "jdbc",
             "params": {
                 "connectionString": "jdbc:postgresql://localhost:54320/simrunner?user=postgres&password=abcde",
@@ -16,7 +22,7 @@
                     {"sql": "insert into mytable (first, last) values (?, ?) returning id", "params": ["%name.firstName", "%name.lastName"], "bind": "last"},
                     {"expr": {"%array": {"min": 1, "max": 10, "of": {
                         "sql": "insert into pets (name, owner) values (?, ?)",
-                        "params": ["%pokemon.name", "#last.id"]
+                        "params": ["#words", "#last.id"]
                     }}}},
                     {"sql": "commit"}
                 ]
