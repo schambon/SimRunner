@@ -83,6 +83,13 @@ What's new?
 
 | Date       |                                                                                                  |
 |------------|--------------------------------------------------------------------------------------------------|
+| 2025-01-29 | JDBC runner                                                                                      |
+| 2024-09-24 | Kafka runner                                                                                     |
+| 2024-09-10 | `%ngram` expression.                                                                             |
+| 2024-01-05 | Support for Queryable Encryption                                                                 |
+| 2023-12-19 | Parallel initialisation of template manager                                                      |
+| 2023-10-08 | `%arrayElement` and `%stringTrim` expressions.                                                   |
+| 2023-09-28 | Substitute environment variables in the config file                                              |
 | 2023-09-08 | `%toInt`/`%toLong`/`%toDouble` expressions. `float` is now aliased to `double` as convenience.   |
 | 2023-09-01 | [Timeseries support](#timeseries)                                                                |
 | 2023-08-22 | Enviroment variables support for connection strings                                              |
