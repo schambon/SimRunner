@@ -1,0 +1,39 @@
+{
+    "reportInterval": 1000,
+    
+    "templates": [
+      
+    ],
+    "workloads": [
+        {
+            "disabled": false,
+            "name": "insert into pg",
+            "op": "jdbc",
+            "params": {
+                "connectionString": "jdbc:postgresql://localhost:54320/simrunner?user=postgres&password=abcde",
+                "statements": [
+                    {"sql": "start transaction"},
+                    {"sql": "insert into mytable (first, last) values (?, ?) returning id", "params": ["%name.firstName", "%name.lastName"], "bind": "last"},
+                    {"expr": {"%array": {"min": 1, "max": 10, "of": {
+                        "sql": "insert into pets (name, owner) values (?, ?)",
+                        "params": ["%pokemon.name", "#last.id"]
+                    }}}},
+                    {"sql": "commit"}
+                ]
+            },
+            "threads": 10
+        },
+        {
+            "disabled": false,
+            "name": "read from pg",
+            "op": "jdbc",
+            "params": {
+                "connectionString": "jdbc:postgresql://localhost:54320/simrunner?user=postgres&password=abcde",
+                "statements": [
+                    {"sql": "select * from mytable m inner join pets p on p.owner=m.id where m.id=?", "params": [{"%natural": {"min": 10003, "max": 29949}}]}
+                ]
+            }
+        }
+    ]
+    
+}

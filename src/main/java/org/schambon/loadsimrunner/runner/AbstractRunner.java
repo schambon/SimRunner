@@ -54,10 +54,11 @@ public abstract class AbstractRunner implements Runnable {
     public void run() {
         var keepGoing = true;
         while (keepGoing) {
+            long duration = 0;
             try {
                 ((WorkloadThread) Thread.currentThread()).setContextValue("iteration", Long.valueOf(counter));
                 template.setVariables(variables);
-                long duration = doRun();
+                duration = doRun();
                 counter++;
 
                 LOGGER.debug("Counter: {}, stopAfter: {}", counter, stopAfter);
@@ -65,15 +66,19 @@ public abstract class AbstractRunner implements Runnable {
                     LOGGER.info("Workload {} stopping.", name);
                     keepGoing = false;
                 }
-                if (pace != 0) {
-                    long wait = Math.max(0, pace - duration);
-                    Thread.sleep(wait);
-                }
             } catch (Exception e) {
                 LOGGER.error(String.format("Workload %s: Error caught in execution", name), e);
             } finally {
                 template.clearVariables();
             } 
+
+            if (pace != 0) {
+                long wait = Math.max(0, pace - duration);
+                try {
+                    Thread.sleep(wait);
+                } catch (InterruptedException e) {
+                }
+            }
         }
         
     }

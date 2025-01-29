@@ -1,5 +1,6 @@
 package org.schambon.loadsimrunner;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import org.schambon.loadsimrunner.runner.TimeSeriesRunner;
 import org.schambon.loadsimrunner.runner.UpdateManyRunner;
 import org.schambon.loadsimrunner.runner.UpdateOneRunner;
 import org.schambon.loadsimrunner.runner.WorkloadThread;
+import org.schambon.loadsimrunner.runner.jdbc.JDBCRunner;
 import org.schambon.loadsimrunner.runner.kafka.KafkaInsertRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,13 +53,19 @@ public class WorkloadManager {
 
     private MongoClient client;
 
-    public static List<WorkloadManager> newInstances(Document config, Map<String, List<TemplateManager>> templatesByBaseName) {
+    public static List<WorkloadManager> newInstances(Document config, Map<String, List<TemplateManager>> templatesByBaseName, Reporter reporter) {
         var templateBaseName = config.getString("template");
-        var templates = templatesByBaseName.get(templateBaseName);
-        return templates.stream().map( template -> new WorkloadManager(config, template)).collect(Collectors.toList());
+        if (templateBaseName == null) {
+            return Collections.singletonList(new WorkloadManager(config, reporter, new NullTemplateManager(reporter)));
+        } else {
+            var templates = templatesByBaseName.get(templateBaseName);
+            return templates.stream().map( template -> new WorkloadManager(config, reporter, template)).collect(Collectors.toList());
+        }
+        
     }
 
-    private WorkloadManager(Document config, TemplateManager templateConfig) {
+    private WorkloadManager(Document config, Reporter reporter, TemplateManager templateConfig) {
+        this.reporter = reporter;
         var _name = config.getString("name");
         if (templateConfig.getInstance() == -1) {
             this.name = _name;
@@ -131,9 +139,8 @@ public class WorkloadManager {
         }
     }
 
-    public void initAndStart(MongoClient client, Reporter reporter) {
+    public void initAndStart(MongoClient client) {
         this.client = client;
-        this.reporter = reporter;
 
         LOGGER.info("Starting workload {}", name);
 
@@ -158,6 +165,7 @@ public class WorkloadManager {
             case "bucketTimeseries": return new BucketTimeSeriesRunner(this, reporter);
             case "custom": return new CustomRunner(this, reporter);
             case "kafkaInsert": return new KafkaInsertRunner(this, reporter);
+            case "jdbc": return new JDBCRunner(this, reporter);
             default:
                 LOGGER.warn("Not implemented (yet?)");
                 return new Runnable() {

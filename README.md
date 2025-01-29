@@ -40,6 +40,7 @@ Contents
     - [aggregate](#aggregate)
     - [timeseries](#timeseries)
     - [kafkaInsert](#kafkainsert)
+    - [jdbc](#jdbc)
   - [Encryption](#encryption)
   - [Output](#output)
   - [HTTP interface](#http-interface)
@@ -746,7 +747,41 @@ Params:
 
 No support is built in (yet) for security, authentication, and other advanced options.
 
-_Important note_: you still need a MongoDB instance, even if it doesn't do anything. Simrunner won't start if the `connectionString` at the top of the config file is invalid. Templates are mapped to collections, so even though you are writing to Kafka, an empty collection will be created in MongoDB for your template. (Fixing this would require a deep refactoring of Simrunner; contributions welcome.)
+_Important note_: you still need a MongoDB instance, even if it doesn't do anything. Templates are mapped to collections, so even though you are writing to Kafka, an empty collection will be created in MongoDB for your template. (Fixing this would require a deep refactoring of Simrunner; contributions welcome.)
+
+### jdbc
+
+Comparing SQL databases with document stores is pretty much apples-to-oranges, but with the advent of jsonb and other hybrid architectures, it can sometimes make sense to challenge a SQL-based solution.
+
+```
+    {
+        "name": "insert into pg",
+        "op": "jdbc",
+        "params": {
+            "connectionString": "jdbc:postgresql://localhost:54320/simrunner?user=postgres&password=secret",
+            "statements": [
+                {"sql": "start transaction"},
+                {"sql": "insert into mytable (first, last) values (?, ?) returning id", "params": ["%name.firstName", "%name.lastName"], "bind": "last"},
+                {"expr": {"%array": {"min": 1, "max": 10, "of": {
+                    "sql": "insert into pets (name, owner) values (?, ?)",
+                    "params": ["%pokemon.name", "#last.id"]
+                }}}},
+                {"sql": "commit"}
+            ]
+        },
+        "threads": 10
+    }
+```
+
+A few notes:
+* the `jdbc` workload does not require to be associated with a template (and would not actually use it for anything else than dictionary definitions). Similarly, you can now run Simrunner without a MongoDB connection string at the top.
+* it will execute all the statements in the `statements` array; statements can be either a simple SQL text, a SQL statement with parameters, or an expression (`expr`) that resolves to an (array of) object(s) containing `sql` (mandatory), `params` (optional), and `bind` (optional) fields.
+* `sql` is NOT evaluated as an expression and sent direct to the driver. If you want an expression, use `expr`.
+* `params` and `expr` are evaluated as expression; all template operators, dictionaries, etc are available.
+* `bind` lets you bind (duh) the last row of the result set of a statement to a local variable, for use in subsequent statements. If there are several rows returned, only the last one is used.
+* you don't have to use `start transaction` / `commit` as in the example above, it's just for show.
+* SimRunner won't manage your DDL; you have to issue your `create table` statements externally.
+* SimRunner ships with the PostgreSQL JDBC driver. If you want to compare with something else, you'll have to switch out the driver in pom.xml. The JDBC workload runner doesn't use any Postgres code, only pure JDBC, so it should be trivial to run against another RDBMS.
 
 Encryption
 ----------

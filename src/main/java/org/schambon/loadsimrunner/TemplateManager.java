@@ -129,7 +129,7 @@ public class TemplateManager {
 
     }
 
-    private TemplateManager(Document config, Reporter reporter) {
+    protected TemplateManager(Document config, Reporter reporter) {
         this._name = config.getString("name");
         this._basename = config.getString("basename");
         this._instance = config.getInteger("instance", -1);
@@ -520,6 +520,8 @@ public class TemplateManager {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Extracted variables: {}", var);
             }
+        } else {
+            localVariables.set(new Document());
         }
     }
 

@@ -83,7 +83,7 @@ public class SimRunner {
 
         reporter.start(); // start the clock
         for (var workload: workloads) {
-            workload.initAndStart(client, reporter);
+            workload.initAndStart(client);
         }
 
         if (httpServer != null) {
@@ -116,23 +116,23 @@ public class SimRunner {
         try {
             connectionString = config.getString("connectionString");
 
-            if (connectionString == null) {                
-                throw new InvalidConfigException("Connection String not present");
-            } 
-
         } catch (ClassCastException t) {
             throw new InvalidConfigException("Invalid Connection String");
         }
 
-        // bit ugly: we have to drop collections before initialising the main MongoClient since it can create encrypted collections, which would error out if they already exist
-        dropCollectionsIfNecessary(connectionString, (List<Document>) config.get("templates"));
+        if (connectionString != null) {
 
-        this.client = MongoClientHelper.client(connectionString, (Document) config.get("encryption"));
+            // bit ugly: we have to drop collections before initialising the main MongoClient since it can create encrypted collections, which would error out if they already exist
+            dropCollectionsIfNecessary(connectionString, (List<Document>) config.get("templates"));
 
-        Document commandResult = client.getDatabase("admin").runCommand(new Document("isMaster", 1));
-        if (!commandResult.getBoolean("ismaster")) {
-            throw new InvalidConfigException("Must connect to master");
+            this.client = MongoClientHelper.client(connectionString, (Document) config.get("encryption"));
+
+            Document commandResult = client.getDatabase("admin").runCommand(new Document("isMaster", 1));
+            if (!commandResult.getBoolean("ismaster")) {
+                throw new InvalidConfigException("Must connect to master");
+            }
         }
+
 
         if (config.get("templates") == null || ! (config.get("templates") instanceof List)) {
             throw new InvalidConfigException("Missing or invalid templates section");
@@ -152,7 +152,7 @@ public class SimRunner {
         }
         for (var workloadConfig: (List<Document>) config.get("workloads")) {
             if ((! workloadConfig.containsKey("disabled")) || (!(workloadConfig.getBoolean("disabled", false))))
-                workloads.addAll(WorkloadManager.newInstances(workloadConfig, templatesByBaseName));
+                workloads.addAll(WorkloadManager.newInstances(workloadConfig, templatesByBaseName, reporter));
         }
 
         if (config.get("http") != null || (config.get("http") instanceof Document)) {
