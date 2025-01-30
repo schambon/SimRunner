@@ -9,8 +9,9 @@ public class RememberField {
     public List<String> compound;
     public String name;
     public int number;
+    public int capped = -1;
 
-    public RememberField(String field, List<String> compound, String name, boolean preload, int number) {
+    public RememberField(String field, List<String> compound, String name, boolean preload, int number, int capped) {
         this.field = field;
         this.preload = preload;
         if (compound == null) {
@@ -24,6 +25,7 @@ public class RememberField {
             this.name = name;
         }
         this.number = number;
+        this.capped = capped;
     }
 
     // compound trumps field, basically

@@ -67,10 +67,10 @@ public class TemplateManager {
     private Document dictionariesConfig;
     private Document shardingConfig;
 
+    // remembered fields
     private Set<RememberField> fieldsToRemember = new HashSet<>();
-    // using a synchronized list for remembrances because a set is too slow to get a
-    // random element out of
     private Map<String, List<Object>> remembrances = new TreeMap<>();
+
     private List<Document> indexes;
 
     private MongoCollection<Document> mongoColl = null;
@@ -268,14 +268,46 @@ public class TemplateManager {
         }
     }
 
+    /**
+     * Explicitly remember a value
+     * @param fieldName
+     * @param value
+     */
+    public void remember(String fieldName, Object value) {
+        _doRemember(fieldName, Arrays.asList(value));
+    }
+
     private void _extractRememberedFields(Document doc) {
         for (var rfield : fieldsToRemember) {
-            var value = RememberUtil.extractRememberedValues(doc, rfield);
+            var values = RememberUtil.extractRememberedValues(doc, rfield);
+            _doRemember(rfield.name, values);            
+        }
+    }
 
-            remembrances.get(rfield.name).addAll(value);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Extracted values: {} for remembered field {}", value, rfield.name);
+    private void _doRemember(String fieldName, List<? extends Object> values) {
+        var found = fieldsToRemember.stream().filter(it -> it.name.equals(fieldName)).collect(Collectors.toList());
+        if (found.size() != 1) {
+            LOGGER.error("Found not exactly one remember definition for {}", fieldName);
+        }
+        var found_1 = found.getFirst();
+
+        List<Object> remembered = remembrances.get(fieldName);
+
+        synchronized(remembered) {
+            if (found_1.capped != -1) {
+                // there are n objects in the list, we want to add m and keep k. So we need potentially to remove (n+m)-k
+                var del = (remembered.size() + values.size()) - found_1.capped;
+                if (del > 0) {
+                    // inefficient but it's a marginal use case...
+                    for (var i = 0; i < del; i++) {
+                        remembered.removeFirst();
+                    }
+                }
             }
+            remembered.addAll(values);
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Extracted values: {} for remembered field {}", values, fieldName);
         }
     }
 
@@ -475,7 +507,7 @@ public class TemplateManager {
         }
     }
 
-    public List<Object> getRemindedValues(String key) {
+    public List<Object> getRememberedValues(String key) {
         return remembrances.get(key);
     }
 
@@ -488,12 +520,8 @@ public class TemplateManager {
                 newVariables.putAll(previousVariables);
 
             localVariables.set(newVariables);
-
             var doc = generate(template);
 
-            // for (RememberField field : fieldsToRemember) {
-            // remembrances.get(field.field).add(doc.get(field.field));
-            // }
             _extractRememberedFields(doc);
 
             return doc;

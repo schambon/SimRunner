@@ -1,0 +1,39 @@
+{
+    "connectionString": "mongodb://localhost",
+    "templates": [
+        {
+            "name": "test",
+            "database": "simrunner",
+            "collection": "capped_rm",
+            "drop": true,
+            "template": {
+                "_id": "%objectid",
+                "created": "%now",
+                "updated": "%now"
+            },
+            "remember": [
+                {"field": "_id", "name": "id", "capped": 10}
+            ]
+        }
+    ],
+    "workloads": [
+        {
+            "name": "insert",
+            "template": "test",
+            "op": "insert",
+            "pace": 100,
+            "comment": "Insert 10 per second, so the last 10 should be within 1s of %now"
+        },
+        {
+            "name": "update",
+            "template": "test",
+            "op": "updateOne",
+            "params": {
+                "filter": {"_id": "#id"},
+                "update": {"$currentDate": {"updated":{"$type":"date"}}}
+            },
+            "pace": 10,
+            "comment": "Randomly take one of the last 10 docs inserted and change its update date. The delay between insert and update date should be <= 1s"
+        }
+    ]
+}

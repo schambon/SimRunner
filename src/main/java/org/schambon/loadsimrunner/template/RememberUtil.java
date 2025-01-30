@@ -25,9 +25,10 @@ public class RememberUtil {
                 var doc = (Document) i;
                 return new RememberField(doc.getString("field"), doc.getList("compound", String.class),
                         doc.getString("name"), doc.getBoolean("preload", true),
-                        doc.getInteger("number", TemplateManager.DEFAULT_NUMBER_TO_PRELOAD));
+                        doc.getInteger("number", TemplateManager.DEFAULT_NUMBER_TO_PRELOAD),
+                        doc.getInteger("capped", -1));
             } else {
-                return new RememberField((String) i, null, null, true, TemplateManager.DEFAULT_NUMBER_TO_PRELOAD);
+                return new RememberField((String) i, null, null, true, TemplateManager.DEFAULT_NUMBER_TO_PRELOAD, -1);
             }
         }).collect(Collectors.toList());
     }

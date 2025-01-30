@@ -358,12 +358,13 @@ Then you can use the following in workloads:
 
 With this, you are guaranteed that `#top_bottom` will be resolved to the value of an actual `bottom` field.
 
-For more control, you can use the following long form: `"remember": [ {"field": "x", "compound": ["x", "y"], "name": "name", "preload": true, "number": 10000} ]`. This long form provides the following features:
+For more control, you can use the following long form: `"remember": [ {"field": "x", "compound": ["x", "y"], "name": "name", "preload": true, "number": 10000, "capped": 100} ]`. This long form provides the following features:
 - `field`: field name or field path, like simply listing in `remember`
 - `compound`: instead of managing a single field, generate a document by compounding several fields. For example, `"compound": [ "x", "y.z" ]` will remember a value of the form `{"x": ..., "y_z": ...}`. The behaviour is the same as for the simple syntax: paths are descended and dots (.) are replaced with underscores (_) in field names. If `compound` is present, `field` is ignored.
 - `name`: this is the name of the value library, which will be used in queries. By default, it is the same as `field` with dots replaced by underscores. If using `compound`, it is mandatory to specify a name.
 - `preload`: should we load values from the existing collection at startup (default: true)?
 - `number`: how many distinct values should we preload from the existing collection at startup (default: one million)?
+- `capped`: the dictionary will only contained the last _n_ values inserted
 
 Compounding is useful when you want to run complex queries and still ensure they do match some existing records. For example, with the following template:
 ```
