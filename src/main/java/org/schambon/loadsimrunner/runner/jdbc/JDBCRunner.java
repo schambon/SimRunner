@@ -2,7 +2,10 @@ package org.schambon.loadsimrunner.runner.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.Document;
@@ -73,7 +76,8 @@ public class JDBCRunner extends AbstractRunner {
             if (statement.containsKey("params")) {
                 var statementParams = statement.getList("params", Object.class);
                 for (var i = 1; i <= statementParams.size(); i++) {
-                    ps.setObject(i, template.generateExpression(statementParams.get(i-1)));
+                    setValue(ps, i, template.generateExpression(statementParams.get(i-1)));
+
                 }
             }
             
@@ -102,6 +106,12 @@ public class JDBCRunner extends AbstractRunner {
         return count;
     }
 
-
+    private void setValue(PreparedStatement ps, int i, Object value) throws SQLException {
+        if (value instanceof Date) {
+            ps.setTimestamp(i, new Timestamp(((Date)value).getTime()));
+        } else {
+            ps.setObject(i, value);
+        }
+    }
 
 }
