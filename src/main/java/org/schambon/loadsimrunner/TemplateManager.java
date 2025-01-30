@@ -290,7 +290,7 @@ public class TemplateManager {
         if (found.size() != 1) {
             LOGGER.error("Found not exactly one remember definition for {}", fieldName);
         }
-        var found_1 = found.getFirst();
+        var found_1 = found.get(0);
 
         List<Object> remembered = remembrances.get(fieldName);
 
@@ -301,7 +301,7 @@ public class TemplateManager {
                 if (del > 0) {
                     // inefficient but it's a marginal use case...
                     for (var i = 0; i < del; i++) {
-                        remembered.removeFirst();
+                        remembered.remove(0);
                     }
                 }
             }
