@@ -187,7 +187,8 @@ public class TemplateManager {
     public void initialize(MongoClient client) {
         reporter.reportInit(String.format("Initializing template %s", _name));
 
-        if (client != null) {
+        // skip MongoDB specific initialization if either connection, db or collection is null
+        if (client != null && database != null && collection != null) {
 
 
             reporter.reportInit(String.format("Initializing collection %s.%s", database, collection));
