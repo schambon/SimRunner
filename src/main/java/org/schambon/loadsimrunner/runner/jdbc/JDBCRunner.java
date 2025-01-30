@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -59,6 +60,19 @@ public class JDBCRunner extends AbstractRunner {
                     }
                 }
                 
+            }
+
+            var remember = params.get("remember", Document.class);
+            if (remember != null) {
+                // force remember some values
+                for (var k: remember.keySet()) {
+                    var val = template.generateExpression(remember.get(k));
+                    if (val instanceof List<?>) {
+                        template.remember(k, (List<?>) val);
+                    } else {
+                        template.remember(k, Collections.singletonList(val));
+                    }
+                }
             }
 
             var duration = System.currentTimeMillis() - start;

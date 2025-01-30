@@ -775,7 +775,8 @@ Comparing SQL databases with document stores is pretty much apples-to-oranges, b
                     "params": ["%pokemon.name", "#last.id"]
                 }}}},
                 {"sql": "commit"}
-            ]
+            ],
+            "remember": { "id": "#last.id" }
         },
         "threads": 10
     }
@@ -790,6 +791,8 @@ A few notes:
 * you don't have to use `start transaction` / `commit` as in the example above, it's just for show.
 * SimRunner won't manage your DDL; you have to issue your `create table` statements externally.
 * SimRunner ships with the PostgreSQL JDBC driver. If you want to compare with something else, you'll have to switch out the driver in pom.xml. The JDBC workload runner doesn't use any Postgres code, only pure JDBC, so it should be trivial to run against another RDBMS.
+
+Since the JDBC runner doesn't use the regular templates (because tables ain't documents), the automatic extraction of remembered values cannot work (it's got nothing to work on!). So if you want to remember some inserted values, you need to explicitly specify them with the `remember` parameter. `"remember": {"id": "#last.id"}` simply inserts the resolved value of `#last.id` (which we bound to a statement result) into the `id` remembered dictionary, so it is possible to use `#id` in other workloads associated with the same template.
 
 Encryption
 ----------

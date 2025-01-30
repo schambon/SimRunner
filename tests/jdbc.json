@@ -6,7 +6,8 @@
             "name": "pg",
             "dictionaries": {
                 "words": {"file": "/usr/share/dict/words", "type": "text"}
-            }
+            },
+            "remember": ["id"]
         }
     ],
     "workloads": [
@@ -25,9 +26,23 @@
                         "params": ["#words", "#last.id"]
                     }}}},
                     {"sql": "commit"}
+                ],
+                "remember": {"id": "#last.id"}
+            },
+            "pace": 100
+        },
+        {
+            "disabled": false,
+            "name": "update pg",
+            "template": "pg",
+            "op": "jdbc",
+            "params": {
+                "connectionString": "jdbc:postgresql://localhost:54320/simrunner?user=postgres&password=abcde",
+                "statements": [
+                    {"sql": "insert into pets (name, owner) values (?, ?)", "params": ["KERBEROS", "#id"]}
                 ]
             },
-            "threads": 10
+            "pace": 1000
         },
         {
             "disabled": false,
@@ -36,9 +51,10 @@
             "params": {
                 "connectionString": "jdbc:postgresql://localhost:54320/simrunner?user=postgres&password=abcde",
                 "statements": [
-                    {"sql": "select * from mytable m inner join pets p on p.owner=m.id where m.id=?", "params": [{"%natural": {"min": 10003, "max": 29949}}]}
+                    {"sql": "select * from mytable m inner join pets p on p.owner=m.id where m.id=?", "params": ["#id"]}
                 ]
-            }
+            },
+            "pace": 100
         }
     ]
     

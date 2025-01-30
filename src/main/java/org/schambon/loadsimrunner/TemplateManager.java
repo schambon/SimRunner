@@ -273,8 +273,8 @@ public class TemplateManager {
      * @param fieldName
      * @param value
      */
-    public void remember(String fieldName, Object value) {
-        _doRemember(fieldName, Arrays.asList(value));
+    public void remember(String fieldName, List<? extends Object> values) {
+        _doRemember(fieldName, values);
     }
 
     private void _extractRememberedFields(Document doc) {
