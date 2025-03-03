@@ -56,7 +56,9 @@ Contents
 TL;DR
 -----
 
-Build with `mvn package` and run with `java -jar SimRunner.jar <config file>`. Needs at least Java 11 (tested with 17 as well).
+Run with Docker with: `docker run --mount type=bind,source=/path/to/your/config/file.json,target=/config.json sylvainchambon/simrunner:latest` (easiest).
+
+Alternatively: build with `mvn package` and run with `java -jar SimRunner.jar <config file>`. Needs at least Java 11 (tested with 17 as well).
 
 The config file specifies:
 * a connection string to MongoDB - if it starts with '$' SimRunner will use environment variables
@@ -74,8 +76,6 @@ If you enable the HTTP interface in the config file, point your browser at http:
 For distributed metrics collection (aggregate results from multiple SimRunners, if you have a very intensive workload) take a look at https://github.com/schambon/SimRunner-Collector
 
 For easy setup in EC2, a quick and dirty script to provision a machine etc. is at https://github.com/schambon/launchSimRunner
-
-If you want to run it as a Docker container a Dockerfile is provided. In this case, you need to create a config file in the `bin` directory named `config.json` and then build your Docker image.
 
 
 What's new?
