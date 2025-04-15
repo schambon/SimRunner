@@ -23,6 +23,7 @@ public abstract class AbstractRunner implements Runnable {
     protected Document variables; // may be null!
     protected long stopAfter;
     protected long stopAfterDuration;
+    protected long startAfterDuration;
 
     protected long counter = 0;
 
@@ -50,12 +51,22 @@ public abstract class AbstractRunner implements Runnable {
         this.variables = workloadConfiguration.getVariables();
         this.stopAfter = workloadConfiguration.getStopAfter();
         this.stopAfterDuration = workloadConfiguration.getStopAfterDuration();
+        this.startAfterDuration = workloadConfiguration.getStartAfterDuration();
     }
 
     @Override
     public void run() {
         var keepGoing = true;
         long totalDuration = 0;
+
+        if(this.startAfterDuration >0){
+            try {
+                Thread.sleep(this.startAfterDuration);
+            } catch (InterruptedException e) {
+                LOGGER.error(String.format("Workload %s: Error caught in execution", name), e);
+            }
+        }
+
         while (keepGoing) {
             long duration = 0;
             try {
