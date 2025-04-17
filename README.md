@@ -75,7 +75,7 @@ If you enable the HTTP interface in the config file, point your browser at http:
     
 For distributed metrics collection (aggregate results from multiple SimRunners, if you have a very intensive workload) take a look at https://github.com/schambon/SimRunner-Collector
 
-For easy setup in EC2, a quick and dirty script to provision a machine etc. is at https://github.com/schambon/launchSimRunner
+For easy setup in EC2, a quick and dirty script to provision a machine etc. is at https://github.com/schambon/launchSimRunner. Supposes that it's built with `docker buildx build --platform linux/amd64,linux/arm64 -t sylvainchambon/simrunner:<version> . --push`
 
 
 What's new?
