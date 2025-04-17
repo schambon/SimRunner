@@ -46,6 +46,8 @@ public class WorkloadManager {
     ReadConcern readConcern;
     WriteConcern writeConcern;
     long stopAfter = -1;
+    long stopAfterDuration = -1;
+    long startAfterDuration = -1;
 
     Reporter reporter;
 
@@ -88,8 +90,22 @@ public class WorkloadManager {
         var _stopAfter = config.get("stopAfter");
         if (_stopAfter != null) {
             this.stopAfter = ((Number)_stopAfter).longValue();
+            LOGGER.debug("Workload {} stopping after {} (config: {})", name, stopAfter, _stopAfter);
         }
-        LOGGER.debug("Workload {} stopping after {} (config: {})", name, stopAfter, _stopAfter);
+
+        var _stopAfterDuration = config.get("stopAfterDuration");
+        if (_stopAfterDuration != null) {
+            if(_stopAfter != null)
+                throw new InvalidConfigException("stopAfter and stopAfterDuration cannot be used at the same time");
+            this.stopAfterDuration = ((Number)_stopAfterDuration).longValue();
+            LOGGER.debug("Workload {} stopping after {} ms (config: {})", name, stopAfter, _stopAfter);
+        }
+
+        var _startAfterDuration = config.get("startAfterDuration");
+        if (_startAfterDuration != null) {
+            this.startAfterDuration = ((Number)_startAfterDuration).longValue();
+            LOGGER.debug("Workload {} will start after {} (config: {})", name, startAfterDuration, _startAfterDuration);
+        }
 
         String readPref = config.getString("readPreference");
         if (readPref != null) {
@@ -225,5 +241,13 @@ public class WorkloadManager {
 
     public long getStopAfter() {
         return stopAfter;
+    }
+
+    public long getStopAfterDuration() {
+        return stopAfterDuration;
+    }
+
+    public long getStartAfterDuration() {
+        return startAfterDuration;
     }
 }

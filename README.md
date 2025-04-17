@@ -542,6 +542,8 @@ Workloads
 * readConcern: majority, local, available, linearizable, snapshot
 * writeConcern: majority, w1, w2 (no tag sets)
 * stopAfter: stop after n iterations, for each thread.
+* stopAfterDuration: stop after the specified duration in ms, for each thread.
+* startAfterDuration: start after the specified duration in ms, for each thread.
 
 Note that stopAfter counts full iterations of the workload on a single thread - e.g. if you're inserting documents in batches of 100 on 10 threads, and you want 1,000,000 documents in the collection, then you need to set `"stopAfter": 1000`. Said another way, total docs = stopAfter * threads * batch.
 
