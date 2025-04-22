@@ -36,8 +36,19 @@ public class InsertRunner extends AbstractRunner {
     private long insertBatch() {
         var s = System.currentTimeMillis();
         List<Document> docs = new ArrayList<>(batch);
+
+        var refreshVariables = ("operation".equals(variablesScope)) ? true : false;
+
         for (int i = 0; i < batch; i++) {
+            if(refreshVariables){
+                template.setVariables(variables);
+            }
+
             docs.add(template.generate());
+            
+            if(refreshVariables){
+                template.clearVariables();
+            }
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Generated batch of {} in {}ms", batch, System.currentTimeMillis()-s);

@@ -24,6 +24,7 @@ public abstract class AbstractRunner implements Runnable {
     protected long stopAfter;
     protected long stopAfterDuration;
     protected long startAfterDuration;
+    protected String variablesScope;
 
     protected long counter = 0;
 
@@ -52,6 +53,7 @@ public abstract class AbstractRunner implements Runnable {
         this.stopAfter = workloadConfiguration.getStopAfter();
         this.stopAfterDuration = workloadConfiguration.getStopAfterDuration();
         this.startAfterDuration = workloadConfiguration.getStartAfterDuration();
+        this.variablesScope = workloadConfiguration.getVariablesScope();
     }
 
     @Override

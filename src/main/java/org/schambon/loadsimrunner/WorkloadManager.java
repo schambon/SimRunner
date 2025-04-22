@@ -48,6 +48,7 @@ public class WorkloadManager {
     long stopAfter = -1;
     long stopAfterDuration = -1;
     long startAfterDuration = -1;
+    String variablesScope = "batch";
 
     Reporter reporter;
 
@@ -86,6 +87,10 @@ public class WorkloadManager {
         this.threads = config.getInteger("threads", 1);
         this.batch =  config.getInteger("batch", 0);
         this.pace = config.getInteger("pace", 0);
+        var varScope = config.getString("variablesScope");
+        if("operation".equals(varScope)) {
+            this.variablesScope = "operation";
+        }
 
         var _stopAfter = config.get("stopAfter");
         if (_stopAfter != null) {
@@ -249,5 +254,9 @@ public class WorkloadManager {
 
     public long getStartAfterDuration() {
         return startAfterDuration;
+    }
+
+    public String getVariablesScope() {
+        return variablesScope;
     }
 }

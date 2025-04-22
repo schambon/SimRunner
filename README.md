@@ -83,6 +83,7 @@ What's new?
 
 | Date       |                                                                                                  |
 |------------|--------------------------------------------------------------------------------------------------|
+| 2025-04-22 | Adding variables scope parameter (batch/operation)                                                                                     |
 | 2025-01-29 | JDBC runner                                                                                      |
 | 2024-09-24 | Kafka runner                                                                                     |
 | 2024-09-10 | `%ngram` expression.                                                                             |
@@ -544,6 +545,7 @@ Workloads
 * stopAfter: stop after n iterations, for each thread.
 * stopAfterDuration: stop after the specified duration in ms, for each thread.
 * startAfterDuration: start after the specified duration in ms, for each thread.
+* variablesScope: `batch` set the value of workload variables once per batch. `operation` set the value for each operation.
 
 Note that stopAfter counts full iterations of the workload on a single thread - e.g. if you're inserting documents in batches of 100 on 10 threads, and you want 1,000,000 documents in the collection, then you need to set `"stopAfter": 1000`. Said another way, total docs = stopAfter * threads * batch.
 
@@ -562,7 +564,7 @@ Note that stopAfter counts full iterations of the workload on a single thread - 
 Inserts a new instance of the named template.
 
 Options:
-* batch: bulk insert. Omit or specify `"batch": 0` for unit insert.
+* batch: bulk insert. Omit or specify `"batch": 0` or `"batch": 1` for unit insert.
 
 ### find
 
@@ -971,7 +973,7 @@ JSON has no syntax for comments... but SimRunner will happily ignore configurati
 
 ### Bulk writes and variables
 
-If you use bulk writes (the `batch` argument in an `insert` or `update` workload), it is interesting to note that the value of workload variables is set once per batch (template variables are evaluated once per document). Also, any variables defined in the workload are inherited by the template generator (for inserts). This lets you create once-per-batch values.
+If you use bulk writes (the `batch` argument in an `insert` or `update` workload), it is interesting to note that the value of workload variables is set once per batch by default (template variables are evaluated once per document). Also, any variables defined in the workload are inherited by the template generator (for inserts). This lets you create once-per-batch values.
 
 For instance if you are dealing with time series data, you may want to insert a bunch of values for a single sensor in a batch:
 

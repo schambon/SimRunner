@@ -70,8 +70,12 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
         var options = new UpdateOptions().upsert(params.getBoolean("upsert", false));
         var filter = (Document) params.get("filter");
         var update = params.get("update");
+        var refreshVariables = ("operation".equals(variablesScope)) ? true : false;
 
         for (int i = 0; i < batch; i++) {
+            if(refreshVariables){
+                template.setVariables(variables);
+            }
             var _f = template.generate(filter);
             UpdateOneModel<Document> model;
             if (update instanceof Document) {
@@ -82,7 +86,10 @@ public abstract class AbstractUpdateRunner extends AbstractRunner {
                 LOGGER.error("Invalid update definition");
                 return 0;
             }
-            operations.add(model);
+            operations.add(model); 
+            if(refreshVariables){
+                template.clearVariables();
+            }           
         }
         var start = System.currentTimeMillis();
         var bulkWriteResult = mongoColl.bulkWrite(operations, new BulkWriteOptions().ordered(params.getBoolean("ordered", false)));
