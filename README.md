@@ -5,7 +5,11 @@ SimRunner is a tool that binds:
 - a powerful data generator for MongoDB
 - a declarative and highly scalable workload generator
 
-You can think of SimRunner as (a bit more than) the sum of [mgeneratejs](https://www.npmjs.com/package/mgeneratejs) and [POCDriver](https://github.com/johnlpage/pocdriver). Generate documents as you would with mgenerate, and inject them to MongoDB with a super-fast multithreaded workload framework.
+You can think of SimRunner as (a bit more than) the sum of 
+[mgeneratejs](https://www.npmjs.com/package/mgeneratejs) and 
+[POCDriver](https://github.com/johnlpage/pocdriver). 
+Generate documents as you would with mgenerate, and inject them to MongoDB 
+with a super-fast multithreaded workload framework.
 
 Workloads are declarative in that you describe them in JSON. Just write your queries, your threading options, and you're set. No code to write. Just make sure you close all your curly brackets. Of course, since MongoDB queries are themselves BSON Documents, you can use the same expression language as in the data generator to introduce some variability. Workloads have a few tricks up their sleeve - for example you can build a "dictionary" of known or generated values that you can reuse in your queries.
 
@@ -58,7 +62,12 @@ TL;DR
 
 Run with Docker with: `docker run --mount type=bind,source=/path/to/your/config/file.json,target=/config.json sylvainchambon/simrunner:latest` (easiest).
 
-Alternatively: build with `mvn package` and run with `java -jar SimRunner.jar <config file>`. Needs at least Java 11 (tested with 17 as well).
+Alternatively: build with `mvn package` and run with `java -jar SimRunner.jar [options] <config file>`. Needs at least Java 11 (tested with 17 as well).
+
+Command line options:
+* `--connString` or `-c`: Override the MongoDB connection string from the config file
+* `--dbUser` or `-u`: Database username
+* `--dbPass` or `-p`: Database password
 
 The config file specifies:
 * a connection string to MongoDB - if it starts with '$' SimRunner will use environment variables

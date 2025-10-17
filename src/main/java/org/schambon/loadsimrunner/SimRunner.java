@@ -33,19 +33,59 @@ public class SimRunner {
 
     public static void main(String[] args) throws ParseException, IOException {
         var options = new Options();
+        options.addOption("c", "connString", true, "Override connection string from config file");
+        options.addOption("u", "dbUser", true, "Database username");
+        options.addOption("p", "dbPass", true, "Database password");
 
         var parser = new DefaultParser();
         var line = parser.parse(options, args);
 
         var list = line.getArgList();
         if (list.size() < 1) {
-            System.err.println("Usage: SimRunner <config file>");
+            System.err.println("Usage: SimRunner [options] <config file>");
+            System.err.println("Options:");
+            System.err.println("  --connString, -c <connection string>   Override MongoDB connection string");
+            System.err.println("  --dbUser, -u <username>                Database username");
+            System.err.println("  --dbPass, -p <password>                Database password");
             System.exit(1);
         }
 
         String configString = Files.readString(Path.of(list.get(0)));
 
         var config = EnvVarSub.subEnvVars(Document.parse(configString));
+        
+        // Print the parsed configuration
+        System.out.println("========= PARSED CONFIGURATION =========");
+        System.out.println(config.toJson());
+        System.out.println("========================================");
+        System.out.println("Press Enter to continue...");
+        
+        // Wait for user input before continuing
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            LOGGER.error("Error reading user input", e);
+        }
+        
+        // Override connectionString if provided as command line argument
+        if (line.hasOption("connString")) {
+            String overrideConnString = line.getOptionValue("connString");
+            config.put("connectionString", overrideConnString);
+            LOGGER.info("Overriding connection string from command line");
+        }
+        
+        // Store database credentials if provided
+        if (line.hasOption("dbUser") || line.hasOption("dbPass")) {
+            Document credentials = new Document();
+            if (line.hasOption("dbUser")) {
+                credentials.put("username", line.getOptionValue("dbUser"));
+            }
+            if (line.hasOption("dbPass")) {
+                credentials.put("password", line.getOptionValue("dbPass"));
+            }
+            config.put("credentials", credentials);
+            LOGGER.info("Using database credentials from command line");
+        }
 
         LOGGER.debug("Applying config file: {}", config.toJson());
 
@@ -125,7 +165,7 @@ public class SimRunner {
             // bit ugly: we have to drop collections before initialising the main MongoClient since it can create encrypted collections, which would error out if they already exist
             dropCollectionsIfNecessary(connectionString, (List<Document>) config.get("templates"));
 
-            this.client = MongoClientHelper.client(connectionString, (Document) config.get("encryption"));
+            this.client = MongoClientHelper.client(connectionString, (Document) config.get("encryption"), (Document) config.get("credentials"));
 
             Document commandResult = client.getDatabase("admin").runCommand(new Document("isMaster", 1));
             if (!commandResult.getBoolean("ismaster")) {
@@ -162,17 +202,18 @@ public class SimRunner {
     }
 
     private void dropCollectionsIfNecessary(String uri, List<Document> templates) {
-        MongoClientHelper.doInTemporaryClient(uri, (client) -> {
+        // Create a temporary client with credentials if available
+        try (MongoClient tempClient = MongoClientHelper.client(uri, null, (Document) config.get("credentials"))) {
             for (Document tpl : templates) {
                 if (tpl.getBoolean("drop", false)) {
                     var database = tpl.getString("database");
                     var collection = tpl.getString("collection");
-                    client.getDatabase(database).getCollection(collection).drop();
-                    client.getDatabase(database).getCollection(String.format("enxcol_.%s.ecoc", collection)).drop();
-                    client.getDatabase(database).getCollection(String.format("enxcol_.%s.esc", collection)).drop();
+                    tempClient.getDatabase(database).getCollection(collection).drop();
+                    tempClient.getDatabase(database).getCollection(String.format("enxcol_.%s.ecoc", collection)).drop();
+                    tempClient.getDatabase(database).getCollection(String.format("enxcol_.%s.esc", collection)).drop();
                     reporter.reportInit(String.format("Dropped collection %s.%s", database, collection));
                 }
             }
-        });
+        }
     }
 }

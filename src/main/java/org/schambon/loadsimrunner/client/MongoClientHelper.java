@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -47,12 +48,29 @@ public class MongoClientHelper {
     }
 
     public static MongoClient client(String uri, Document encryption) {
+        return client(uri, encryption, null);
+    }
+    
+    public static MongoClient client(String uri, Document encryption, Document credentials) {
         
         if (! isOn(encryption)) {
-            return MongoClients.create(MongoClientSettings.builder()
+            MongoClientSettings.Builder settingsBuilder = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(uri))
-                .uuidRepresentation(UuidRepresentation.STANDARD)
-                .build());
+                .uuidRepresentation(UuidRepresentation.STANDARD);
+            
+            // Apply credentials if provided
+            if (credentials != null) {
+                ConnectionString connString = new ConnectionString(uri);
+                if (credentials.containsKey("username") && credentials.containsKey("password")) {
+                    MongoCredential credential = MongoCredential.createCredential(
+                        credentials.getString("username"),
+                        connString.getDatabase() != null ? connString.getDatabase() : "admin",
+                        credentials.getString("password").toCharArray());
+                    settingsBuilder.credential(credential);
+                }
+            }
+            
+            return MongoClients.create(settingsBuilder.build());
             
         } else {
             var cryptSharedLibPath = getOrEnv(encryption, "sharedlib");
