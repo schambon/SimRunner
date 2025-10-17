@@ -1,5 +1,10 @@
 {
-    "connectionString": "mongodb+srv://user:password@samquote7-pl-0.baelt.mongodb.net/",
+    "connectionString": "mongodb://user:password@nameCluster.cluster-xxxx.us-east-2.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false",
+    "tlsOptions": {
+        "tls": true,
+        "tlsCAFile": "/path/to/DocDB/global-bundle.pem",
+        "invalidHostNameAllowed": false
+    },
     "http": {
         "enabled": true,
         "port": 3000,

@@ -33,7 +33,7 @@ import com.mongodb.client.model.ValidationOptions;
 import static com.mongodb.client.model.Filters.*;
 
 import org.bson.Document;
-import org.schambon.loadsimrunner.client.MongoClientHelper;
+import org.schambon.loadsimrunner.client.EnhancedMongoClientHelper;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.generators.Address;
 import org.schambon.loadsimrunner.generators.Name;
@@ -195,7 +195,7 @@ public class TemplateManager {
             this.mongoClient = client;
 
             var db = client.getDatabase(database);
-            var found = MongoClientHelper.collExists(db, collection);
+            var found = EnhancedMongoClientHelper.collExists(db, collection);
 
             this.mongoColl = db.getCollection(collection);
 

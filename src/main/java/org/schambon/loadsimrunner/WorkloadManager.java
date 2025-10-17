@@ -47,6 +47,8 @@ public class WorkloadManager {
     WriteConcern writeConcern;
     long stopAfter = -1;
     long stopAfterDuration = -1;
+    long startAfterDuration = -1;
+    String variablesScope = "batch";
 
     Reporter reporter;
 
@@ -85,6 +87,10 @@ public class WorkloadManager {
         this.threads = config.getInteger("threads", 1);
         this.batch =  config.getInteger("batch", 0);
         this.pace = config.getInteger("pace", 0);
+        var varScope = config.getString("variablesScope");
+        if("operation".equals(varScope)) {
+            this.variablesScope = "operation";
+        }
 
         var _stopAfter = config.get("stopAfter");
         if (_stopAfter != null) {
@@ -98,6 +104,12 @@ public class WorkloadManager {
                 throw new InvalidConfigException("stopAfter and stopAfterDuration cannot be used at the same time");
             this.stopAfterDuration = ((Number)_stopAfterDuration).longValue();
             LOGGER.debug("Workload {} stopping after {} ms (config: {})", name, stopAfter, _stopAfter);
+        }
+
+        var _startAfterDuration = config.get("startAfterDuration");
+        if (_startAfterDuration != null) {
+            this.startAfterDuration = ((Number)_startAfterDuration).longValue();
+            LOGGER.debug("Workload {} will start after {} (config: {})", name, startAfterDuration, _startAfterDuration);
         }
 
         String readPref = config.getString("readPreference");
@@ -238,5 +250,13 @@ public class WorkloadManager {
 
     public long getStopAfterDuration() {
         return stopAfterDuration;
+    }
+
+    public long getStartAfterDuration() {
+        return startAfterDuration;
+    }
+
+    public String getVariablesScope() {
+        return variablesScope;
     }
 }

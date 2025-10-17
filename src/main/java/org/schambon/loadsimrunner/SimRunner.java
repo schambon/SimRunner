@@ -19,7 +19,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.bson.Document;
-import org.schambon.loadsimrunner.client.MongoClientHelper;
+import org.schambon.loadsimrunner.client.EnhancedMongoClientHelper;
 import org.schambon.loadsimrunner.errors.InvalidConfigException;
 import org.schambon.loadsimrunner.http.HttpServer;
 import org.schambon.loadsimrunner.report.MongoReporter;
@@ -165,7 +165,7 @@ public class SimRunner {
             // bit ugly: we have to drop collections before initialising the main MongoClient since it can create encrypted collections, which would error out if they already exist
             dropCollectionsIfNecessary(connectionString, (List<Document>) config.get("templates"));
 
-            this.client = MongoClientHelper.client(connectionString, (Document) config.get("encryption"), (Document) config.get("credentials"));
+            this.client = EnhancedMongoClientHelper.client(connectionString, (Document) config.get("tlsOptions"), (Document) config.get("encryption"));
 
             Document commandResult = client.getDatabase("admin").runCommand(new Document("isMaster", 1));
             if (!commandResult.getBoolean("ismaster")) {
@@ -202,8 +202,7 @@ public class SimRunner {
     }
 
     private void dropCollectionsIfNecessary(String uri, List<Document> templates) {
-        // Create a temporary client with credentials if available
-        try (MongoClient tempClient = MongoClientHelper.client(uri, null, (Document) config.get("credentials"))) {
+        EnhancedMongoClientHelper.doInTemporaryClient(uri, (Document) config.get("tlsOptions"), (client) -> {
             for (Document tpl : templates) {
                 if (tpl.getBoolean("drop", false)) {
                     var database = tpl.getString("database");
