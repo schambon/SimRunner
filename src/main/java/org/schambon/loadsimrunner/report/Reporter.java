@@ -121,15 +121,17 @@ public class Reporter {
             durations.addAll(durationsBatch);
 
             List<Document> computedPercentiles = new ArrayList<>(percentiles.size());
-            for (int _p : percentiles) {
-                double p = (double)_p/100d;
+            if (!durations.isEmpty()) {
+                for (int _p : percentiles) {
+                    double p = (double)_p/100d;
 
-                var index = (int)Math.ceil(p * (double)durations.size());
-                if (index >= durations.size()) {
-                    index = Math.max(0, durations.size() - 1);
+                    var index = (int)Math.ceil(p * (double)durations.size());
+                    if (index >= durations.size()) {
+                        index = durations.size() - 1;
+                    }
+                    long pctVal = durations.get(index);
+                    computedPercentiles.add(new Document("p", _p).append("value", pctVal));
                 }
-                long pctVal = durations.get(index);
-                computedPercentiles.add(new Document("p", _p).append("value", pctVal));
             }
 
             // var ninetyFifthIndex = (int)Math.ceil(.95d * (double)durations.size());
