@@ -33,9 +33,16 @@ public class SimRunner {
 
     public static void main(String[] args) throws ParseException, IOException {
         var options = new Options();
+        options.addOption("v", "version", false, "Print version and exit");
 
         var parser = new DefaultParser();
         var line = parser.parse(options, args);
+
+        if (line.hasOption("version")) {
+            String version = SimRunner.class.getPackage().getImplementationVersion();
+            System.out.println("SimRunner " + (version != null ? version : "dev"));
+            System.exit(0);
+        }
 
         var list = line.getArgList();
         if (list.size() < 1) {
