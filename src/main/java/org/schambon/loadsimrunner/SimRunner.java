@@ -110,7 +110,8 @@ public class SimRunner {
 
         reportInterval = config.getInteger("reportInterval", 1000);
         List<Integer> reportPercentiles = config.getList("reportPercentiles", Integer.class, Arrays.asList(95));
-        reporter = new Reporter(reportPercentiles);
+        boolean memoryOptimizedReporter = config.getBoolean("memoryOptimizedReporter", false);
+        reporter = new Reporter(reportPercentiles, memoryOptimizedReporter);
 
         String connectionString = null;
         try {

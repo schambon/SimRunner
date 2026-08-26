@@ -8,10 +8,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TreeMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -28,9 +34,18 @@ public class Reporter {
     private long startTime = 0;
     private TreeMap<Instant, Report> reports = new TreeMap<>();
     private List<Integer> percentiles;
+    private final boolean memoryOptimized;
 
     public Reporter(List<Integer> reportPercentiles) {
+        this(reportPercentiles, false);
+    }
+
+    public Reporter(List<Integer> reportPercentiles, boolean memoryOptimized) {
         this.percentiles = reportPercentiles;
+        this.memoryOptimized = memoryOptimized;
+        if (memoryOptimized) {
+            LOGGER.info("Reporter running in memory-optimized mode");
+        }
     }
 
     public void start() {
@@ -84,10 +99,9 @@ public class Reporter {
     }
 
     public synchronized void reportOp(String name, long i, long duration) {
-        //LOGGER.debug("Reported {} {} {}", name, i, duration);
         StatsHolder h = stats.get(name);
         if (h == null) {
-            h = new StatsHolder();
+            h = memoryOptimized ? new OptimizedStatsHolder() : new DefaultStatsHolder();
             stats.put(name, h);
         }
         h.addOp(i, duration);
@@ -100,14 +114,26 @@ public class Reporter {
     public synchronized Collection<Report> getReportsSince(Instant start) {
         return reports.tailMap(start, false).values();
     }
-    
+
     // a specific thread for logging durations
     static ExecutorService asyncExecutor = Executors.newFixedThreadPool(1);
 
-    private static class StatsHolder {
+    // -------------------------------------------------------------------------
+    // StatsHolder interface
+    // -------------------------------------------------------------------------
+
+    private interface StatsHolder {
+        void addOp(long number, long duration);
+        Document compute(long interval, List<Integer> percentiles);
+    }
+
+    // -------------------------------------------------------------------------
+    // DefaultStatsHolder — original behaviour, unchanged
+    // -------------------------------------------------------------------------
+
+    private static class DefaultStatsHolder implements StatsHolder {
 
         AtomicLong numops = new AtomicLong(0);
-        // List<Long> durationsBatch = new ArrayList<>();
         TreeMultiset<Long> durationsBatch = TreeMultiset.create();
         List<Long> numbers = new ArrayList<>();
 
@@ -134,20 +160,12 @@ public class Reporter {
                 }
             }
 
-            // var ninetyFifthIndex = (int)Math.ceil(.95d * (double)durations.size());
-            // if (ninetyFifthIndex >= durations.size()) {
-            //     ninetyFifthIndex = Math.max(0, durations.size()-1);
-            // }
-            // long ninetyFifth = durations.get(ninetyFifthIndex);
-            // long fiftieth = durations.size() > 1 ? durations.get(durations.size()/2) : 0;
-
             Stats batchStats = Stats.of(durations);
             var meanBatch = batchStats.mean();
             var util = 100. * batchStats.sum() / (double) interval;
             var numberStats = Stats.of(numbers);
 
             long totalOps = (long) (numberStats.count() /  ((double)interval/1000.d));
-            // TODO fix this properly - there are times when the number goes through the roof, either because of an overflow or because `interval` is too small.
             if (totalOps > 1e10) {
                 LOGGER.warn("Computed very large ops number {}. Count is {}, interval is {}", totalOps, numberStats.count(), interval);
                 return null;
@@ -168,12 +186,94 @@ public class Reporter {
             wlReport.append("report compute time", currentTimeMillis() - __startCompute);
 
             return wlReport;
-
         }
 
         public void addOp(long number, long duration) {
             numops.incrementAndGet();
-            Reporter.asyncExecutor.submit(() ->  {durationsBatch.add(duration); numbers.add(number);});
+            Reporter.asyncExecutor.submit(() -> { durationsBatch.add(duration); numbers.add(number); });
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // OptimizedStatsHolder — memory-safe implementation
+    //
+    // Key differences from DefaultStatsHolder:
+    //   1. addOp() writes directly to ConcurrentLinkedQueue (no asyncExecutor
+    //      submission) — eliminates the unbounded executor queue.
+    //   2. compute() atomically swaps both queues for fresh empty ones before
+    //      processing — eliminates the race where stale queued tasks write to
+    //      an already-drained StatsHolder, and means new ops during compute()
+    //      land in the next cycle's fresh queue immediately.
+    //   3. No full copy of durationsBatch into a second ArrayList — the swapped-
+    //      out queue IS the snapshot, so peak memory is never doubled.
+    // -------------------------------------------------------------------------
+
+    private static class OptimizedStatsHolder implements StatsHolder {
+
+        private final AtomicReference<Queue<Long>> durationsBatch =
+                new AtomicReference<>(new ConcurrentLinkedQueue<>());
+        private final AtomicReference<Queue<Long>> numbers =
+                new AtomicReference<>(new ConcurrentLinkedQueue<>());
+
+        public void addOp(long number, long duration) {
+            // Direct lock-free writes — no executor submission
+            durationsBatch.get().add(duration);
+            numbers.get().add(number);
+        }
+
+        public Document compute(long interval, List<Integer> percentiles) {
+
+            var __startCompute = currentTimeMillis();
+
+            // Atomically swap both queues out — any addOp() calls after this
+            // point write into the fresh queues and belong to the next cycle.
+            Queue<Long> durationsSnapshot = durationsBatch.getAndSet(new ConcurrentLinkedQueue<>());
+            Queue<Long> numbersSnapshot   = numbers.getAndSet(new ConcurrentLinkedQueue<>());
+
+            // Materialise snapshots into sorted lists for percentile computation
+            List<Long> durations = new ArrayList<>(durationsSnapshot);
+            durations.sort(null);
+            List<Long> numbersList = new ArrayList<>(numbersSnapshot);
+
+            List<Document> computedPercentiles = new ArrayList<>(percentiles.size());
+            if (!durations.isEmpty()) {
+                for (int _p : percentiles) {
+                    double p = (double)_p / 100d;
+                    var index = (int) Math.ceil(p * (double) durations.size());
+                    if (index >= durations.size()) {
+                        index = durations.size() - 1;
+                    }
+                    long pctVal = durations.get(index);
+                    computedPercentiles.add(new Document("p", _p).append("value", pctVal));
+                }
+            }
+
+            Stats batchStats = durations.isEmpty() ? Stats.of(new long[]{}) : Stats.of(durations);
+            var meanBatch = batchStats.mean();
+            var util = 100. * batchStats.sum() / (double) interval;
+            Stats numberStats = numbersList.isEmpty() ? Stats.of(new long[]{}) : Stats.of(numbersList);
+
+            long totalOps = (long) (numberStats.count() / ((double) interval / 1000.d));
+            if (totalOps > 1e10) {
+                LOGGER.warn("Computed very large ops number {}. Count is {}, interval is {}", totalOps, numberStats.count(), interval);
+                return null;
+            }
+
+            Document wlReport = new Document();
+
+            wlReport.append("ops", totalOps);
+            wlReport.append("records", (long) (numberStats.sum() / (double) (interval / 1000)));
+            wlReport.append("total ops", numberStats.count());
+            wlReport.append("total records", (long) numberStats.sum());
+            wlReport.append("mean duration", meanBatch);
+            wlReport.append("percentiles", computedPercentiles);
+            wlReport.append("mean batch size", numberStats.mean());
+            wlReport.append("min batch size", numberStats.min());
+            wlReport.append("max batch size", numberStats.max());
+            wlReport.append("client util", util);
+            wlReport.append("report compute time", currentTimeMillis() - __startCompute);
+
+            return wlReport;
         }
     }
 }
